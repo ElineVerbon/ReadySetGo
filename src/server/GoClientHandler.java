@@ -21,6 +21,10 @@ public class GoClientHandler implements Runnable {
 
 	/** Name of this ClientHandler */
 	private String name;
+	
+//	/** Communication version of this client-server combination) */
+//	private String version;
+	//TODO implement this to keep track of the protocol version. Not sure if this is necessary, depends on how the protocols differ
 
 	/**
 	 * Constructs a new HotelClientHandler. Opens the In- and OutputStreams.

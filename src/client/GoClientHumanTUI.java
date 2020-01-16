@@ -11,13 +11,13 @@ import exceptions.*;
 import protocol.ProtocolMessages;
 
 
-public class GoClientTUI {
-	private GoClient goClient;
+public class GoClientHumanTUI {
+	private GoClientHuman goHumanClient;
 	private boolean active = true;
 	
-	/** Constructor, connected to the client that called the constructor */
-	public GoClientTUI(GoClient goClient) {
-		this.goClient = goClient;
+	/** Constructor, connected to the client that called the constructor. */
+	public GoClientHumanTUI(GoClientHuman goClient) {
+		this.goHumanClient = goClient;
 	}
 	
 	/**
@@ -32,15 +32,18 @@ public class GoClientTUI {
 	public void start() throws ServerUnavailableException {
 		Scanner scanner = new Scanner(System.in);
 		
-		while(active) {
+		while (active) {
 			String userInput = getString("Which move would you like to do?");
 			try {
 				handleUserInput(userInput);
 			} catch (ExitProgram e) {
 				active = false;
-				goClient.sendExit();//not sure if this is correct
+				goHumanClient.sendExit();
 			}
-			if(userInput.equals("x")) { active = false; } //dit is niet de mooiste oplossing
+			if (userInput.equals("x")) { 
+				active = false; 
+				//TODO dit behandelen in de default case van handleUserInput?
+			} 
 		}
 		scanner.close();
 	}
@@ -62,9 +65,13 @@ public class GoClientTUI {
 		//TODO
 		
 		char command = msg.charAt(0);
-		switch(command) {
+		switch (command) {
 			case ProtocolMessages.HANDSHAKE:
-				goClient.doHandshake();
+				try {
+					goHumanClient.doHandshake();
+				} catch (ProtocolException e) {
+					e.printStackTrace();
+				}
 				break;
 			case ProtocolMessages.GAME:
 				//TO DO, see above
@@ -108,7 +115,7 @@ public class GoClientTUI {
 		boolean validIP = false;
 		InetAddress inetAddress = null;
 		
-		while(!validIP) {
+		while (!validIP) {
 			System.out.println("Please enter a valid IP, numbers divided by points.");
 			Scanner scanner = new Scanner(System.in);
 			String userInput = scanner.nextLine();
@@ -157,7 +164,7 @@ public class GoClientTUI {
 		String userInput = "";
 		Integer userInt = 0;
 		
-		while(!validInt) {
+		while (!validInt) {
 			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 			try {
 				userInput = in.readLine();
@@ -189,7 +196,7 @@ public class GoClientTUI {
 		boolean validInput = false;
 		boolean userBoolean = false;
 		
-		while(!validInput) {
+		while (!validInput) {
 			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 			String userInput = "";
 			try {
@@ -198,9 +205,13 @@ public class GoClientTUI {
 				e.printStackTrace();
 			}
 			
-			if(userInput.equalsIgnoreCase("yes")) { userBoolean = true; validInput = true;}
-			else if(userInput.equalsIgnoreCase("no")) { userBoolean = false; validInput = true;}
-			else { System.out.println("Sorry, this is not valid input, please enter yes or no"); }
+			if (userInput.equalsIgnoreCase("yes")) { 
+				userBoolean = true; validInput = true;
+			} else if (userInput.equalsIgnoreCase("no")) { 
+				userBoolean = false; validInput = true;
+			} else { 
+				System.out.println("Sorry, this is not valid input, please enter yes or no");
+			}
 		}
 		
 		return userBoolean;

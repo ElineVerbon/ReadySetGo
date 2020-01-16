@@ -8,7 +8,7 @@ import java.io.PrintWriter;
 
 public class GoServerTUI {
 	
-	/** The PrintWriter to write messages to */
+	/** The PrintWriter to write messages to. */
 	private PrintWriter console;
 
 	/**
@@ -45,7 +45,7 @@ public class GoServerTUI {
 		boolean validInt = false;
 		Integer userInt = 0;
 		
-		while(!validInt) {
+		while (!validInt) {
 			String userInput = readUserInput();
 			
 			try {
@@ -53,8 +53,7 @@ public class GoServerTUI {
 				validInt = true;
 	        } catch (NumberFormatException e) {
 	            System.out.println("ERROR: " + userInput
-	            		           + " is not an integer.");
-	            break;
+	            		           + " is not an integer. Please try again.");
 	        }
 		}
 		
@@ -73,12 +72,16 @@ public class GoServerTUI {
 		boolean validInput = false;
 		boolean userBoolean = false;
 		
-		while(!validInput) {
+		while (!validInput) {
 			String userInput = readUserInput();
 			
-			if(userInput.equalsIgnoreCase("yes")) { userBoolean = true; validInput = true;}
-			else if(userInput.equalsIgnoreCase("no")) { userBoolean = false; validInput = true;}
-			else { System.out.println("sorry, this is not valid input, please enter yes or no"); }
+			if (userInput.equalsIgnoreCase("yes")) { 
+				userBoolean = true; validInput = true;
+			} else if (userInput.equalsIgnoreCase("no")) { 
+				userBoolean = false; validInput = true;
+			} else { 
+				System.out.println("sorry, this is not valid input, please enter yes or no");
+			}
 		}
 		
 		return userBoolean;

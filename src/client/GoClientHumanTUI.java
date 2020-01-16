@@ -117,16 +117,22 @@ public class GoClientHumanTUI {
 		
 		while (!validIP) {
 			System.out.println("Please enter a valid IP, numbers divided by points.");
-			Scanner scanner = new Scanner(System.in);
-			String userInput = scanner.nextLine();
+			String userInput = "";
+			
+			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+			
+			try {
+				userInput = in.readLine();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			
 			try {
 				inetAddress = InetAddress.getByName(userInput);
+				validIP = true;
 			} catch (UnknownHostException e) {
-				System.out.println("Sorry, this is not a valid IP.");
-				break;
+				System.out.println("Sorry, this is not a valid IP. ");
 			}
-			scanner.close();
 		}
 		return inetAddress;
 	}
@@ -138,7 +144,7 @@ public class GoClientHumanTUI {
 	 * @return The user input as a String
 	 */
 	public String getString(String question) {
-		System.out.print(question);
+		System.out.println(question);
 		String userInput = "";
 		
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
@@ -159,7 +165,7 @@ public class GoClientHumanTUI {
 	 * @return The written Integer.
 	 */
 	public int getInt(String question) {
-		System.out.print(question);
+		System.out.println(question);
 		boolean validInt = false;
 		String userInput = "";
 		Integer userInt = 0;
@@ -192,7 +198,7 @@ public class GoClientHumanTUI {
 	 * @return The user input as boolean.
 	 */
 	public boolean getBoolean(String question) {
-		System.out.print(question);
+		System.out.println(question);
 		boolean validInput = false;
 		boolean userBoolean = false;
 		

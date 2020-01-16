@@ -74,14 +74,14 @@ public class GoClientHuman implements GoClient {
 			}
 		} while (restart);
 		
-		/** Start the TUI, which will take care of getting user input via the console. */
-		if (successfulConnection) {
-			try {
-				clientTUI.start();
-			} catch (ServerUnavailableException e) {
-				e.printStackTrace();
-			}
-		}
+		/** TODO Wait for the start game method. Then start the TUI. */
+//		if (successfulConnection) {
+//			try {
+//				clientTUI.start();
+//			} catch (ServerUnavailableException e) {
+//				e.printStackTrace();
+//			}
+//		}
 	}
 	
 	/**
@@ -99,8 +99,25 @@ public class GoClientHuman implements GoClient {
 	public void createConnection() throws ExitProgram {
 		clearConnection();
 		
+		/** 
+		 * TODO: user the user input or test version to assign values to addr and port. 
+		 * */
+		// Get user input about where to connect & try connecting.
 		InetAddress addr = clientTUI.getIp("To which IP address do you want to try to connect?");
 		int port = clientTUI.getInt("On which port do you want to listen?");
+		
+//		// For testing purposes, set addr and port.
+//		String host = "127.0.0.1";
+//		InetAddress addr;
+//		try {
+//			addr = InetAddress.getLocalHost();
+//		} catch (UnknownHostException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		
+//		int port = 8888;
+		
 		
 		while (sock == null) {
 			// try to open a Socket to the server
@@ -234,15 +251,15 @@ public class GoClientHuman implements GoClient {
 		usedVersion = serverResponse[1]; //TODO check whether the version is valid?
 		//get message if available
 		if (serverResponse.length > 2) {
-			clientTUI.showMessage(serverResponse[2]);
 			//correct response was received, message was printed. Print this as well to be sure
-			clientTUI.showMessage("Previous message came from the server. In case it was not " +
-					"included in the message, communication will proceed according to version " + 
-					serverResponse[1] + "!");
+			clientTUI.showMessage("You connected to a server. Communication will proceed " +
+					"according to version " + usedVersion + ".\n" +
+					"You received the following message from the server: ");
+			clientTUI.showMessage(serverResponse[2]);
 		} else {
 			//correct response was received, print welcome string
-			clientTUI.showMessage("Welcome to the Go server, we will communicate according to " +
-					"version " + usedVersion + "!");
+			clientTUI.showMessage("You connected to a server. Communication will proceed " +
+					"according to version " + usedVersion + ".\n");
 		}
 	}
 	

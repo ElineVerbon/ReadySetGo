@@ -19,13 +19,19 @@ public class Game {
 		gameNumber = number;
 	}
 	
-	public void addPlayer(String name) {
+	//responds with a message that indicates the gameNumber and the number of players.
+	public String addPlayer(String name) {
+		String message = "";
 		if (player1 == null) {
 			player1 = name;
+			message = name + " was added to game " + gameNumber + " as the first player.";
 		} else {
 			player2 = name;
 			complete = true;
+			message = name + " was added to game " + gameNumber + 
+					" as the second player. The game can start!";
 		}
+		return message;
 	}
 	
 	/** returns whether two players were added to this game. */

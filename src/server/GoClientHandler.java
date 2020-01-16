@@ -8,23 +8,28 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 
 import protocol.ProtocolMessages;
+import game.*;
 
 
 public class GoClientHandler implements Runnable {
-	/** The socket and In- and OutputStreams */
+	/** The socket and In- and OutputStreams. */
 	private BufferedReader in;
 	private BufferedWriter out;
 	private Socket sock;
 	
-	/** The connected HotelServer */
+	/** The connected HotelServer. */
 	private GoServer srv;
 
-	/** Name of this ClientHandler */
+	/** Name of this ClientHandler. */
 	private String name;
+	
+	/** The game connected with this ClientHandler. */
+	private Game thisClientsGame;
 	
 //	/** Communication version of this client-server combination) */
 //	private String version;
-	//TODO implement this to keep track of the protocol version. Not sure if this is necessary, depends on how the protocols differ
+	//TODO implement this to keep track of the protocol version. 
+	//Not sure if this is necessary, depends on how the protocols differ
 
 	/**
 	 * Constructs a new HotelClientHandler. Opens the In- and OutputStreams.
@@ -86,14 +91,46 @@ public class GoClientHandler implements Runnable {
 		
 		char command = msg.charAt(0);
 		
-		switch(command) {
+		switch (command) {
 			case ProtocolMessages.HANDSHAKE:
-				//handshake of a client consists of: handshake + requestedVersion + nameClient + optionally the wantedColor
+				
+				/** 
+				 * Send the message of the client to the server formatted according to the protocol.
+				 * The message of the client consists of: handshake + requestedVersion + nameClient 
+				 * and optionally the wantedColor.
+				 * The server will check the handshake.
+				 * If correct, the clientHandler (this) will attach a game to this clientHandler.
+				 */
+				
 				String[] commands = msg.split(ProtocolMessages.DELIMITER);
-				String wantedColor = (commands.length > 3) ? commands[3] : null; // if the wantedColor is available, get it, otherwise set null
-				response = srv.doHandshake(commands[1], commands[2], wantedColor);
+				String nameClient = commands[2];
+				String wantedColor = (commands.length > 3) ? commands[3] : null; 
+				
+				//let the server check the handshake & decide the version number in doHandshake()
+				//get 'ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER + usedVersion' back
+				response = srv.doHandshake(commands[1], nameClient);
+				
+				//add the player to a game and get back the game to save in the client handler
+				//this way methods can be called with the correct game instance
+				thisClientsGame = srv.addClientToGame(nameClient);
+				int gameNumber = thisClientsGame.getNumber();
+				boolean gameComplete = thisClientsGame.getCompleteness();
+				String message = "";
+				
+				if (gameComplete) {
+					message = "Welcome " + nameClient + " to game " + gameNumber + ". " +
+							"You are the second player, the game will start soon!"; 
+				} else {
+					message = "Welcome " + nameClient + " to game " + gameNumber + ". " +
+							"You are the first player, please wait for the second player."; 
+				}
+				response += ProtocolMessages.DELIMITER + message;
+				
+				//Send the response to the client
+				//Response contains the handshake according to the protocol + the game info
 				out.write(response);
 				break;
+				
 			case ProtocolMessages.GAME:
 				//TO DO, see above
 				break;

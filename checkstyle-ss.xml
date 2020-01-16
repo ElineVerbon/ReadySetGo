@@ -57,10 +57,6 @@
       <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
     </module>
     <module name="LeftCurly"/>
-    <module name="LineLength">
-      <property name="max" value="100"/>
-      <property name="tabWidth" value="4"/>
-    </module>
     <module name="LocalFinalVariableName">
       <message key="name.invalidPattern" value="Name ''{0}'' must match pattern ''{1}''. (should start with a lower case letter, should not use underscore)"/>
     </module>
@@ -125,6 +121,10 @@
       <message key="name.invalidPattern" value="Name ''{0}'' must match pattern ''{1}''. (the first seqment may only contain letters and underscore)"/>
     </module>
     <module name="PackageDeclaration"/>
+  </module>
+  <module name="LineLength">
+    <property name="max" value="100" />
+    <property name="tabWidth" value="4" />
   </module>
   <module name="FileLength">
     <property name="severity" value="ignore"/>

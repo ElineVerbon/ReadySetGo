@@ -29,6 +29,7 @@ public class GoClientHumanTUI {
 	 * 
 	 * @throws ServerUnavailableException in case of IO exceptions.
 	 */
+	
 	public void start() throws ServerUnavailableException {
 		Scanner scanner = new Scanner(System.in);
 		
@@ -42,7 +43,7 @@ public class GoClientHumanTUI {
 			}
 			if (userInput.equals("x")) { 
 				active = false; 
-				//TODO dit behandelen in de default case van handleUserInput?
+				//TODO kijken of dit mooier opgelost kan worden
 			} 
 		}
 		scanner.close();

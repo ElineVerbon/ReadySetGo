@@ -14,9 +14,8 @@ import protocol.ProtocolMessages;
 /**
  * Server for playing GO.
  * 
- * Intended Functionality: should listen for clients
- * once two client have connected, starts a game while continuing
- * to listen for further clients and setting up new games
+ * The server listens for clients continuously. When a client connects, the 
+ * server starts a clientHandler to handle interaction with the client.
  */
 
 public class GoServer implements Runnable {
@@ -95,9 +94,6 @@ public class GoServer implements Runnable {
 					//add the handler to the list of handlers
 					clients.add(handler);
 					nextClientNo++;
-					
-					//check whether there are N%2=0 clients connected + with same handshake, 
-					//if so, start game for the latest two clients
 				}
 
 			} catch (ExitProgram e1) {

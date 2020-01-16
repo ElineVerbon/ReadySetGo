@@ -32,7 +32,7 @@ public class GoClientHandler implements Runnable {
 	//Not sure if this is necessary, depends on how the protocols differ
 
 	/**
-	 * Constructs a new HotelClientHandler. Opens the In- and OutputStreams.
+	 * Constructs a new GoClientHandler. Opens the In- and OutputStreams.
 	 * 
 	 * @param sock The socket of the server that connects to a certain client
 	 * @param srv  The connected server
@@ -75,12 +75,9 @@ public class GoClientHandler implements Runnable {
 
 	/**
 	 * Handles commands received from the client by calling the according 
-	 * methods at the HotelServer. For example, when the message "i Name" 
-	 * is received, the method doIn() of HotelServer should be called 
-	 * and the output must be sent to the client. //how do I do this? or should the server do this?
+	 * methods at the GoServer and sending the output to the client.
 	 * 
-	 * If the received input is not valid, send an "Unknown Command" 
-	 * message to the server. NB: this should be to the client!
+	 * If the received input is not valid, send an "?" message to the client.
 	 * 
 	 * @param msg command from client
 	 * @throws IOException if an IO errors occur.
@@ -125,6 +122,10 @@ public class GoClientHandler implements Runnable {
 							"You are the first player, please wait for the second player."; 
 				}
 				response += ProtocolMessages.DELIMITER + message;
+				
+				//TODO Problem: if the client rejects the received protocol message, it will have 
+				//already been added to the game. Thus, the next player will wait indefinitely for
+				//the second player. 
 				
 				//Send the response to the client
 				//Response contains the handshake according to the protocol + the game info

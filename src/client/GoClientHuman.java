@@ -175,7 +175,9 @@ public class GoClientHuman implements GoClient {
 	}
 	
 	/**.
-	 * Send handshake to the server according to the following protocol:
+	 * First get necessary information from the user via the console. 
+	 * 
+	 * Then send a handshake to the server according to the following protocol:
 	 * PROTOCOL.handshake + PROTOCOL.delimiter + requestedVersion + PROTOCOL.delimiter + naamClient 
 	 * optionally these at the end: + PROTOCOL.delimiter + PROTOCOL.white/black
 	 * 
@@ -183,14 +185,19 @@ public class GoClientHuman implements GoClient {
 	 * PROTOCOL.handshake + PROTOCOL.delimiter + finalVersion (string) 
 	 * optionally these at the end: PROTOCOL.delimiter + message (string)
 	 * @throws ProtocolException 
-	 * 
-	 * 
 	 */
 	
 	public void doHandshake() throws ServerUnavailableException, ProtocolException {
+		
+		/**
+		 * Get all the necessary components of the handshake message via the console.
+		 * Then paste them together according to the protocol. Send the message to the
+		 * server and wait for a response.
+		 */
+		
 		String message = "";
 		
-		/** get name of client */
+		//get name of client
 		boolean correctName = false;
 		String nameClient = "";
 		while (!correctName) {
@@ -203,7 +210,7 @@ public class GoClientHuman implements GoClient {
 			}
 		}
 		
-		/** get black or white from the player */
+		//get 'black' or 'white' from the console
 		boolean correctColor = false;
 		char wantedColor = '!';
 		while (!correctColor) {
@@ -219,10 +226,11 @@ public class GoClientHuman implements GoClient {
 			}
 		}
 		
+		//assemble the handshake message that will be sent to the server.
 		message = ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER + wantedVersion + 
 				ProtocolMessages.DELIMITER + nameClient + ProtocolMessages.DELIMITER + wantedColor;
 		
-		/** send handshake to server, read response */
+		//send handshake message to the server, read the response.
 		String line = "";
 		try {
 			out.write(message);
@@ -241,7 +249,7 @@ public class GoClientHuman implements GoClient {
 		 * optionally these at the end: PROTOCOL.delimiter + message (string)
 		 */ 
 		
-		//check whether the handshake message came first, if not: throw exception
+		//check whether the handshake character came first, if not: throw exception
 		String[] serverResponse = line.split(ProtocolMessages.DELIMITER);
 		if (line.charAt(0) != ProtocolMessages.HANDSHAKE) {
 			throw new ProtocolException("Server response does not comply with the protocol!");

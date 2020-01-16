@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Scanner;
 
 import exceptions.*;
 import protocol.ProtocolMessages;
@@ -13,7 +12,7 @@ import protocol.ProtocolMessages;
 
 public class GoClientHumanTUI {
 	private GoClientHuman goHumanClient;
-	private boolean active = true;
+//	private boolean active = true; //don't know what I would use this for
 	
 	/** Constructor, connected to the client that called the constructor. */
 	public GoClientHumanTUI(GoClientHuman goClient) {
@@ -30,24 +29,24 @@ public class GoClientHumanTUI {
 	 * @throws ServerUnavailableException in case of IO exceptions.
 	 */
 	
-	public void start() throws ServerUnavailableException {
-		Scanner scanner = new Scanner(System.in);
-		
-		while (active) {
-			String userInput = getString("Which move would you like to do?");
-			try {
-				handleUserInput(userInput);
-			} catch (ExitProgram e) {
-				active = false;
-				goHumanClient.sendExit();
-			}
-			if (userInput.equals("x")) { 
-				active = false; 
-				//TODO kijken of dit mooier opgelost kan worden
-			} 
-		}
-		scanner.close();
-	}
+//	public void start() throws ServerUnavailableException {
+//		Scanner scanner = new Scanner(System.in);
+//		
+//		while (active) {
+//			String userInput = getString("Which move would you like to do?");
+//			try {
+//				handleUserInput(userInput);
+//			} catch (ExitProgram e) {
+//				active = false;
+//				goHumanClient.sendExit();
+//			}
+//			if (userInput.equals("x")) { 
+//				active = false; 
+//				//TODO kijken of dit mooier opgelost kan worden
+//			} 
+//		}
+//		scanner.close();
+//	}
 	
 	/**
 	 * Split the user input on a space and handle it accordingly. 

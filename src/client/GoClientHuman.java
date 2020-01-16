@@ -13,12 +13,17 @@ import protocol.ProtocolMessages;
 
 public class GoClientHuman implements GoClient {
 	
+	//variables used to start a connection with the server
 	private Socket sock;
 	private BufferedReader in;
 	private BufferedWriter out;
 	private GoClientHumanTUI clientTUI;
 	private String wantedVersion; //set in the constructor
 	private String usedVersion; //given back by server upon handshake
+	
+	//variables to play a game
+	private String color;
+	private int boardDimension;
 
 	/**
 	 * Constructs a new GoClient. Initialises the TUI.
@@ -47,8 +52,10 @@ public class GoClientHuman implements GoClient {
 	 * user is asked whether a new connection should be made.
 	 */
 	public void start() {
-		boolean restart = false;
+		boolean reconnect = false;
 		boolean successfulConnection = false;
+		boolean restart = false;
+		boolean gameStarted = false;
 		
 		do {
 			/** Create a connection. */
@@ -60,28 +67,46 @@ public class GoClientHuman implements GoClient {
 				try {
 					this.sendExit();
 				} catch (ServerUnavailableException e1) {
-					restart = clientTUI.getBoolean("The server is unavailable, " +
+					reconnect = clientTUI.getBoolean("The server is unavailable, " +
 							"do you want a new connection to be made?");
 				}
 			}
 			
 			//** Send HELLO handshake. */
 			try {
-				this.doHandshake();
+				doHandshake();
 			} catch (ServerUnavailableException | ProtocolException e) {
-				restart = clientTUI.getBoolean("The server is unavailable or it did not " +
+				reconnect = clientTUI.getBoolean("The server is unavailable or it did not " +
 						"keep to the protocol, do you want a new connection to be made?");
 			}
-		} while (restart);
+		} while (reconnect);
 		
-		/** TODO Wait for the start game method. Then start the TUI. */
-//		if (successfulConnection) {
-//			try {
-//				clientTUI.start();
-//			} catch (ServerUnavailableException e) {
-//				e.printStackTrace();
-//			}
-//		}
+		//TODO if no connection, what should I do? Not continue, at least. Quit the program?
+		//close connection? first send 'quit' (but there might be no connection)
+		
+		if (successfulConnection) {
+			
+			do {
+				/** Wait for the start-game-message. */
+				try {
+					doStart();
+					gameStarted = true;
+				} catch (ServerUnavailableException | ProtocolException e) {
+					restart = clientTUI.getBoolean("The server is unavailable or it did not " +
+							"keep to the protocol, do you want to try again?");
+				}
+			} while (restart);
+		
+		}
+		
+		if (gameStarted) {
+			try {
+				playGame();
+			} catch (ServerUnavailableException | ProtocolException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	/**
@@ -105,19 +130,6 @@ public class GoClientHuman implements GoClient {
 		// Get user input about where to connect & try connecting.
 		InetAddress addr = clientTUI.getIp("To which IP address do you want to try to connect?");
 		int port = clientTUI.getInt("On which port do you want to listen?");
-		
-//		// For testing purposes, set addr and port.
-//		String host = "127.0.0.1";
-//		InetAddress addr;
-//		try {
-//			addr = InetAddress.getLocalHost();
-//		} catch (UnknownHostException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-//		
-//		int port = 8888;
-		
 		
 		while (sock == null) {
 			// try to open a Socket to the server
@@ -214,8 +226,8 @@ public class GoClientHuman implements GoClient {
 		boolean correctColor = false;
 		char wantedColor = '!';
 		while (!correctColor) {
-			String color = clientTUI.getString("Which color do you want to play with? white/black");
-			if (color.equalsIgnoreCase("white")) {
+			String userInput = clientTUI.getString("Which color do you want to play? Black/White");
+			if (userInput.equalsIgnoreCase("white")) {
 				wantedColor = ProtocolMessages.WHITE;
 				correctColor = true;
 			} else if (color.equalsIgnoreCase("black")) { 
@@ -269,6 +281,94 @@ public class GoClientHuman implements GoClient {
 			clientTUI.showMessage("You connected to a server. Communication will proceed " +
 					"according to version " + usedVersion + ".\n");
 		}
+	}
+	
+	/**
+	 * Method to handle the start message.
+	 * Start message should be formatted as follows:
+	 * PROTOCOL.GAME + PROTOCOL.DELIMITER + bord + PROTOCOL.DELIMITER + color
+	 * 
+	 * Separates the messages and sets the color and dimensions of the board.
+	 */
+	
+	public void doStart() throws ServerUnavailableException, ProtocolException {
+		//Wait for the start method & run the doStart method.
+		String line = "";
+		line = readLineFromServer();
+		
+		String[] commands = line.split(ProtocolMessages.DELIMITER);
+		if (commands[0].length() != 1 || commands[0] != "G") {
+			throw new ProtocolException("Server response does not comply with the start protocol!");
+			//TODO send back '?' (because invalid command)
+		}
+		
+		//set dimensions of board
+		int numberOfPlaces = Integer.parseInt(commands[1]);
+		boardDimension = (int) Math.sqrt(numberOfPlaces);
+		
+		//set assigned color
+		color = commands[2];
+		
+	}
+	
+	/** 
+	 * Method that waits for a message from the server and responds.
+	 * It ends when 'Protocol.Messages.END' is received.
+	 */
+	public void playGame() throws ServerUnavailableException, ProtocolException {
+		
+		//Wait for a message from the server
+		String line = "";
+		line = readLineFromServer();
+		
+		//Split the message into parts
+		String[] commands = line.split(ProtocolMessages.DELIMITER);
+		if (commands[0].length() != 1) {
+			throw new ProtocolException("Server response does not comply with the protocol! " + 
+					"It did not send a char as the first part of its message.");
+		}
+		
+		//check which kind of message is received
+		char command = line.charAt(0);
+		switch (command) {
+			case 'T':
+				doTurn(commands[1]);
+				break;
+			case 'R' :
+				//TODO
+				break;
+			case 'E' :
+				//TODO
+				break;
+			default :
+				throw new ProtocolException("Server response does not comply with the protocol! " + 
+						"It did not send a T, R or E as the first part of its message return.");
+		}
+		//wait for turn message from server
+		
+		//print board
+		
+		//get user input about wanted move
+		
+		//check move
+		
+		//send move to server (then start again to wait for turn message)
+	}
+	
+	public void doTurn(String board) {
+		//Incoming message is a String representation of the board
+		for (int d = 0; d < boardDimension; d++) {
+			clientTUI.showMessage(board.substring(d * boardDimension, 
+					(d + 1) * boardDimension - 1));
+		}
+	}
+	
+	public void getResult(String[] commands) {
+		//TODO
+	}
+	
+	public void endGame(String[] commands) {
+		//TODO
 	}
 	
 	/**

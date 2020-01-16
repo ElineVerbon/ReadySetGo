@@ -53,13 +53,26 @@ public class GoClientHandler implements Runnable {
 	}
 
 	/**
-	 * Continuously listens to client input and forwards the input to the
-	 * 'handleCommand(String)' method.
+	 * Listens for handshake message & starts the game.
 	 */
 	public void run() {
 		String msg;
 		try {
 			msg = in.readLine();
+			//TODO check whether it is not a quit or '?' message 
+					//Those are the only other possible methods at this point
+			
+			//send handshake to server, receive hanshake message back,
+			//add to a game
+			doHandshakeAndAddToGame(msg);
+			
+			//if this was the second player added to the game, start the game
+			if (thisClientsGame.getCompleteness()) {
+				thisClientsGame.startGame();
+			}
+			
+			
+			
 			while (msg != null) {
 				System.out.println("> [" + name + "] Incoming: " + msg);
 				handleCommand(msg);
@@ -72,7 +85,56 @@ public class GoClientHandler implements Runnable {
 			shutdown();
 		}
 	}
-
+	
+	/** 
+	 * Send the handshake message of the client to the server formatted according to the protocol.
+	 * The message of the client consists of: handshake + requestedVersion + nameClient 
+	 * and optionally the wantedColor.
+	 * The server will check the handshake.
+	 * If correct, the clientHandler (this) will attach a game to this clientHandler.
+	 */
+	private void doHandshakeAndAddToGame(String msg) {
+		
+		String[] commands = msg.split(ProtocolMessages.DELIMITER);
+		String nameClient = commands[2];
+		String wantedColor = (commands.length > 3) ? commands[3] : null; 
+		
+		//let the server check the handshake & decide the version number in doHandshake()
+		//get 'ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER + usedVersion' back
+		String response = srv.doHandshake(commands[1], nameClient);
+		
+		//add the player to a game and get back the game to save in the client handler
+		//this way methods can be called with the correct game instance
+		thisClientsGame = srv.addClientToGame(nameClient, this);
+		int gameNumber = thisClientsGame.getNumber();
+		boolean gameComplete = thisClientsGame.getCompleteness();
+		String message = "";
+		
+		if (gameComplete) {
+			message = "Welcome " + nameClient + " to game " + gameNumber + ". " +
+					"You are the second player, the game will start soon!"; 
+		} else {
+			message = "Welcome " + nameClient + " to game " + gameNumber + ". " +
+					"You are the first player, please wait for the second player."; 
+		}
+		response += ProtocolMessages.DELIMITER + message;
+		
+		//TODO Problem: if the client rejects the received protocol message, it will have 
+		//already been added to the game. Thus, the next player will wait indefinitely for
+		//the second player. 
+		
+		//Send the response to the client
+		//Response contains the handshake according to the protocol + the game info
+		try {
+			out.write(response);
+			out.newLine();
+			out.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	/**
 	 * Handles commands received from the client by calling the according 
 	 * methods at the GoServer and sending the output to the client.
@@ -89,49 +151,7 @@ public class GoClientHandler implements Runnable {
 		char command = msg.charAt(0);
 		
 		switch (command) {
-			case ProtocolMessages.HANDSHAKE:
-				
-				/** 
-				 * Send the message of the client to the server formatted according to the protocol.
-				 * The message of the client consists of: handshake + requestedVersion + nameClient 
-				 * and optionally the wantedColor.
-				 * The server will check the handshake.
-				 * If correct, the clientHandler (this) will attach a game to this clientHandler.
-				 */
-				
-				String[] commands = msg.split(ProtocolMessages.DELIMITER);
-				String nameClient = commands[2];
-				String wantedColor = (commands.length > 3) ? commands[3] : null; 
-				
-				//let the server check the handshake & decide the version number in doHandshake()
-				//get 'ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER + usedVersion' back
-				response = srv.doHandshake(commands[1], nameClient);
-				
-				//add the player to a game and get back the game to save in the client handler
-				//this way methods can be called with the correct game instance
-				thisClientsGame = srv.addClientToGame(nameClient);
-				int gameNumber = thisClientsGame.getNumber();
-				boolean gameComplete = thisClientsGame.getCompleteness();
-				String message = "";
-				
-				if (gameComplete) {
-					message = "Welcome " + nameClient + " to game " + gameNumber + ". " +
-							"You are the second player, the game will start soon!"; 
-				} else {
-					message = "Welcome " + nameClient + " to game " + gameNumber + ". " +
-							"You are the first player, please wait for the second player."; 
-				}
-				response += ProtocolMessages.DELIMITER + message;
-				
-				//TODO Problem: if the client rejects the received protocol message, it will have 
-				//already been added to the game. Thus, the next player will wait indefinitely for
-				//the second player. 
-				
-				//Send the response to the client
-				//Response contains the handshake according to the protocol + the game info
-				out.write(response);
-				break;
-				
+			//made a separate thing for the handshake
 			case ProtocolMessages.GAME:
 				//TO DO, see above
 				break;

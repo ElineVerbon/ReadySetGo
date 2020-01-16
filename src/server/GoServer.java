@@ -16,6 +16,14 @@ import protocol.ProtocolMessages;
  * 
  * The server listens for clients continuously. When a client connects, the 
  * server starts a clientHandler to handle interaction with the client.
+ * It will then add the client to a game instance. Once two clients are in a game,
+ * the game is started and control is given to the game instance.
+ * 
+ * What happens when the game is over? 
+ * 
+ * Not yet supported:
+ * ClientHandler can ask the client whether they want to do another game against the same player
+ * Clients should be removed from the list once a game is over?
  */
 
 public class GoServer implements Runnable {
@@ -38,12 +46,19 @@ public class GoServer implements Runnable {
 	/** Available versions of this server. */
 	private List<String> availableVersions = new ArrayList<String>();
 
-	/** The TUI of this GoServer. */
+	/**  
+	 * The TUI of this GoServer.
+	 * Needed to ask for IP address and port number
+	 */
 	private GoServerTUI tui;
 	
 	// ------------------ Main --------------------------
 
-	/** Start a new GoServer. */
+	/** 
+	 * Start a new GoServer.
+	 * A GoServer is constructed and then its run() method is called
+	 * in a new thread to listen for new clients. 
+	 */
 	public static void main(String[] args) {
 		GoServer server = new GoServer();
 		System.out.println("Welcome to the GoServer! Starting...");
@@ -77,9 +92,15 @@ public class GoServer implements Runnable {
 		boolean openNewSocket = true;
 		while (openNewSocket) {
 			try {
-				// Sets up the hotel application
+				//sets up a ServerSocket on a certain port and IP address
 				setup();
 
+				/**
+				 * The ServerSocket listens for new clients, makes a clientHandler 
+				 * for each connected client and starts the clientHandler in a new 
+				 * thread (so the ServerSocket can continue listening for new clients).
+				 */
+				//clientHandler will further redirect input from the client
 				while (true) {
 					Socket sock = ssock.accept();
 					tui.showMessage("Client number " + nextClientNo + " just connected!");
@@ -113,13 +134,12 @@ public class GoServer implements Runnable {
 	}
 
 	/**
-	 * Sets up a new Game using 'setupGame()' and opens a new 
-	 * ServerSocket at localhost on a user-defined port.
+	 * Sets up a ServerSocket at localhost on a user-defined port.
 	 * 
-	 * The user is asked to input a port, after which a socket is attempted 
-	 * to be opened. If the attempt succeeds, the method ends, If the 
-	 * attempt fails, the user decides to try again, after which an 
-	 * ExitProgram exception is thrown or a new port is entered.
+	 * The user of the server is asked to input a port and an IP address, 
+	 * after which a socket is attempted to be opened. If the attempt succeeds, 
+	 * the method ends. If the attempt fails, the user can decide to try again, 
+	 * after which an ExitProgram exception is thrown or a new port is entered.
 	 * 
 	 * @throws ExitProgram if a connection can not be created on the given 
 	 *                     port and the user decides to exit the program.
@@ -128,6 +148,7 @@ public class GoServer implements Runnable {
 	public void setup() throws ExitProgram {
 		ssock = null;
 		while (ssock == null) {
+			InetAddress addr = tui.getIp("Please enter your IP address.");
 			int port = tui.getInt("Please enter the server port.");
 			while (port <= 1280) {
 				port = tui.getInt("The port number should be greater than 1280. " +
@@ -136,14 +157,13 @@ public class GoServer implements Runnable {
 			
 			// try to open a new ServerSocket
 			try {
-				tui.showMessage("Attempting to open a socket at 127.0.0.1 "
-						+ "on port " + port + "...");
+				tui.showMessage("Attempting to open a socket at " + addr.toString() +
+						"on port " + port + "...");
 				tui.showMessage("Socket opened, waiting for a client.");
-				ssock = new ServerSocket(port, 0, 
-						InetAddress.getByName("127.0.0.1"));
+				ssock = new ServerSocket(port, 0, addr);
 			} catch (IOException e) {
 				tui.showMessage("ERROR: could not create a socket on "
-						+ "127.0.0.1" + " and port " + port + ".");
+						+ addr.toString() + " and port " + port + ".");
 
 				if (!tui.getBoolean("Do you want to try again? (yes/no)")) {
 					throw new ExitProgram("User indicated to exit the "
@@ -206,7 +226,7 @@ public class GoServer implements Runnable {
 		return response;
 	}
 	
-	public Game addClientToGame(String nameClient) {
+	public Game addClientToGame(String nameClient, GoClientHandler goClientHandler) {
 		/**
 		 * add the player to an existing game, or (if no game available with one player)
 		 * start a new game with this player as first player
@@ -220,7 +240,7 @@ public class GoServer implements Runnable {
 		if (games.isEmpty()) {
 			gameNumber = 1;
 			game = setupGoGame();
-			tui.showMessage(game.addPlayer(nameClient));
+			tui.showMessage(game.addPlayer(nameClient, goClientHandler));
 			return game;
 		} else {
 			//check whether last game is already full
@@ -229,13 +249,13 @@ public class GoServer implements Runnable {
 			if (!lastGame.getCompleteness()) {
 				gameNumber = games.size();
 				game = lastGame;
-				tui.showMessage(lastGame.addPlayer(nameClient));
+				tui.showMessage(lastGame.addPlayer(nameClient, goClientHandler));
 				return game;
 			//otherwise, start a new game
 			} else {
 				gameNumber = nextGameNo;
 				game = setupGoGame();
-				tui.showMessage(game.addPlayer(nameClient));
+				tui.showMessage(game.addPlayer(nameClient, goClientHandler));
 				return game;
 			}
 		}

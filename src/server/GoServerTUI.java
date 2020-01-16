@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 
 public class GoServerTUI {
@@ -59,6 +61,39 @@ public class GoServerTUI {
 		
 		return userInt;
 	}
+	
+	/**
+	 * Ask the user to input a valid IP. If it is not valid, show a message and ask
+	 * again.
+	 * 
+	 * @return a valid IP
+	 */
+	public InetAddress getIp(String message) {
+		showMessage(message);
+		boolean validIP = false;
+		InetAddress inetAddress = null;
+		
+		while (!validIP) {
+			System.out.println("Please enter a valid IP, numbers divided by points.");
+			String userInput = "";
+			
+			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+			
+			try {
+				userInput = in.readLine();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			try {
+				inetAddress = InetAddress.getByName(userInput);
+				validIP = true;
+			} catch (UnknownHostException e) {
+				System.out.println("Sorry, this is not a valid IP. ");
+			}
+		}
+		return inetAddress;
+	}
 
 	/**
 	 * Prints the question and returns the input as a boolean.
@@ -97,7 +132,7 @@ public class GoServerTUI {
 	}
 	
 	/**
-	 * Reads user input (is always a String)
+	 * Reads user input (is always a String).
 	 */
 	public String readUserInput() {
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));

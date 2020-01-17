@@ -41,7 +41,7 @@ public class GoServerTUI {
 	 * @param question The question to show to the user
 	 * @return The written Integer.
 	 */
-	public int getInt(String question) {
+	public int getInt(String question, int minNumber) {
 		showMessage(question);
 		
 		boolean validInt = false;
@@ -52,11 +52,17 @@ public class GoServerTUI {
 			
 			try {
 				userInt = Integer.parseInt(userInput);
-				validInt = true;
 	        } catch (NumberFormatException e) {
-	            System.out.println("ERROR: " + userInput
+	            System.out.println(userInput
 	            		           + " is not an integer. Please try again.");
 	        }
+			
+			if (userInt < minNumber) {
+				System.out.println("The number should be at least " + minNumber +
+						"Please try again.");
+			} else {
+				validInt = true;
+			}
 		}
 		
 		return userInt;

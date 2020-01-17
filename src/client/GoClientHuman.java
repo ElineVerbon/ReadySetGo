@@ -44,70 +44,64 @@ public class GoClientHuman implements GoClient {
 	
 	/**
 	 * Starts a new GoClient by creating a connection, followed by the 
-	 * HELLO handshake as defined in the protocol. After a successful 
-	 * connection and handshake, the tui is started. The tui asks for 
-	 * user input and handles all further calls to methods of this class. 
+	 * HELLO handshake as defined in the protocol. 
 	 * 
 	 * When errors occur, or when the user terminates a server connection, the
 	 * user is asked whether a new connection should be made.
 	 */
 	public void start() {
-		boolean reconnect = false;
+		//set boolean variables to keep track whether connections and signals worked
 		boolean successfulConnection = false;
-		boolean restart = false;
+		boolean handshake = false;
 		boolean gameStarted = false;
 		
-		do {
-			/** Create a connection. */
-			try {
-				this.createConnection();
-				successfulConnection = true;
-				clientTUI.showMessage("You made a succesful connection!");
-			} catch (ExitProgram e) {
-				try {
-					this.sendExit();
-				} catch (ServerUnavailableException e1) {
-					reconnect = clientTUI.getBoolean("The server is unavailable, " +
-							"do you want a new connection to be made?");
-				}
-			}
-			
-			//** Send HELLO handshake. */
-			try {
-				doHandshake();
-			} catch (ServerUnavailableException | ProtocolException e) {
-				reconnect = clientTUI.getBoolean("The server is unavailable or it did not " +
-						"keep to the protocol, do you want a new connection to be made?");
-			}
-		} while (reconnect);
-		
-		//TODO if no connection, what should I do? Not continue, at least. Quit the program?
-		//close connection? first send 'quit' (but there might be no connection)
-		
-		if (successfulConnection) {
-			
-			do {
-				/** Wait for the start-game-message. */
-				try {
-					doStart();
-					gameStarted = true;
-				} catch (ServerUnavailableException | ProtocolException e) {
-					restart = clientTUI.getBoolean("The server is unavailable or it did not " +
-							"keep to the protocol, do you want to try again?");
-				}
-			} while (restart);
-		
+		/** Try to create a connection to a server. */
+		successfulConnection = createConnectionWithUserInput();
+		//TODO If no connection, return (this will stop the thread?)
+		if (!successfulConnection) {
+			clientTUI.showMessage("Sorry, no connection could be established. " +
+					"Hope to see you again in the future!");
+			return;
 		}
 		
-		if (gameStarted) {
-			try {
-				playGame();
-			} catch (ServerUnavailableException | ProtocolException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		/** Send HELLO handshake. */
+		try {
+			doHandshake();
+			handshake = true;
+		} catch (ProtocolException e) {
+			clientTUI.showMessage("The server did not keep to the protocol during the handshake.");
+			//TODO what to do when the protocol is not kept?
+		} catch (ServerUnavailableException e) {
+			clientTUI.showMessage("The server cannot be reached anymore for the handshake.");
+			//TODO what to do when the server cannot be reached anymore? Try again? 
+			//Close connection? Check other SUE in other places, handle same way)
 		}
-	}
+		
+		if (!handshake) {
+			//TODO what to do (see questions above)
+			return;
+		}
+		
+		/** Start game. */
+		try {
+			startGame();
+			gameStarted = true;
+		} catch (ProtocolException e) {
+			clientTUI.showMessage("The server did not keep to the protocol during game start.");
+			//TODO what to do when the protocol is not kept?
+		} catch (ServerUnavailableException e) {
+			clientTUI.showMessage("The server cannot be reached anymore for the handshake.");
+			//TODO what to do when the server cannot be reached anymore? Try again? 
+			//Close connection? Check other SUE in other places, handle same way)
+		}
+		
+		if (!gameStarted) {
+			//TODO what to do if we cannot start?
+			//maybe if server unavailable try again, if different protocol quit?
+		}
+	}	
+	
+	
 	
 	/**
 	 * Creates a connection to the server. Requests the IP and port to 
@@ -121,43 +115,64 @@ public class GoClientHuman implements GoClient {
 	 * 				       indicates to want to exit the program.
 	 * @ensures serverSock contains a valid socket connection to a server
 	 */
-	public void createConnection() throws ExitProgram {
-		clearConnection();
+	
+	public boolean createConnectionWithUserInput() {
+		//variable to allow to try to connect a second time if not successful
+		boolean reconnect = true;
+		boolean successfulConnection = false;
 		
-		/** 
-		 * TODO: user the user input or test version to assign values to addr and port. 
-		 * */
-		// Get user input about where to connect & try connecting.
-		InetAddress addr = clientTUI.getIp("To which IP address do you want to try to connect?");
-		int port = clientTUI.getInt("On which port do you want to listen?");
-		
-		while (sock == null) {
-			// try to open a Socket to the server
-			try {
-				clientTUI.showMessage("Attempting to connect to " + addr + ":" 
-					+ port + "...");
-				sock = new Socket(addr, port); //this is the socket to the server
-				in = new BufferedReader(new InputStreamReader(
-						sock.getInputStream())); //data from the server to this socket
-				out = new BufferedWriter(new OutputStreamWriter(
-						sock.getOutputStream())); 
-						//data from the client via this socket to the buffer 
-			} catch (IOException e) {
-				clientTUI.showMessage("ERROR: could not create a socket on " 
-					+ addr + " and port " + port + ".");
+		while (reconnect) {
+			while (sock == null) {
+				//Get user input about where to connect & try connecting.
+				InetAddress addr = clientTUI.getIp("To which IP address do you want to connect?");
+				int port = clientTUI.getInt("On which port do you want to listen?");
+				
+				// try to open a Socket to the server
+				try {
+					createConnection(addr, port);
+					//successful connection, return
+					successfulConnection = true;
+					return successfulConnection;
+				} catch (IOException e) {
+					clientTUI.showMessage("ERROR: could not create a socket on " 
+						+ addr + " and port " + port + ".");
 
-				boolean userInput = clientTUI.getBoolean("Do you want to try again?");
-				if (userInput) { 
-					addr = clientTUI.getIp("To which IP address do you want to try " +
-							"to connect this time?");
-					port = clientTUI.getInt("On which port do you want to listen this time?");
-				}
-				//Do you want to try again? (ask user, to be implemented)
-				if (!userInput) {
-					throw new ExitProgram("User indicated to exit.");
+					boolean userInput = clientTUI.getBoolean("Do you want to try again?");
+					//If user doesn't want to try again, shut down, otherwise, loop will start again
+					if (!userInput) {
+						try {
+							clientTUI.showMessage("Okay, we will shut down!");
+							this.sendExit();
+						} catch (ServerUnavailableException e1) {
+							reconnect = clientTUI.getBoolean("The server is unavailable, " +
+									"do you want a new connection to be made?");
+						}
+					}
 				}
 			}
 		}
+		//If there is a successful connection, you won't get here, return false
+		return false;
+	}
+	
+	/**
+	 * Creates a connection to the server with the given IP and port.
+	 * 
+	 * @throws IO Exception if the connection cannot be made 
+	 * 
+	 * @ensures serverSock contains a valid socket connection to a server
+	 */
+	public void createConnection(InetAddress addr, int port) throws IOException {
+		clearConnection();
+			
+		clientTUI.showMessage("Attempting to connect to " + addr + ":" 
+			+ port + "...");
+		sock = new Socket(addr, port); //this is the socket to the server
+		in = new BufferedReader(new InputStreamReader(
+				sock.getInputStream())); //data from the server to this socket
+		out = new BufferedWriter(new OutputStreamWriter(
+				sock.getOutputStream())); 
+		clientTUI.showMessage("You made a succesful connection!");
 	}
 	
 	/**
@@ -291,10 +306,11 @@ public class GoClientHuman implements GoClient {
 	 * Separates the messages and sets the color and dimensions of the board.
 	 */
 	
-	public void doStart() throws ServerUnavailableException, ProtocolException {
+	public void startGame() throws ServerUnavailableException, ProtocolException {
 		//Wait for the start method & run the doStart method.
 		String line = "";
 		line = readLineFromServer();
+		//TODO implement maximum waiting time?
 		
 		String[] commands = line.split(ProtocolMessages.DELIMITER);
 		if (commands[0].length() != 1 || commands[0] != "G") {

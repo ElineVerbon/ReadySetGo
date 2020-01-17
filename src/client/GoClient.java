@@ -1,5 +1,8 @@
 package client;
 
+import java.io.IOException;
+import java.net.InetAddress;
+
 import exceptions.*;
 
 public interface GoClient {
@@ -14,8 +17,8 @@ public interface GoClient {
 	 * 				       indicates to want to exit the program.
 	 * @ensures serverSock contains a valid socket connection to a server
 	 */
-	public void createConnection() 
-			throws ExitProgram;
+	public void createConnection(InetAddress addr, int port) 
+			throws IOException;
 	
 	/**
 	 * Resets the serverSocket and In- and OutputStreams to null.

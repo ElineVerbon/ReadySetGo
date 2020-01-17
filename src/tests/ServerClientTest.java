@@ -3,6 +3,7 @@ package tests;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.InetAddress;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -17,12 +18,6 @@ import server.*;
 public class ServerClientTest {
 	private final static ByteArrayOutputStream OUTCONTENT = new ByteArrayOutputStream();
 	private final static PrintStream ORIGINALOUT = System.out;
-	
-	private static final String GUEST1 = "John";
-	private static final String GUEST2 = "Lucy";
-	private static final String FAKE_GUEST = "Fake";
-	private static final String NIGHTS = "3";
-	private static final String INVALID_NIGHTS = "a";
 
 	//Create a client
 	GoClientHuman client = new GoClientHuman();
@@ -35,29 +30,45 @@ public class ServerClientTest {
 	@Test
 	void testServer() 
 			throws ExitProgram, ServerUnavailableException, ProtocolException, IOException {
-		//Start the server
+		//Test with the server on local host and port 8888
+		InetAddress addr = InetAddress.getLocalHost();
+		int port = 8888;
+		
+		//Start server with local host and port 8888 and let it listen for client
 		GoServer testServer = new GoServer();
+		testServer.createSocket(addr, port);
 		new Thread(testServer).start();
 		
-		// Create the connection. Expected: server indicates a new client has connected.
-		client.createConnection();
+		//wait to ensure that server has started
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		// Create a connection. Expected: server indicates a new client has connected.
+		client.createConnection(addr, port);
 		assertThat(OUTCONTENT.toString(), 
-				containsString("Attempting to connect to /127.0.0.1:8888..."));
+				containsString("You made a succesful connection!"));
 		OUTCONTENT.reset();
 		
 //		// Do the HELLO handshake. Expect a welcome message.
 //		client.doHandshake();
-//		assertThat(OUTCONTENT.toString(), containsString("Welcome to the Hotel booking system of U Parkhotel!"));
+//		assertThat(OUTCONTENT.toString(), containsString(
+//			"Welcome to the Hotel booking system of U Parkhotel!"));
 //		OUTCONTENT.reset();
 //		
 //		// Check in a guest
 //		client.doIn(GUEST1);
-//		assertThat(OUTCONTENT.toString(), containsString("> CheckIn successful, you room number is "));
+//		assertThat(OUTCONTENT.toString(), containsString(
+//			"> CheckIn successful, you room number is "));
 //		OUTCONTENT.reset();
 //		
 //		// TRY TO Activate safe of GUEST1 (fails)
 //		client.doAct(GUEST1, "");
-//		assertThat(OUTCONTENT.toString(), containsString("> Parameter is wrong (password is required)."));
+//		assertThat(OUTCONTENT.toString(), containsString(
+//				"> Parameter is wrong (password is required)."));
 //		OUTCONTENT.reset();
 //		
 //		// Retrieve room information of GUEST1
@@ -66,13 +77,15 @@ public class ServerClientTest {
 //		OUTCONTENT.reset();
 //		
 //		// Retrieve room information of a non existing guest
-////		client.doRoom(FAKE_GUEST);
-////		assertThat(outContent.toString(), containsString("> Received: r;" + FAKE_GUEST + System.lineSeparator()));
-////		outContent.reset();
+//		client.doRoom(FAKE_GUEST);
+//		assertThat(outContent.toString(), containsString(
+//					"> Received: r;" + FAKE_GUEST + System.lineSeparator()));
+//		outContent.reset();
 //		
 //		// Check in a second guest
 //		client.doIn(GUEST2);
-//		assertThat(OUTCONTENT.toString(), containsString("> CheckIn successful, you room number is "));
+//		assertThat(OUTCONTENT.toString(), containsString(
+//			"> CheckIn successful, you room number is "));
 //		OUTCONTENT.reset();
 //		
 //		// Retrieve the state of the hotel
@@ -85,9 +98,10 @@ public class ServerClientTest {
 //		assertThat(OUTCONTENT.toString(), containsString("> The bill of guest ... is:"));
 //		OUTCONTENT.reset();
 //		
-//		// Expect a local error message when no integer is given (i.e. no message sent to the server)
+//		//Expect a local error message when no integer is given (i.e. no message sent to the server)
 //		client.doBill(GUEST1, INVALID_NIGHTS);
-//		assertThat(OUTCONTENT.toString(), containsString("ERROR: " + INVALID_NIGHTS + " is not an integer"));
+//		assertThat(OUTCONTENT.toString(), containsString(
+//			"ERROR: " + INVALID_NIGHTS + " is not an integer"));
 //		OUTCONTENT.reset();
 //		
 //		// Check out GUEST1

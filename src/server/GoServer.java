@@ -62,6 +62,22 @@ public class GoServer implements Runnable {
 	public static void main(String[] args) {
 		GoServer server = new GoServer();
 		System.out.println("Welcome to the GoServer! Starting...");
+		
+		/**
+		 * Set up a ServerSocket.
+		 * First, get user input for IP and port
+		 * Then create the socket
+		 */
+		try {
+			server.setup();
+		} catch (ExitProgram e1) {
+			// If setup() throws an ExitProgram exception, stop the program.
+			return;
+		}
+		
+		/**
+		 * Start listening for connections in a separate thread
+		 */
 		new Thread(server).start();
 	}
 	
@@ -81,56 +97,32 @@ public class GoServer implements Runnable {
 	}
 	
 	/**
-	 * Opens a new socket by calling 'setup()' and starts a new
-	 * GoClientHandler for every connecting client.
-	 * 
-	 * If 'setup()' throws a ExitProgram exception, stop the program. 
-	 * In case of any other errors, ask the user whether the setup should be 
-	 * ran again to open a new socket.
+	 * Create connections with clients.
+	 * The ServerSocket listens for new clients, makes a clientHandler 
+	 * for each connected client and starts the clientHandler in a new 
+	 * thread (so the ServerSocket can continue listening for new clients).
 	 */
+	
 	public void run() {
-		boolean openNewSocket = true;
-		while (openNewSocket) {
-			try {
-				//sets up a ServerSocket on a certain port and IP address
-				setup();
-
-				/**
-				 * The ServerSocket listens for new clients, makes a clientHandler 
-				 * for each connected client and starts the clientHandler in a new 
-				 * thread (so the ServerSocket can continue listening for new clients).
-				 */
-				//clientHandler will further redirect input from the client
-				while (true) {
-					Socket sock = ssock.accept();
-					tui.showMessage("Client number " + nextClientNo + " just connected!");
-					
-					//construct a client handler to handle the communication with the client
-					//and start this in a new thread
-					GoClientHandler handler = 
-							new GoClientHandler(sock, this, "Client " 
-									+ String.format("%02d", nextClientNo));
-					new Thread(handler).start();
-					
-					//add the handler to the list of handlers
-					clients.add(handler);
-					nextClientNo++;
-				}
-
-			} catch (ExitProgram e1) {
-				// If setup() throws an ExitProgram exception, 
-				// stop the program.
-				openNewSocket = false;
-			} catch (IOException e) {
-				System.out.println("A server IO error occurred: " 
-						+ e.getMessage());
-
-				if (!tui.getBoolean("Do you want to open a new socket?")) {
-					openNewSocket = false;
-				}
-			}
+		try {
+			Socket sock = ssock.accept();
+			tui.showMessage("Client number " + nextClientNo + " just connected!");
+			
+			//construct a client handler to handle the communication with the client
+			//and start this in a new thread
+			GoClientHandler handler = 
+					new GoClientHandler(sock, this, "Client " 
+							+ String.format("%02d", nextClientNo));
+			new Thread(handler).start();
+			
+			//add the handler to the list of handlers
+			clients.add(handler);
+			nextClientNo++;
+		} catch (IOException e) {
+			System.out.println("A server IO error occurred: " 
+					+ e.getMessage());
+			System.out.println("The server will shut down.");
 		}
-		tui.showMessage("Hope to see you again later to let more people play GO!");
 	}
 
 	/**
@@ -149,18 +141,12 @@ public class GoServer implements Runnable {
 		ssock = null;
 		while (ssock == null) {
 			InetAddress addr = tui.getIp("Please enter your IP address.");
-			int port = tui.getInt("Please enter the server port.");
-			while (port <= 1280) {
-				port = tui.getInt("The port number should be greater than 1280. " +
-						"Please try again.");
-			}
+			int port = tui.getInt("Please enter the number of the server port " +
+					"that you want to listen on.", 1281);
 			
 			// try to open a new ServerSocket
 			try {
-				tui.showMessage("Attempting to open a socket at " + addr.toString() +
-						"on port " + port + "...");
-				tui.showMessage("Socket opened, waiting for a client.");
-				ssock = new ServerSocket(port, 0, addr);
+				createSocket(addr, port);
 			} catch (IOException e) {
 				tui.showMessage("ERROR: could not create a socket on "
 						+ addr.toString() + " and port " + port + ".");
@@ -171,6 +157,21 @@ public class GoServer implements Runnable {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Create a socket with given IP and port (also useful for testing purposes).
+	 * Is called in setup()
+	 * 
+	 * @param addr
+	 * @param port
+	 * @throws IOException
+	 */
+	public void createSocket(InetAddress addr, int port) throws IOException {
+		tui.showMessage("Attempting to open a socket at " + addr.toString() +
+				"on port " + port + "...");
+		ssock = new ServerSocket(port, 0, addr);
+		tui.showMessage("Socket opened, waiting for a client.");
 	}
 	
 	/**

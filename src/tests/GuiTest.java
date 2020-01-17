@@ -1,14 +1,15 @@
 package tests;
 
-import gui.*;
+import com.nedap.go.gui.GoGUIIntegrator;
 
 public class GuiTest {
 	public GuiTest() {
-		GoGuiIntegrator g = new GoGuiIntegrator(true, true, 10);
+		GoGUIIntegrator g = new GoGUIIntegrator(true, true, 10);
 		g.startGUI();
 		g.setBoardSize(10);
 	}
-	public static void main(String[] args) {
+	
+	public static void main (String[] args) {
 		new GuiTest();
 	}
 }

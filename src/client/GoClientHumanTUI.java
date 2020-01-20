@@ -67,11 +67,8 @@ public class GoClientHumanTUI {
 		char command = msg.charAt(0);
 		switch (command) {
 			case ProtocolMessages.HANDSHAKE:
-				try {
-					goHumanClient.doHandshake();
-				} catch (ProtocolException e) {
-					e.printStackTrace();
-				}
+				showMessage("Handshake has already been exchanged, "
+						+ "please use another command ('M' or 'Q').");
 				break;
 			case ProtocolMessages.GAME:
 				//TO DO, see above
@@ -184,7 +181,7 @@ public class GoClientHumanTUI {
 	        } catch (NumberFormatException e) {
 	            System.out.println("ERROR: " + userInput
 	            		           + " is not an integer.");
-	            break;
+	            System.out.println("Please try again.");
 	        }
 		}
 		

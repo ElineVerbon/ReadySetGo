@@ -30,22 +30,14 @@ public class ServerClientTest {
 	@Test
 	void testServer() 
 			throws ExitProgram, ServerUnavailableException, ProtocolException, IOException {
-		//Test with the server on local host and port 8888
-		InetAddress addr = InetAddress.getLocalHost();
-		int port = 8888;
 		
 		//Start server with local host and port 8888 and let it listen for client
 		GoServer testServer = new GoServer();
+		InetAddress addr = InetAddress.getLocalHost();
+		int port = 8888;
 		testServer.createSocket(addr, port);
 		new Thread(testServer).start();
 		
-		//wait to ensure that server has started
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		
 		// Create a connection. Expected: server indicates a new client has connected.
 		client.createConnection(addr, port);
@@ -53,12 +45,16 @@ public class ServerClientTest {
 				containsString("You made a succesful connection!"));
 		OUTCONTENT.reset();
 		
-//		// Do the HELLO handshake. Expect a welcome message.
-//		client.doHandshake();
-//		assertThat(OUTCONTENT.toString(), containsString(
-//			"Welcome to the Hotel booking system of U Parkhotel!"));
-//		OUTCONTENT.reset();
-//		
+		//Do the handshake. Expect a welcome message.
+		//Also expect a message about having been added to a game
+		//Note: cannot test with wrong input, because that is caught by the TUI (not user here)
+		client.doHandshake("Eline", 'B');
+		assertThat(OUTCONTENT.toString(), containsString("You connected to a server."));
+		assertThat(OUTCONTENT.toString(), containsString("You have been added"));
+		OUTCONTENT.reset();
+		
+		
+		
 //		// Check in a guest
 //		client.doIn(GUEST1);
 //		assertThat(OUTCONTENT.toString(), containsString(

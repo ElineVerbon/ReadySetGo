@@ -104,24 +104,27 @@ public class GoServer implements Runnable {
 	 */
 	
 	public void run() {
-		try {
-			Socket sock = ssock.accept();
-			tui.showMessage("Client number " + nextClientNo + " just connected!");
-			
-			//construct a client handler to handle the communication with the client
-			//and start this in a new thread
-			GoClientHandler handler = 
-					new GoClientHandler(sock, this, "Client " 
-							+ String.format("%02d", nextClientNo));
-			new Thread(handler).start();
-			
-			//add the handler to the list of handlers
-			clients.add(handler);
-			nextClientNo++;
-		} catch (IOException e) {
-			System.out.println("A server IO error occurred: " 
-					+ e.getMessage());
-			System.out.println("The server will shut down.");
+		boolean openNewSocket = true;
+		while (openNewSocket) {
+			try {
+				Socket sock = ssock.accept();
+				tui.showMessage("Client number " + nextClientNo + " just connected!");
+				
+				//construct a client handler to handle the communication with the client
+				//and start this in a new thread
+				GoClientHandler handler = 
+						new GoClientHandler(sock, this, "Client " 
+								+ String.format("%02d", nextClientNo));
+				new Thread(handler).start();
+				
+				//add the handler to the list of handlers
+				clients.add(handler);
+				nextClientNo++;
+			} catch (IOException e) {
+				System.out.println("A server IO error occurred: " 
+						+ e.getMessage());
+				System.out.println("The server will shut down.");
+			}
 		}
 	}
 
@@ -189,45 +192,39 @@ public class GoServer implements Runnable {
 	 * Handshake from the client is correct if it is formatted as follows:
 	 * PROTOCOL.handshake + PROTOCOL.delimiter + requestedVersion + PROTOCOL.delimiter + naamClient 
 	 * optionally these at the end: + PROTOCOL.delimiter + PROTOCOL.white/black
+	 * 
+	 * Response string should be formatted as follows:
+	 * PROTOCOL.handshake + PROTOCOL.delimiter + finalVersion (string) 
+	 * optionally these at the end: PROTOCOL.delimiter + message (string)
 	 */
 	
 	public String doHandshake(String requestedVersion, String nameClient) {
-		/**
-		 * Response string should be formatted as follows:
-		 * PROTOCOL.handshake + PROTOCOL.delimiter + finalVersion (string) 
-		 * optionally these at the end: PROTOCOL.delimiter + message (string)
-		 */
-		
 		String response;
 		
 		/**
-		 * check if requestedVersion is available, if so:
-		 * the requestedVersion becomes the used version, if not:
-		 * version 1.0 is the used version. 
+		 * check if requested version is available, if so:
+		 * it will be used for communication with this client, if not:
+		 * version 1.0 will be used. 
 		 */
-		String usedVersion = "";
-		
-		//check if required version is available
-		boolean versionAvailable = false;
+		String usedVersion = "1.0";
 		for (String version : availableVersions) {
 			if (version.equals(requestedVersion)) {
-				versionAvailable = true;
+				usedVersion = requestedVersion;
 				break;
 			}
 		}
 		
-		if (versionAvailable) {
-			usedVersion = requestedVersion;
-		} else {
-			usedVersion = "1.0";
-		}
+		String message = "Welcome " + nameClient + " to the GO server! " +
+				"Communication will proceed via version " + usedVersion + ".";
 		
 		response = ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER 
-				+ usedVersion;
+				+ usedVersion + ProtocolMessages.DELIMITER + message;
 		return response;
 	}
 	
-	public Game addClientToGame(String nameClient, GoClientHandler goClientHandler) {
+	//TODO synchronize this! (right? else games & gameNo & client and clientNO can go wrong)
+	public Game addClientToGame(
+				String nameClient, GoClientHandler goClientHandler, String wantedColor) {
 		/**
 		 * add the player to an existing game, or (if no game available with one player)
 		 * start a new game with this player as first player
@@ -241,7 +238,7 @@ public class GoServer implements Runnable {
 		if (games.isEmpty()) {
 			gameNumber = 1;
 			game = setupGoGame();
-			tui.showMessage(game.addPlayer(nameClient, goClientHandler));
+			tui.showMessage(game.addPlayer(nameClient, goClientHandler, wantedColor));
 			return game;
 		} else {
 			//check whether last game is already full
@@ -250,13 +247,13 @@ public class GoServer implements Runnable {
 			if (!lastGame.getCompleteness()) {
 				gameNumber = games.size();
 				game = lastGame;
-				tui.showMessage(lastGame.addPlayer(nameClient, goClientHandler));
+				tui.showMessage(lastGame.addPlayer(nameClient, goClientHandler, wantedColor));
 				return game;
 			//otherwise, start a new game
 			} else {
 				gameNumber = nextGameNo;
 				game = setupGoGame();
-				tui.showMessage(game.addPlayer(nameClient, goClientHandler));
+				tui.showMessage(game.addPlayer(nameClient, goClientHandler, wantedColor));
 				return game;
 			}
 		}

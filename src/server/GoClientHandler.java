@@ -21,7 +21,10 @@ public class GoClientHandler implements Runnable {
 	private GoServer srv;
 
 	/** Name of this ClientHandler. */
-	private String name;
+	private String handlerName;
+	
+	/** Name of the attached client. */
+	private String clientName;
 	
 	/** The game connected with this ClientHandler. */
 	private Game thisClientsGame;
@@ -46,14 +49,14 @@ public class GoClientHandler implements Runnable {
 					new OutputStreamWriter(sock.getOutputStream()));
 			this.sock = sock;
 			this.srv = srv;
-			this.name = name;
+			this.handlerName = name;
 		} catch (IOException e) {
 			shutdown();
 		}
 	}
 
 	/**
-	 * Listens for handshake message & starts the game.
+	 * Listens for handshake message & lets the client start playing.
 	 */
 	public void run() {
 		String msg;
@@ -62,71 +65,60 @@ public class GoClientHandler implements Runnable {
 			//TODO check whether it is not a quit or '?' message 
 					//Those are the only other possible methods at this point
 			
-			//send handshake to server, receive hanshake message back,
-			//add to a game
-			doHandshakeAndAddToGame(msg);
+			//send handshake to server, send response of server to the client
+			//client will not respond, so can add client to player as well.
+			if (msg.charAt(0) == ProtocolMessages.HANDSHAKE) {
+				doHandshakeAndAddToGame(msg);
+			}
 			
 			//if this was the second player added to the game, start the game
+			//TODO From here, the flow of the game is handled by the Game instance
+			//server is not involved anymore, will only get back at the end!
 			if (thisClientsGame.getCompleteness()) {
 				thisClientsGame.startGame();
 			}
 			
-			
-			
-			while (msg != null) {
-				System.out.println("> [" + name + "] Incoming: " + msg);
-				handleCommand(msg);
-				out.newLine();
-				out.flush();
-				msg = in.readLine();
-			}
-			shutdown();
+			//TODO shutdown client when necessary
+//			shutdown();
 		} catch (IOException e) {
 			shutdown();
 		}
 	}
 	
-	/** 
-	 * Send the handshake message of the client to the server formatted according to the protocol.
-	 * The message of the client consists of: handshake + requestedVersion + nameClient 
-	 * and optionally the wantedColor.
-	 * The server will check the handshake.
-	 * If correct, the clientHandler (this) will attach a game to this clientHandler.
+	/**
+	 * Check handshake message from the client. Should follow this protocol:
+	 * PROTOCOL.handshake + PROTOCOL.delimiter + requestedVersion + PROTOCOL.delimiter + naamClient 
+	 * optionally these at the end: + PROTOCOL.delimiter + PROTOCOL.white/black
+	 * 
+	 * Upon receiving a handshake message from the client, send handshake
+	 * command to the server. Get the response. Add the client to a game.
+	 * Send response + message about game back to client.
 	 */
+	
 	private void doHandshakeAndAddToGame(String msg) {
+		String message = "";
+		String handshakeResponse = "";
+		String addToGameResponse = "";
 		
+		//break message into pieces
 		String[] commands = msg.split(ProtocolMessages.DELIMITER);
-		String nameClient = commands[2];
+		
+		String command = commands[0];
+		if (command.length() != 1) {
+			//TODO does not keep to the protocol!
+		}
+		String requestedVersion = commands[1];
+		clientName = commands[2];
 		String wantedColor = (commands.length > 3) ? commands[3] : null; 
 		
-		//let the server check the handshake & decide the version number in doHandshake()
-		//get 'ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER + usedVersion' back
-		String response = srv.doHandshake(commands[1], nameClient);
+		//let server check handshake and get the response
+		handshakeResponse = doHandshake(requestedVersion, clientName);
+		addToGameResponse = addToGame(wantedColor);
 		
-		//add the player to a game and get back the game to save in the client handler
-		//this way methods can be called with the correct game instance
-		thisClientsGame = srv.addClientToGame(nameClient, this);
-		int gameNumber = thisClientsGame.getNumber();
-		boolean gameComplete = thisClientsGame.getCompleteness();
-		String message = "";
-		
-		if (gameComplete) {
-			message = "Welcome " + nameClient + " to game " + gameNumber + ". " +
-					"You are the second player, the game will start soon!"; 
-		} else {
-			message = "Welcome " + nameClient + " to game " + gameNumber + ". " +
-					"You are the first player, please wait for the second player."; 
-		}
-		response += ProtocolMessages.DELIMITER + message;
-		
-		//TODO Problem: if the client rejects the received protocol message, it will have 
-		//already been added to the game. Thus, the next player will wait indefinitely for
-		//the second player. 
-		
+		message = handshakeResponse + addToGameResponse;
 		//Send the response to the client
-		//Response contains the handshake according to the protocol + the game info
 		try {
-			out.write(response);
+			out.write(message);
 			out.newLine();
 			out.flush();
 		} catch (IOException e) {
@@ -134,6 +126,55 @@ public class GoClientHandler implements Runnable {
 			e.printStackTrace();
 		}
 	}
+	
+	/** 
+	 * Get handshake message of the client, send handshake command to server
+	 * Send response back to client. (No response expected)
+	 * 
+	 * @return a String formatted according to handshake format,
+	 * with information about the server communication & the game.
+	 */
+	private String doHandshake(String command, String name) {
+		
+		//let the server check the handshake and return a message
+		String response = srv.doHandshake(command, name);
+		
+		return response;
+	}
+	
+	/**
+	 * Add client to a game.
+	 * 
+	 * @return a string with game number and player number
+	 */
+	
+	private String addToGame(String wantedColor) {
+		
+		//let the server add the client to a game
+		thisClientsGame = srv.addClientToGame(clientName, this, wantedColor);
+		int gameNumber = thisClientsGame.getNumber();
+		boolean gameComplete = thisClientsGame.getCompleteness();
+		String message = "";
+		
+		//send appropriate message to the client (cannot be send by server,
+		//server is returning the game so the clientHandler can organize the 
+		//client - game communication
+		if (gameComplete) {
+			message = " You have been added to game " + gameNumber + ". " +
+					"You are the second player, the game will start soon!"; 
+		} else {
+			message = " You have been added to game " + gameNumber + ". " +
+					"You are the first player, please wait for the second player."; 
+		}
+		
+		return message;
+	}
+
+	/**
+	 * If correct, the clientHandler (this) will attach a game to this clientHandler.
+	 *
+	 */
+	
 	
 	/**
 	 * Handles commands received from the client by calling the according 
@@ -172,13 +213,29 @@ public class GoClientHandler implements Runnable {
 				break;
 		}
 	}
+	
+	/**
+	 * Send message from game to client.
+	 */
+	public void sendMessageToClient(String msg) {
+		try {
+			out.write(msg);
+			out.newLine();
+			out.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
 
 	/**
 	 * Shut down the connection to this client by closing the socket and 
 	 * the In- and OutputStreams.
 	 */
 	private void shutdown() {
-		System.out.println("> [" + name + "] Shutting down.");
+		System.out.println("> [" + handlerName + "] Shutting down.");
 		try {
 			in.close();
 			out.close();

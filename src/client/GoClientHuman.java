@@ -8,6 +8,8 @@ import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 
+import com.nedap.go.gui.GoGUIIntegrator;
+
 import exceptions.*;
 import protocol.ProtocolMessages;
 
@@ -22,8 +24,9 @@ public class GoClientHuman implements GoClient {
 	private String usedVersion; //given back by server upon handshake
 	
 	//variables to play a game
-	private String color;
+	private char color;
 	private int boardDimension;
+	private GoGUIIntegrator gogui;
 
 	/**
 	 * Constructs a new GoClient. Initialises the TUI.
@@ -43,34 +46,44 @@ public class GoClientHuman implements GoClient {
 	}
 	
 	/**
-	 * Starts a new GoClient by creating a connection, followed by the 
-	 * HELLO handshake as defined in the protocol. 
+	 * 1) Creates a connection with a server.
+	 * 2) Sends a handshake as defined in the protocol. 
+	 * 3) Waits for the start-game message, start playing
+	 * While game did not end {
+	 * 4) Waits for turn message, returns move
+	 * 5) Waits for result message, prints results
+	 * }
 	 * 
 	 * When errors occur, or when the user terminates a server connection, the
 	 * user is asked whether a new connection should be made.
 	 */
 	public void start() {
+		//TODO Handle incoming messages starting with '?'
+		
 		//set boolean variables to keep track whether connections and signals worked
 		boolean successfulConnection = false;
 		boolean handshake = false;
-		boolean gameStarted = false;
 		
-		/** Try to create a connection to a server. */
+		/** 
+		 * Try to create a connection to a server. 
+		 */
 		successfulConnection = createConnectionWithUserInput();
-		//TODO If no connection, return (this will stop the thread?)
+		//If no connection, return (this will stop the thread?)
 		if (!successfulConnection) {
 			clientTUI.showMessage("Sorry, no connection could be established. " +
 					"Hope to see you again in the future!");
 			return;
 		}
 		
-		/** Send HELLO handshake. */
+		/** 
+		 * Send HELLO handshake. 
+		 */
 		try {
-			doHandshake();
+			doHandshakeWithUserInput();
 			handshake = true;
 		} catch (ProtocolException e) {
 			clientTUI.showMessage("The server did not keep to the protocol during the handshake.");
-			//TODO what to do when the protocol is not kept?
+			//TODO what to do when the protocol is not kept? Quit? (='return;')
 		} catch (ServerUnavailableException e) {
 			clientTUI.showMessage("The server cannot be reached anymore for the handshake.");
 			//TODO what to do when the server cannot be reached anymore? Try again? 
@@ -82,23 +95,46 @@ public class GoClientHuman implements GoClient {
 			return;
 		}
 		
-		/** Start game. */
+		/** 
+		 * Wait for start game message. 
+		 * Upon reception of the message, set variables & let user know via console. 
+		 */
+		String message = "";
 		try {
-			startGame();
-			gameStarted = true;
-		} catch (ProtocolException e) {
-			clientTUI.showMessage("The server did not keep to the protocol during game start.");
-			//TODO what to do when the protocol is not kept?
+			message = readLineFromServer();
 		} catch (ServerUnavailableException e) {
-			clientTUI.showMessage("The server cannot be reached anymore for the handshake.");
-			//TODO what to do when the server cannot be reached anymore? Try again? 
-			//Close connection? Check other SUE in other places, handle same way)
+			clientTUI.showMessage("Could not read "
+					+ "from server.");
+			return;
+			//TODO decide whether I want to quit here or whether I want to do something else.
 		}
+		//TODO handle message starting with '?'
 		
-		if (!gameStarted) {
-			//TODO what to do if we cannot start?
-			//maybe if server unavailable try again, if different protocol quit?
+		//When receiving the start game message, 
+		if (message.charAt(0) == 'G') {
+			try {
+				startGame(message);
+			} catch (ProtocolException e) {
+				//TODO print specific error message as shown in startGame
+				clientTUI.showMessage(e.getMessage());
+				//TODO what to do when the protocol is not kept?
+			} catch (ServerUnavailableException e) {
+				clientTUI.showMessage("The server could not be reached for game start.");
+				//TODO what to do when the server cannot be reached anymore? Try again? 
+				//Close connection? Check other SUE in other places, handle same way)
+			}
+		} 
+		
+		try {
+			playGame();
+		} catch (ServerUnavailableException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ProtocolException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+		//TODO end game?
 	}	
 	
 	
@@ -201,28 +237,13 @@ public class GoClientHuman implements GoClient {
 		clientTUI.showMessage("Connection has been closed, hope to see you again someday!");
 	}
 	
-	/**.
-	 * First get necessary information from the user via the console. 
-	 * 
-	 * Then send a handshake to the server according to the following protocol:
-	 * PROTOCOL.handshake + PROTOCOL.delimiter + requestedVersion + PROTOCOL.delimiter + naamClient 
-	 * optionally these at the end: + PROTOCOL.delimiter + PROTOCOL.white/black
-	 * 
-	 * After sending, wait for response, which should be formatted as follows:
-	 * PROTOCOL.handshake + PROTOCOL.delimiter + finalVersion (string) 
-	 * optionally these at the end: PROTOCOL.delimiter + message (string)
-	 * @throws ProtocolException 
+	/**
+	 * Get all the necessary components of the handshake message via the console.
+	 * Then paste them together according to the protocol. Send the message to the
+	 * server and wait for a response.
 	 */
 	
-	public void doHandshake() throws ServerUnavailableException, ProtocolException {
-		
-		/**
-		 * Get all the necessary components of the handshake message via the console.
-		 * Then paste them together according to the protocol. Send the message to the
-		 * server and wait for a response.
-		 */
-		
-		String message = "";
+	public void doHandshakeWithUserInput() throws ServerUnavailableException, ProtocolException {
 		
 		//get name of client
 		boolean correctName = false;
@@ -237,7 +258,7 @@ public class GoClientHuman implements GoClient {
 			}
 		}
 		
-		//get 'black' or 'white' from the console
+		//get user color preference from the console
 		boolean correctColor = false;
 		char wantedColor = '!';
 		while (!correctColor) {
@@ -245,7 +266,7 @@ public class GoClientHuman implements GoClient {
 			if (userInput.equalsIgnoreCase("white")) {
 				wantedColor = ProtocolMessages.WHITE;
 				correctColor = true;
-			} else if (color.equalsIgnoreCase("black")) { 
+			} else if (userInput.equalsIgnoreCase("black")) { 
 				wantedColor = ProtocolMessages.BLACK;
 				correctColor = true;
 			} else { 
@@ -253,8 +274,26 @@ public class GoClientHuman implements GoClient {
 			}
 		}
 		
+		//perform the handshake
+		doHandshake(nameClient, wantedColor);
+	}
+	
+	/**
+	 * Send a handshake to the server. Follow this protocol:
+	 * PROTOCOL.handshake + PROTOCOL.delimiter + requestedVersion + PROTOCOL.delimiter + naamClient 
+	 * optionally these at the end: + PROTOCOL.delimiter + PROTOCOL.white/black
+	 * 
+	 * After sending, wait for response, which should be formatted as follows:
+	 * PROTOCOL.handshake + PROTOCOL.delimiter + finalVersion (string) 
+	 * optionally these at the end: PROTOCOL.delimiter + message (string)
+	 * @throws ProtocolException 
+	 */
+	
+	public void doHandshake(String nameClient, char wantedColor) 
+			throws ServerUnavailableException, ProtocolException {
+		
 		//assemble the handshake message that will be sent to the server.
-		message = ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER + wantedVersion + 
+		String message = ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER + wantedVersion + 
 				ProtocolMessages.DELIMITER + nameClient + ProtocolMessages.DELIMITER + wantedColor;
 		
 		//send handshake message to the server, read the response.
@@ -282,17 +321,18 @@ public class GoClientHuman implements GoClient {
 			throw new ProtocolException("Server response does not comply with the protocol!");
 		}
 		
-		//get version of the communication procotol and print message(s)
+		//get version of the communication protocol and print message(s)
 		usedVersion = serverResponse[1]; //TODO check whether the version is valid?
 		//get message if available
 		if (serverResponse.length > 2) {
-			//correct response was received, message was printed. Print this as well to be sure
+			//correct response was received. Print own message
 			clientTUI.showMessage("You connected to a server. Communication will proceed " +
 					"according to version " + usedVersion + ".\n" +
 					"You received the following message from the server: ");
+			//print server message
 			clientTUI.showMessage(serverResponse[2]);
 		} else {
-			//correct response was received, print welcome string
+			//correct response was received. Print own message (no message received).
 			clientTUI.showMessage("You connected to a server. Communication will proceed " +
 					"according to version " + usedVersion + ".\n");
 		}
@@ -301,64 +341,99 @@ public class GoClientHuman implements GoClient {
 	/**
 	 * Method to handle the start message.
 	 * Start message should be formatted as follows:
-	 * PROTOCOL.GAME + PROTOCOL.DELIMITER + bord + PROTOCOL.DELIMITER + color
+	 * PROTOCOL.GAME + PROTOCOL.DELIMITER + bord + PROTOCOL.DELIMITER + 
+	 * 			ProtocolMessage.BLACK / ProtocolMessage.WHITE
 	 * 
 	 * Separates the messages and sets the color and dimensions of the board.
+	 * Print a welcome message to the client.
 	 */
 	
-	public void startGame() throws ServerUnavailableException, ProtocolException {
-		//Wait for the start method & run the doStart method.
-		String line = "";
-		line = readLineFromServer();
-		//TODO implement maximum waiting time?
+	public void startGame(String message) throws ServerUnavailableException, ProtocolException {
 		
-		String[] commands = line.split(ProtocolMessages.DELIMITER);
-		if (commands[0].length() != 1 || commands[0] != "G") {
-			throw new ProtocolException("Server response does not comply with the start protocol!");
+		String[] commands = message.split(ProtocolMessages.DELIMITER);
+		
+		/** The first component of the message should be the command ProtocolMessages.GAME. */
+		if (commands[0].length() != 1 || !commands[0].equals("G")) {
+			throw new ProtocolException("ProtocolException: "
+					+ "'G' expected as first command, but " + commands[0] + " received.");
 			//TODO send back '?' (because invalid command)
 		}
 		
-		//set dimensions of board
-		int numberOfPlaces = Integer.parseInt(commands[1]);
+		/** The second component of the message should be a string representation of the board. */
+		String board = commands[1];
+		int numberOfPlaces = commands[1].length();
 		boardDimension = (int) Math.sqrt(numberOfPlaces);
 		
-		//set assigned color
-		color = commands[2];
+		/** 
+		 * The third component of the message should be either 
+		 * ProtocolMessages.WHITE or ProtocolMessages.BLACK. 
+		 */
+		String assignedColor = commands[2];
+		if (assignedColor.length() != 1) {
+			clientTUI.showMessage(Integer.toString(assignedColor.length()));
+			throw new ProtocolException("ProtocolException: "
+					+ "'B' or 'W' expected as third command, but " + commands[2] + " received.");
+		}
+		color = assignedColor.charAt(0);
+		if (!(color == 'W' || color == 'B')) {
+			throw new ProtocolException("ProtocolException: "
+					+ "'B' or 'W' expected as third command, but " + commands[2] + " received.");
+		}
 		
+		String clientsColor = "";
+		if (color == 'W') {
+			clientsColor = "white";
+		} else {
+			clientsColor = "black";
+		}
+		clientTUI.showMessage("The game has started! "
+				+ "The board is " + boardDimension + " by " + boardDimension + ". "
+				+ "\nYour color is " + clientsColor + ". Good luck!");
 	}
 	
 	/** 
 	 * Method that waits for a message from the server and responds.
+	 * It can receive a turn message, an end message or a ?.
+	 * (Or a result message, but that is handled in doTurn().)
+	 * 
 	 * It ends when 'Protocol.Messages.END' is received.
 	 */
 	public void playGame() throws ServerUnavailableException, ProtocolException {
+		boolean gameEnded = false;
 		
-		//Wait for a message from the server
-		String line = "";
-		line = readLineFromServer();
-		
-		//Split the message into parts
-		String[] commands = line.split(ProtocolMessages.DELIMITER);
-		if (commands[0].length() != 1) {
-			throw new ProtocolException("Server response does not comply with the protocol! " + 
-					"It did not send a char as the first part of its message.");
-		}
-		
-		//check which kind of message is received
-		char command = line.charAt(0);
-		switch (command) {
-			case 'T':
-				doTurn(commands[1]);
-				break;
-			case 'R' :
-				//TODO
-				break;
-			case 'E' :
-				//TODO
-				break;
-			default :
+		while (!gameEnded) {
+			//Wait for a message from the server
+			String line = "";
+			line = readLineFromServer();
+			
+			//Split the message into parts
+			String[] commands = line.split(ProtocolMessages.DELIMITER);
+			//if the first component is not of length 1, server does not comply with the protocol
+			if (commands[0].length() != 1) {
 				throw new ProtocolException("Server response does not comply with the protocol! " + 
-						"It did not send a T, R or E as the first part of its message return.");
+						"It did not send a char as the first part of its message.");
+			}
+			
+			//check which kind of message is received
+			char command = line.charAt(0);
+			switch (command) {
+				case 'T':
+					doTurn(commands[1]);
+					break;
+				case 'R' :
+					//TODO
+					break;
+				case 'E' :
+					//TODO
+					gameEnded = true;
+					break;
+				case '?':
+					//TODO
+					break;
+				default :
+					throw new ProtocolException("Server did not stick to the response protocol! " + 
+							"It did not send a T, R, E or ? as the first part of its message.");
+			}
 		}
 		//wait for turn message from server
 		
@@ -371,13 +446,32 @@ public class GoClientHuman implements GoClient {
 		//send move to server (then start again to wait for turn message)
 	}
 	
+	/**
+	 * Decide on a move, based on the board representation.
+	 * 
+	 * @param board
+	 */
 	public void doTurn(String board) {
 		//Incoming message is a String representation of the board
 		for (int d = 0; d < boardDimension; d++) {
 			clientTUI.showMessage(board.substring(d * boardDimension, 
 					(d + 1) * boardDimension - 1));
 		}
+		
+		
 	}
+	
+	/**
+	 * Check whether a suggested move is valid.
+	 * 1) It does not result in a board that has been seen before
+	 * 2) The suggested place is in between 0 & board.length-1
+	 * 3) The suggested space is currently Unoccupied
+	 */
+	//checks whether a move is valid
+	public void checkValid() {
+		
+	}
+	
 	
 	public void getResult(String[] commands) {
 		//TODO
@@ -399,6 +493,7 @@ public class GoClientHuman implements GoClient {
 			try {
 				// Read and return answer from Server
 				String answer = in.readLine();
+				
 				if (answer == null) {
 					throw new ServerUnavailableException("Could not read "
 							+ "from server.");

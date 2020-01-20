@@ -47,7 +47,7 @@ public interface GoClient {
 	 * 
 	 */
 	
-	public void doHandshake() 
+	public void doHandshake(String nameClient, char wantedColor) 
 			throws ServerUnavailableException, ProtocolException;
 	
 	/**

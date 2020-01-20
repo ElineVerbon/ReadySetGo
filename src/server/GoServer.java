@@ -96,6 +96,11 @@ public class GoServer implements Runnable {
 		availableVersions.add("0.01");
 	}
 	
+	//For testign purposes: getter for socket
+	public ServerSocket getSsock() {
+		return ssock;
+	}
+	
 	/**
 	 * Create connections with clients.
 	 * The ServerSocket listens for new clients, makes a clientHandler 

@@ -68,6 +68,7 @@ public class GoClientHandler implements Runnable {
 			//send handshake to server, send response of server to the client
 			//client will not respond, so can add client to player as well.
 			if (msg.charAt(0) == ProtocolMessages.HANDSHAKE) {
+				//Don't use the returned game here, only in the tests
 				doHandshakeAndAddToGame(msg);
 			}
 			
@@ -93,6 +94,8 @@ public class GoClientHandler implements Runnable {
 	 * Upon receiving a handshake message from the client, send handshake
 	 * command to the server. Get the response. Add the client to a game.
 	 * Send response + message about game back to client.
+	 * 
+	 * Return the Game for testing purposes!
 	 */
 	
 	private void doHandshakeAndAddToGame(String msg) {
@@ -125,6 +128,8 @@ public class GoClientHandler implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+//		return thisClientsGame;
 	}
 	
 	/** 
@@ -226,7 +231,23 @@ public class GoClientHandler implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+	}
+	
+	/**
+	 * Send message to and get message from client.
+	 */
+	public String sendAndReceiveMessage(String msg) {
+		String reply = "";
+		try {
+			out.write(msg);
+			out.newLine();
+			out.flush();
+			reply = in.readLine();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return reply;
 	}
 	
 

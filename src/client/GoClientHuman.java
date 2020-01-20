@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.*;
 
 import com.nedap.go.gui.GoGUIIntegrator;
 
@@ -27,6 +28,8 @@ public class GoClientHuman implements GoClient {
 	private char color;
 	private int boardDimension;
 	private GoGUIIntegrator gogui;
+	private List<String> prevBoards = new ArrayList<String>();
+	//TODO add boards!
 
 	/**
 	 * Constructs a new GoClient. Initialises the TUI.
@@ -421,7 +424,8 @@ public class GoClientHuman implements GoClient {
 					doTurn(commands[1]);
 					break;
 				case 'R' :
-					//TODO
+					//TODO what to do if there aren't two other components
+					getResult(commands[1], commands[2]);
 					break;
 				case 'E' :
 					//TODO
@@ -452,13 +456,30 @@ public class GoClientHuman implements GoClient {
 	 * @param board
 	 */
 	public void doTurn(String board) {
-		//Incoming message is a String representation of the board
+		String move = "";
+		String message;
+		
+		//add the board to the list of previous boards
+		prevBoards.add(board);
+		
+		//Show the board to the client
+		//TODO this should be a GUI
+		clientTUI.showMessage("\nIt's you turn! The board currently looks like this:");
 		for (int d = 0; d < boardDimension; d++) {
 			clientTUI.showMessage(board.substring(d * boardDimension, 
-					(d + 1) * boardDimension - 1));
+					(d + 1) * boardDimension));
 		}
 		
-		
+		boolean passing = clientTUI.getBoolean("\nDo you want to pass?");
+		if (passing) {
+			move = Character.toString(ProtocolMessages.PASS);
+		} else {
+			move = Integer.toString(clientTUI.getInt("Where do you want to place "
+					+ "your next marker?"));
+			checkValid(move);
+		}
+		message = ProtocolMessages.MOVE + ProtocolMessages.DELIMITER + move;
+		sendToGame(message);
 	}
 	
 	/**
@@ -468,13 +489,40 @@ public class GoClientHuman implements GoClient {
 	 * 3) The suggested space is currently Unoccupied
 	 */
 	//checks whether a move is valid
-	public void checkValid() {
-		
+	public void checkValid(String move) {
+		Integer.parseInt(move);
+		//check w
 	}
 	
+	public void sendToGame(String message) {
+		try {
+			out.write(message);
+			out.newLine();
+			out.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+			clientTUI.showMessage("Sorry, the server cannot be reached!");
+			//TODO shut down?
+		}
+	}
 	
-	public void getResult(String[] commands) {
-		//TODO
+	public void getResult(String validChar, String board) {
+		//add the board to the list of previous boards
+		prevBoards.add(board);
+		
+		//communicate result to the client
+		if (Character.toString(ProtocolMessages.VALID).equals(validChar)) {
+			clientTUI.showMessage("Your move was valid. The board now looks like this: ");
+			for (int d = 0; d < boardDimension; d++) {
+				clientTUI.showMessage(board.substring(d * boardDimension, 
+						(d + 1) * boardDimension));
+			}
+			clientTUI.showMessage("It's now the other players turn. Please wait.");
+		} else {
+			clientTUI.showMessage("Your move was invalid. You lose the game.");
+			//TODO add parameter to indicate why the game ended.
+		}
+		
 	}
 	
 	public void endGame(String[] commands) {

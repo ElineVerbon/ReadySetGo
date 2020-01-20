@@ -293,7 +293,7 @@ public class Game {
 	//set a few variables that will be used in the following methods
 	//to check the effect of a move
 	private boolean surrounded;
-	private char currentlyCheckedColor = 'x';
+	private char opponentsColor = 'x';
 	
 	//variable to keep track of places checked per group (cleared at end of group)
 	private List<Integer> checkedPlaces;
@@ -308,15 +308,30 @@ public class Game {
 		
 		//first check the opponent's color, capturing of a group goes before suicide
 		if (firstPlayersTurn) {
-			currentlyCheckedColor = colorPlayer2;
+			opponentsColor = colorPlayer2;
 		} else {
-			currentlyCheckedColor = colorPlayer1;
+			opponentsColor = colorPlayer1;
 		}
 		
 		checkedPlaces = new ArrayList<Integer>();
 		surroundedStones = new ArrayList<Integer>();
 		checkedStonesThisColor = new ArrayList<Integer>();
 		
+		//check the opponent's stones for captured groups
+		checkStonesOfOneColor(opponentsColor);
+		
+		//check current player's stones for captured groups (suicide is allowed)
+		if (opponentsColor == colorPlayer1) {
+			checkStonesOfOneColor(colorPlayer2);
+		} else {
+			checkStonesOfOneColor(colorPlayer1);
+		}
+		
+		//TODO check again whether board is the same as previous boards
+		
+	}
+	
+	public void checkStonesOfOneColor(char currentlyCheckedColor) {
 		//go from top left to bottom right to check for capture of a group of opponents
 		for (int x = 0; x < boardDimension; x++) {
 			for (int y = 0; y < boardDimension; y++) {
@@ -349,12 +364,6 @@ public class Game {
 				}
 			}
 		}
-		
-		//go from new stone to check capture of a group of one's one color
-		
-		
-		//TODO update board
-		//TODO check again whether board is the same as previous boards
 	}
 	
 	/**
@@ -402,7 +411,7 @@ public class Game {
 		checkedPlaces.add(toBeCheckedLocation);
 		
 		//if the location is occupied by the currently checked color, it is added to the group
-		if (board.charAt(toBeCheckedLocation) == currentlyCheckedColor) {
+		if (board.charAt(toBeCheckedLocation) == opponentsColor) {
 			surroundedStones.add(toBeCheckedLocation);
 			checkAllNeighbors(toBeCheckedLocation);
 		//if the location is unoccupied, surrounded is set to false

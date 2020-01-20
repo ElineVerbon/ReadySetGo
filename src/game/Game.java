@@ -178,7 +178,7 @@ public class Game {
 	public void processMove(String move) {
 		boolean valid;
 		
-		if (move == Character.toString(ProtocolMessages.PASS)) {
+		if (move.equals(Character.toString(ProtocolMessages.PASS))) {
 			if (passed == true) {
 				//second pass: the game is over
 				endGame(ProtocolMessages.FINISHED);

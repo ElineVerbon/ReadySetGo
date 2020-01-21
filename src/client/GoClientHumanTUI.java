@@ -219,4 +219,40 @@ public class GoClientHumanTUI {
 		
 		return userBoolean;
 	}
+	
+	/**
+	 * Prints the question and waits for a move (a String that parses to an int or 'pass').
+	 * Returns the move as a String
+	 * 
+	 * @param question The question to show to the user
+	 * @return The user input as boolean.
+	 */
+	public String getMove(String question) {
+		boolean validInput = false;
+		int userInt = -1;
+		String move = "";
+		
+		while (!validInput) {
+			//get userInput about move
+			String userInput = getString("Where do you want to place "
+								+ "your next marker? (Type 'pass' to pass.)");
+			if  (userInput.equalsIgnoreCase("pass")) {
+				if (getBoolean("Are you sure you want to pass? (yes/no)")) {
+					move = Character.toString(ProtocolMessages.PASS);
+					validInput = true;
+				}
+				
+			} else  {
+				try  {
+					userInt = Integer.parseInt(userInput);
+					move = Integer.toString(userInt);
+					validInput = true;
+				} catch (NumberFormatException e) {
+					showMessage("Only an integer or 'pass' is accepted. You entered: " + userInput
+		            		           + ". Please try again.");
+				}
+			}
+		}
+		return move;
+	}
 }

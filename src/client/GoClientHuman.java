@@ -458,6 +458,7 @@ public class GoClientHuman implements GoClient {
 	public void doTurn(String board) {
 		String move = "";
 		String message;
+		boolean validInput = false;
 		
 		//add the board to the list of previous boards
 		prevBoards.add(board);
@@ -470,14 +471,14 @@ public class GoClientHuman implements GoClient {
 					(d + 1) * boardDimension));
 		}
 		
-		boolean passing = clientTUI.getBoolean("\nDo you want to pass?");
-		if (passing) {
-			move = Character.toString(ProtocolMessages.PASS);
-		} else {
-			move = Integer.toString(clientTUI.getInt("Where do you want to place "
-					+ "your next marker?"));
-			checkValid(move);
+		//Ask the client for a move until a valid move is given
+		while (!validInput) {
+			move = clientTUI.getMove("Where do you want to place "
+								+ "your next marker? (Type 'pass' to pass.)");
 		}
+		
+		//check validity of move
+		
 		message = ProtocolMessages.MOVE + ProtocolMessages.DELIMITER + move;
 		sendToGame(message);
 	}

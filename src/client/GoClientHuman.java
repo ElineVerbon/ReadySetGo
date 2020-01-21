@@ -490,7 +490,6 @@ public class GoClientHuman implements GoClient {
 			
 			/** Check whether the player passed, if so, break out of loop and send message. */
 			if (move.equals(Character.toString(ProtocolMessages.PASS))) {
-//				validInput = true;
 				break;
 			} 
 			

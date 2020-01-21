@@ -43,10 +43,15 @@ public class Game {
 	
 	
 	/** 
-	 * Constructor, sets game number. 
+	 * Constructor, sets game number & creates string representation of the board. 
 	 */
 	public Game(int number) {
 		gameNumber = number;
+		
+		// Create a string representation of the empty board.
+        char[] charArray = new char[boardDimension * boardDimension];
+        Arrays.fill(charArray, ProtocolMessages.UNOCCUPIED);
+        board = new String(charArray);
 	}
 	
 	/** 
@@ -106,28 +111,36 @@ public class Game {
 	}
 	
 	/**
-	 * Runs the game. 
+	 * Runs the game.
+	 * Starts the game (send start messages, send first turn message), 
+	 * keep sending turns to alternating players until game end. Then end game.
 	 */
 	public void runGame() {
-		
-		/** 
-		 * Create a string representation of the empty board.
-		 * Create a char array of a specified length, fills it with UNOCCUPIED
-		 * and change it into a String.
-		 */
-        char[] charArray = new char[boardDimension * boardDimension];
-        Arrays.fill(charArray, ProtocolMessages.UNOCCUPIED);
-        board = new String(charArray);
 
-		
 		//TODO check whether both players are still connected
 		
-        /**
-         * Send start game message to both players (via their clientHandler).
-         * Include the string representation of the board and the assigned color.
-         * 
-         * PROTOCOL.GAME + PROTOCOL.DELIMITER + bord + PROTOCOL.DELIMITER + color
-         */
+        // Send start game message to both players (via their clientHandler).
+		startGame();
+		
+		// Keep calling doTurn until the game has ended.
+		while (!gameEnded) {
+			doTurn();
+		}
+		
+		//TODO end the game.
+	}
+	
+	/**
+     * Send start game message to both players (via their clientHandler).
+     * Include the string representation of the board and the assigned color.
+     * PM.GAME + PM.DELIMITER + board + PM.DELIMITER + color
+     * 
+     * Give the first turn to the player who plays with black to start the game.
+	 * doTurn will also process the move and send the result back to the player.
+	 * At the end, it will set the current player to the other player.
+     */
+	public void startGame() {
+		//Send start message to both players
 		String startMessage1 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
 				+ board + ProtocolMessages.DELIMITER + colorPlayer1;
 		String startMessage2 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
@@ -135,11 +148,7 @@ public class Game {
 		sendMessageToClient(startMessage1, out1);
 		sendMessageToClient(startMessage2, out2);
 		
-		/**
-		 * Give the first turn to the black player to start the game.
-		 * doTurn will also process the move and send the result back to the player.
-		 * At the end, it will set the current player to the other player.
-		 */
+		//Send first turn to the player whose stones are black
 		if (colorPlayer1 == ProtocolMessages.BLACK) {
 			firstPlayersTurn = true;
 			doTurn();
@@ -147,18 +156,6 @@ public class Game {
 			firstPlayersTurn = false;
 			doTurn();
 		}
-		
-		/**
-		 * Keep calling doTurn until the game has ended.
-		 * doTurn() will ensure that the players are alternated.
-		 */
-		while (!gameEnded) {
-			doTurn();
-		}
-		
-		/**
-		 * TODO end the game.
-		 */
 	}
 	
 	/**

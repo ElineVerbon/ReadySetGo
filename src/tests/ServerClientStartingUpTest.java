@@ -14,7 +14,7 @@ import client.*;
 import exceptions.*;
 import server.*;
 
-public class ServerClientStartingIUpTest {
+public class ServerClientStartingUpTest {
 	private final static ByteArrayOutputStream OUTCONTENT = new ByteArrayOutputStream();
 	private final static PrintStream ORIGINALOUT = System.out;
 
@@ -39,7 +39,6 @@ public class ServerClientStartingIUpTest {
 		int port = 8888;
 		testServer.createSocket(addr, port);
 		new Thread(testServer).start();
-		
 		
 		/**
 		 * Test creating a connection. 

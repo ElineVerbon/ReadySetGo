@@ -475,7 +475,7 @@ public class GoClientHuman implements GoClient {
 		
 		//Show the board to the client
 		//TODO this should be a GUI
-		clientTUI.showMessage("\nIt's you turn! The board currently looks like this:");
+		clientTUI.showMessage("\nIt's your turn! The board currently looks like this:");
 		for (int d = 0; d < boardDimension; d++) {
 			clientTUI.showMessage(board.substring(d * boardDimension, 
 					(d + 1) * boardDimension));

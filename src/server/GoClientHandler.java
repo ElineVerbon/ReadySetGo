@@ -156,7 +156,7 @@ public class GoClientHandler implements Runnable {
 	private String addToGame(String wantedColor) {
 		
 		//let the server add the client to a game
-		thisClientsGame = srv.addClientToGame(clientName, this, wantedColor);
+		thisClientsGame = srv.addClientToGame(clientName, in, out, wantedColor);
 		int gameNumber = thisClientsGame.getNumber();
 		boolean gameComplete = thisClientsGame.getCompleteness();
 		String message = "";
@@ -219,38 +219,6 @@ public class GoClientHandler implements Runnable {
 		}
 	}
 	
-	/**
-	 * Send message from game to client.
-	 */
-	public void sendMessageToClient(String msg) {
-		try {
-			out.write(msg);
-			out.newLine();
-			out.flush();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	/**
-	 * Send message to and get message from client.
-	 */
-	public String sendAndReceiveMessage(String msg) {
-		String reply = "";
-		try {
-			out.write(msg);
-			out.newLine();
-			out.flush();
-			reply = in.readLine();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return reply;
-	}
-	
-
 	/**
 	 * Shut down the connection to this client by closing the socket and 
 	 * the In- and OutputStreams.

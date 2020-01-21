@@ -1,5 +1,7 @@
 package server;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -229,7 +231,7 @@ public class GoServer implements Runnable {
 	
 	//TODO synchronize this! (right? else games & gameNo & client and clientNO can go wrong)
 	public Game addClientToGame(
-				String nameClient, GoClientHandler goClientHandler, String wantedColor) {
+				String nameClient, BufferedReader in, BufferedWriter out, String wantedColor) {
 		/**
 		 * add the player to an existing game, or (if no game available with one player)
 		 * start a new game with this player as first player
@@ -243,7 +245,7 @@ public class GoServer implements Runnable {
 		if (games.isEmpty()) {
 			gameNumber = 1;
 			game = setupGoGame();
-			tui.showMessage(game.addPlayer(nameClient, goClientHandler, wantedColor));
+			tui.showMessage(game.addPlayer(nameClient, in, out, wantedColor));
 			return game;
 		} else {
 			//check whether last game is already full
@@ -252,13 +254,13 @@ public class GoServer implements Runnable {
 			if (!lastGame.getCompleteness()) {
 				gameNumber = games.size();
 				game = lastGame;
-				tui.showMessage(lastGame.addPlayer(nameClient, goClientHandler, wantedColor));
+				tui.showMessage(lastGame.addPlayer(nameClient, in, out, wantedColor));
 				return game;
 			//otherwise, start a new game
 			} else {
 				gameNumber = nextGameNo;
 				game = setupGoGame();
-				tui.showMessage(game.addPlayer(nameClient, goClientHandler, wantedColor));
+				tui.showMessage(game.addPlayer(nameClient, in, out, wantedColor));
 				return game;
 			}
 		}

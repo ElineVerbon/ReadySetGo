@@ -1,10 +1,12 @@
 package game;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.*;
 
 import movechecker.*;
 import protocol.ProtocolMessages;
-import server.GoClientHandler;
 
 public class Game {
 	/** Set board dimension (= length of board). */
@@ -19,8 +21,10 @@ public class Game {
 	private String namePlayer2 = null; //name of player2
 	private char colorPlayer1 = 'x'; //color of player1
 	private char colorPlayer2 = 'x'; //color of player2
-	GoClientHandler goClientHandler1; //access to player1
-	GoClientHandler goClientHandler2; //access to player2
+	private BufferedReader in1;
+	private BufferedWriter out1;
+	private BufferedReader in2;
+	private BufferedWriter out2;
 	
 	/** Variable to keep track of game states. */
 	private boolean complete = false; //two players have been added
@@ -58,12 +62,15 @@ public class Game {
 	 * @param wantedColor, the color requested by the player (null if not specified by the player)
 	 * @return message, a String that shows the Server user that a player was added to the game
 	 */
-	public String addPlayer(String name, GoClientHandler goClientHandler, String wantedColor) {
+	public String addPlayer(String name, BufferedReader in, BufferedWriter out, 
+																	String wantedColor) {
 		String message = "";
 		
 		//if no player1 yet:
 		if (namePlayer1 == null) {
 			namePlayer1 = name;
+			in1 = in;
+			out1 = out;
 			//if no provided wanted color (or of length 1, give black)
 			if (wantedColor == null || wantedColor.length() != 1) {
 				colorPlayer1 = ProtocolMessages.BLACK;
@@ -76,13 +83,13 @@ public class Game {
 					colorPlayer1 = ProtocolMessages.BLACK;
 				}
 			}
-			goClientHandler1 = goClientHandler;
 			message = name + " was added to game " + gameNumber + " as the first player.";
 		
 		//if there is already a player in the game
 		} else {
 			namePlayer2 = name;
-			goClientHandler2 = goClientHandler;
+			in2 = in;
+			out2 = out;
 			//give player 2 the other color than player 1
 			if (colorPlayer1 == ProtocolMessages.BLACK) {
 				colorPlayer2 = ProtocolMessages.WHITE;
@@ -125,8 +132,8 @@ public class Game {
 				+ board + ProtocolMessages.DELIMITER + colorPlayer1;
 		String startMessage2 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
 				+ board + ProtocolMessages.DELIMITER + colorPlayer2;
-		goClientHandler1.sendMessageToClient(startMessage1);
-		goClientHandler2.sendMessageToClient(startMessage2);
+		sendMessageToClient(startMessage1, out1);
+		sendMessageToClient(startMessage2, out2);
 		
 		/**
 		 * Give the first turn to the black player to start the game.
@@ -165,9 +172,9 @@ public class Game {
 		
 		/** Send message to client & wait for reply. */
 		if (firstPlayersTurn) {
-			reply = goClientHandler1.sendAndReceiveMessage(turnMessage);
+			reply = sendAndReceiveMessage(turnMessage, out1, in1);
 		} else {
-			reply = goClientHandler2.sendAndReceiveMessage(turnMessage);
+			reply = sendAndReceiveMessage(turnMessage, out2, in2);
 		}
 		
 		String[] commands = reply.split(ProtocolMessages.DELIMITER);
@@ -288,9 +295,9 @@ public class Game {
 		
 		/** Send the result to the correct player. */
 		if (firstPlayersTurn) {
-			goClientHandler1.sendMessageToClient(resultMessage);
+			sendMessageToClient(resultMessage, out1);
 		} else {
-			goClientHandler2.sendMessageToClient(resultMessage);
+			sendMessageToClient(resultMessage, out2);
 		}
 	}
 	
@@ -332,8 +339,8 @@ public class Game {
 		
 		gameEnded = true;
 		
-		goClientHandler1.sendMessageToClient(endOfGameMessage);
-		goClientHandler2.sendMessageToClient(endOfGameMessage);
+		sendMessageToClient(endOfGameMessage, out1);
+		sendMessageToClient(endOfGameMessage, out2);
 		//TODO add possibility to play another game against the same player?
 	}
 	
@@ -351,6 +358,38 @@ public class Game {
 	public int getNumber() {
 		return gameNumber;
 	}
+	
+	/**
+	 * Send message from game to client.
+	 */
+	public void sendMessageToClient(String msg, BufferedWriter out) {
+		try {
+			out.write(msg);
+			out.newLine();
+			out.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Send message to and get message from client.
+	 */
+	public String sendAndReceiveMessage(String msg, BufferedWriter out, BufferedReader in) {
+		String reply = "";
+		try {
+			out.write(msg);
+			out.newLine();
+			out.flush();
+			reply = in.readLine();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return reply;
+	}
+	
 	
 	
 }

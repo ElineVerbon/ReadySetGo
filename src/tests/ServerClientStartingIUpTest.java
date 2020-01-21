@@ -4,8 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -14,11 +12,9 @@ import org.junit.jupiter.api.*;
 
 import client.*;
 import exceptions.*;
-import game.*;
-import protocol.ProtocolMessages;
 import server.*;
 
-public class ServerClientTest {
+public class ServerClientStartingIUpTest {
 	private final static ByteArrayOutputStream OUTCONTENT = new ByteArrayOutputStream();
 	private final static PrintStream ORIGINALOUT = System.out;
 
@@ -96,56 +92,9 @@ public class ServerClientTest {
 		OUTCONTENT.reset();
 		
 		/**
-		 * Test start of the game with two new clients.
-		 * A new clientHandler is made for every client, so that they can be added to the game 
-		 * directly via the clientHandler method. That way their game can be accessed from the test.
+		 * TODO: test ending a game (if I want to do that via the server)
 		 */
-		
-//		/** Preparation: start server with local host and port 8888 and let it listen for clients.*/
-//		GoServer nextTestServer = new GoServer();
-//		InetAddress nextTestAddr = InetAddress.getLocalHost();
-//		int nextTestPort = 8889;
-//		nextTestServer.createSocket(nextTestAddr, nextTestPort);
-//		ServerSocket ssock = nextTestServer.getSsock();
-//		
-//		System.out.println("hi");
-//		
-//		Socket sock = ssock.accept();
-//		client3.createConnection(nextTestAddr, nextTestPort);
-//		GoClientHandler handler3 = 
-//				new GoClientHandler(sock, nextTestServer, "Client " 
-//						+ String.format("%02d", "3"));
-//		
-//		System.out.println("bye");
-//		
-//		sock = ssock.accept();
-//		client4.createConnection(nextTestAddr, nextTestPort);
-//		GoClientHandler handler4 = 
-//				new GoClientHandler(sock, nextTestServer, "Client " 
-//						+ String.format("%02d", "4"));
-//		
-//		String message = ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER + "1.0" + 
-//				ProtocolMessages.DELIMITER + "Eline" + ProtocolMessages.DELIMITER + 
-//				ProtocolMessages.WHITE;
-//		Game thisGame = handler3.doHandshakeAndAddToGame(message);
-//		handler4.doHandshakeAndAddToGame(message);
-//		//make this method public!
-//		
-//		System.out.println("ge");
-//		
-//		//Client prints a message to indicate which communication version will be used
-//		assertThat(OUTCONTENT.toString(), containsString("Communication will proceed according"));
-//		//Client also prints the message from the server: a welcome & to which game it was added
-//		assertThat(OUTCONTENT.toString(), containsString("Welcome"));
-//		assertThat(OUTCONTENT.toString(), containsString("You have been added"));
-//		//Server prints that a client was added to a game & that the game can start
-//		assertThat(OUTCONTENT.toString(), containsString(" was added to game "));
-//		assertThat(OUTCONTENT.toString(), containsString("The game can start!"));
-//		OUTCONTENT.reset();
-		
-
-//		
-//		// Exit the program
+		// Exit the program
 //		client.sendExit();
 	}
 	

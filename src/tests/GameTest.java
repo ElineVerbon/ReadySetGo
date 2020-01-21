@@ -1,22 +1,15 @@
 package tests;
 
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.*;
-import java.util.Arrays;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import client.GoClientHuman;
-import exceptions.ExitProgram;
-import exceptions.ProtocolException;
-import exceptions.ServerUnavailableException;
 import game.Game;
-import protocol.ProtocolMessages;
 
 /**
  * This class will test whether the Game responds correctly to certain responses of players.
@@ -94,6 +87,10 @@ public class GameTest {
 	}
 	
 	/**
+	 * Test whether the correct stones are removed from the board.
+	 * 
+	 * Moves are given as lines in two separate files.
+	 * Last boards are checked
 	 * 
 	 * @throws FileNotFoundException 
 	 */
@@ -120,31 +117,17 @@ public class GameTest {
 		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
 		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
 		
-		//
-//		String msg = inPlayer1.readLine();
-//		while (msg != null) {
-//			testGame.sendMessageToClient(msg, outPlayer1);
-//			String reply = outPlayer1.toString();
-//			assertThat(outPlayer1.toString(), containsString("The game has started!"));
-//			msg = inPlayer1.readLine();
-//		}
-		
-		/**
-		 * Test start game.
-		 * This will 
-		 */
 		testGame.startGame();
-		testGame.doTurn();
-		assertThat(stringWriter1.toString(), not(containsString("R;V;UBBUUBWWBUUBBWUUUWBWUUUWU")));
-		assertThat(stringWriter1.toString(), containsString("R;V;UBBUUBUUBUUBBWUUUWUWUUUWU"));
-		//Client prints a message to indicate the game has started
-		
-		//Test invalid move
-		
-		//Test valid move
-		
-		//Test several moves that result in capture of a group of stones
-		
+		//I have 14 lines of commands (7 for player1, 7 for player2)
+		//first command is used in startGame, so 13 more to go.
+		for (int x = 0; x < 13; x++) {
+			testGame.doTurn();
+		}
+		//The last board seen by player 1 (W in 6 and 7 is removed, B in 18 not yet removed)
+		assertThat(stringWriter1.toString(), containsString("R;V;UBBUUBUUBUUBBWUUUWBWWUUUU"));
+		//The last board seen by player 2 (B in 18 is not also removed)
+		assertThat(stringWriter2.toString(), containsString("R;V;UBBUUBUUBUUBBWUUUWUWWUUWU"));
+
 		OUTCONTENT.reset();
 	}
 	

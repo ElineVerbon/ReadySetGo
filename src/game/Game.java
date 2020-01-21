@@ -205,7 +205,10 @@ public class Game {
 	 * - if second pass: end the game
 	 * - if first pass: move is valid, finish turn and continue the game
 	 * 
-	 * If not: check validity of the move
+	 * If player did not pass:
+	 * - check validity of move (if not valid, end game)
+	 * - determine the new board
+	 * - check whether board has not been seen before (if it has: end game)
 	 */
 	
 	public void processMove(String move) {
@@ -226,53 +229,42 @@ public class Game {
 				passed = true;
 				giveResult(validness);
 			}
-		} else {
-			passed = false;
-			//check validity of the move
-			valid = moveValidator.checkValidityBeforeRemoving(move, boardDimension, board);
-			
-			if (!valid) {
-				//if move is not valid, end the game (other player will win)
-				validness = ProtocolMessages.INVALID;
-				giveResult(validness);
-				endGame(ProtocolMessages.CHEAT);
-			} else {
-				prevBoards.add(board);
-				addStone(move); 
-				
-				//determine what the new board looks like after removing stones
-				if (firstPlayersTurn) {
-					board = moveResult.determineNewBoard(board, colorPlayer1);
-				} else {
-					board = moveResult.determineNewBoard(board, colorPlayer2);
-				}
-				
-				//check whether the new board is not the same as a previous board
-				valid = moveValidator.checkValidityAfterRemoving(board, prevBoards);
-				if (!valid) {
-					validness = ProtocolMessages.INVALID;
-				} 
-				giveResult(validness);
-			}
-		}
-	}
-	
-	/**
-	 * Add a stone of the current color to the location specified by the player.
-	 * @param move
-	 */
-	public void addStone(String move) {
-		int location;
+			return;
+		} 
+		
+		/** If player did not pass. */
+		passed = false;
+		
+		//check validity of the move, end game if not valid
+		valid = moveValidator.checkValidityBeforeRemoving(move, boardDimension, board);
+		if (!valid) {
+			validness = ProtocolMessages.INVALID;
+			giveResult(validness);
+			endGame(ProtocolMessages.CHEAT);
+			return;
+		} 
+		
+		prevBoards.add(board);
 		
 		//parse move to an integer (it has already been checked whether that is possible)
+		int location;
 		location = Integer.parseInt(move);
 		
-		//Update the board to set the location to the current player's color
+		//determine what the board looks like after removing stones because of placing the new stone
 		if (firstPlayersTurn) {
 			board = board.substring(0, location) + colorPlayer1 + board.substring(location + 1);
+			board = moveResult.determineNewBoard(board, colorPlayer1);
 		} else {
 			board = board.substring(0, location) + colorPlayer2 + board.substring(location + 1);
+			board = moveResult.determineNewBoard(board, colorPlayer2);
 		}
+		
+		//check whether the new board is not the same as a previous board
+		valid = moveValidator.checkValidityAfterRemoving(board, prevBoards);
+		if (!valid) {
+			validness = ProtocolMessages.INVALID;
+		} 
+		giveResult(validness);
 	}
 	
 	/**

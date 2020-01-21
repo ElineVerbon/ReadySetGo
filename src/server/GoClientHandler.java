@@ -76,7 +76,7 @@ public class GoClientHandler implements Runnable {
 			//TODO From here, the flow of the game is handled by the Game instance
 			//server is not involved anymore, will only get back at the end!
 			if (thisClientsGame.getCompleteness()) {
-				thisClientsGame.startGame();
+				thisClientsGame.runGame();
 			}
 			
 			//TODO shutdown client when necessary

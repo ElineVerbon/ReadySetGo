@@ -6,54 +6,54 @@ import protocol.ProtocolMessages;
 import server.GoClientHandler;
 
 public class Game {
+	/** Set board dimension (= length of board). */
+	//TODO possibly let user of server set this instead
+	private int boardDimension = 5;
 	
-	//save the game number, might need it later for a leader board
+	/** Save the game number, might need it later for a leader board. */
 	private int gameNumber;
-
-	/** Variable to keep track of whose turn it is. */
-	private boolean firstPlayersTurn = true;
 	
-	/** Variable to keep track of a possible pass. */
-	private boolean passed = false;
-	
-	/** Save the names of the players. */
+	/** Variable to keep track of and connect to the players. */
 	private String namePlayer1 = null; //name of player1
 	private String namePlayer2 = null; //name of player2
+	private char colorPlayer1 = 'x'; //color of player1
+	private char colorPlayer2 = 'x'; //color of player2
+	GoClientHandler goClientHandler1; //access to player1
+	GoClientHandler goClientHandler2; //access to player2
 	
-	/** Save the colors of the players. Set to x as default. */
-	private char colorPlayer1 = 'x';
-	private char colorPlayer2 = 'x';
+	/** Variable to keep track of game states. */
+	private boolean complete = false; //two players have been added
+	private boolean passed = false; //first pass has occurred
+	private boolean firstPlayersTurn = true; //turn of player1
+	private boolean gameEnded = false; //game has ended
 	
-	/** Save access to clientHandlers of the competing player. */
-	GoClientHandler goClientHandler1;
-	GoClientHandler goClientHandler2;
-	
-	/** Variable to save whether two players were added. */
-	private boolean complete = false;
-	
-	/** Variable to keep track whether game is done. */
-	private boolean gameEnded = false;
-	
-	/** The board, represented as a string. */
+	/** The board and all previous boards, represented as strings. */
 	private String board;
-	
-	/** Board dimension (= length of board. */
-	//TODO decide whether I want to determine that here or elsewhere
-	//maybe in server via user input?
-	private int boardDimension = 3;
-	
-	/** All previous boards, to check whether a move is valid. */
 	private List<String> prevBoards = new ArrayList<String>();
 	
 	
-	
+	/** Constructor, sets game number. */
 	public Game(int number) {
 		gameNumber = number;
 	}
 	
-	//responds with a message that indicates the gameNumber and the number of players.
+	/** 
+	 * Adds a player to the game & sets the color of the player's stones.
+	 * First player will get what he / she requested, otherwise BLACK, second player will get the 
+	 * remaining color.
+	 * 
+	 * Is called by the server, will only be called if the game is not full yet.
+	 * TODO need to synchronize?
+	 * 
+	 * @param name, the name of the player
+	 * @param goClientHandler, the handler of the player
+	 * @param wantedColor, the color requested by the player (null if not specified by the player)
+	 * @return message, a String that shows the Server user that a player was added to the game
+	 */
 	public String addPlayer(String name, GoClientHandler goClientHandler, String wantedColor) {
 		String message = "";
+		
+		//if no player1 yet:
 		if (namePlayer1 == null) {
 			namePlayer1 = name;
 			//if no provided wanted color (or of length 1, give black)
@@ -70,6 +70,8 @@ public class Game {
 			}
 			goClientHandler1 = goClientHandler;
 			message = name + " was added to game " + gameNumber + " as the first player.";
+		
+		//if there is already a player in the game
 		} else {
 			namePlayer2 = name;
 			goClientHandler2 = goClientHandler;
@@ -83,25 +85,34 @@ public class Game {
 			message = name + " was added to game " + gameNumber + 
 					" as the second player. The game can start!";
 		}
+		
+		//return message to let user of the server know what has happened.
 		return message;
 	}
 	
-	public void startGame() {
-		//TODO where do I want to decide on the board dimension?
+	/**
+	 * Runs the game. 
+	 */
+	public void runGame() {
 		
-		/** Create a string representation of the empty board. */
-		//create char array of specified length
+		/** 
+		 * Create a string representation of the empty board.
+		 * Create a char array of a specified length, fills it with UNOCCUPIED
+		 * and change it into a String.
+		 */
         char[] charArray = new char[boardDimension * boardDimension];
-        //fill all elements with the specified char
-        Arrays.fill(charArray, 'U');
-        //create string from char array and return
+        Arrays.fill(charArray, ProtocolMessages.UNOCCUPIED);
         board = new String(charArray);
 
 		
 		//TODO check whether both players are still connected
 		
-		//send start game message to both players (via they clientHandler)
-		//PROTOCOL.GAME + PROTOCOL.DELIMITER + bord + PROTOCOL.DELIMITER + color
+        /**
+         * Send start game message to both players (via their clientHandler).
+         * Include the string representation of the board and the assigned color.
+         * 
+         * PROTOCOL.GAME + PROTOCOL.DELIMITER + bord + PROTOCOL.DELIMITER + color
+         */
 		String startMessage1 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
 				+ board + ProtocolMessages.DELIMITER + colorPlayer1;
 		String startMessage2 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
@@ -109,7 +120,11 @@ public class Game {
 		goClientHandler1.sendMessageToClient(startMessage1);
 		goClientHandler2.sendMessageToClient(startMessage2);
 		
-		//send turn message to black player to start the game
+		/**
+		 * Give the first turn to the black player to start the game.
+		 * doTurn will also process the move and send the result back to the player.
+		 * At the end, it will set the current player to the other player.
+		 */
 		if (colorPlayer1 == ProtocolMessages.BLACK) {
 			firstPlayersTurn = true;
 			doTurn();
@@ -118,10 +133,17 @@ public class Game {
 			doTurn();
 		}
 		
-		//TODO now keep waiting for messages & send messages yourself.
+		/**
+		 * Keep calling doTurn until the game has ended.
+		 * doTurn() will ensure that the players are alternated.
+		 */
 		while (!gameEnded) {
 			doTurn();
 		}
+		
+		/**
+		 * TODO end the game.
+		 */
 	}
 	
 	/**
@@ -136,10 +158,8 @@ public class Game {
 		/** Send message to client & wait for reply. */
 		if (firstPlayersTurn) {
 			reply = goClientHandler1.sendAndReceiveMessage(turnMessage);
-//			reply = goClientHandler1.getMessageFromClient();
 		} else {
 			reply = goClientHandler2.sendAndReceiveMessage(turnMessage);
-//			reply = goClientHandler2.getMessageFromClient();
 		}
 		
 		String[] commands = reply.split(ProtocolMessages.DELIMITER);
@@ -165,7 +185,7 @@ public class Game {
 		if (firstPlayersTurn) {
 			firstPlayersTurn = false;
 		} else {
-			firstPlayersTurn = true;;
+			firstPlayersTurn = true;
 		}
 	}
 	
@@ -181,6 +201,9 @@ public class Game {
 		if (move.equals(Character.toString(ProtocolMessages.PASS))) {
 			if (passed == true) {
 				//second pass: the game is over
+				//TODO decide on how to do this depending on how we decide to in the protocol
+				//i.e. end directly or first finish the turn & send the result
+				gameEnded = true;
 				endGame(ProtocolMessages.FINISHED);
 			} else {
 				//first pass: set 'passed' to true

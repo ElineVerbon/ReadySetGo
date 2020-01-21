@@ -12,6 +12,8 @@ import java.util.*;
 import com.nedap.go.gui.GoGUIIntegrator;
 
 import exceptions.*;
+import movechecker.MoveResult;
+import movechecker.MoveValidator;
 import protocol.ProtocolMessages;
 
 public class GoClientHuman implements GoClient {
@@ -28,8 +30,14 @@ public class GoClientHuman implements GoClient {
 	private char color;
 	private int boardDimension;
 	private GoGUIIntegrator gogui;
+	
+	/** The board and all previous boards, represented as strings. */
+	private String board;
 	private List<String> prevBoards = new ArrayList<String>();
-	//TODO add boards!
+	
+	/** Set classes to check move results. */
+	private MoveValidator moveValidator = new MoveValidator();
+	private MoveResult moveResult = new MoveResult();
 
 	/**
 	 * Constructs a new GoClient. Initialises the TUI.
@@ -363,7 +371,7 @@ public class GoClientHuman implements GoClient {
 		}
 		
 		/** The second component of the message should be a string representation of the board. */
-		String board = commands[1];
+		board = commands[1];
 		int numberOfPlaces = commands[1].length();
 		boardDimension = (int) Math.sqrt(numberOfPlaces);
 		
@@ -451,11 +459,13 @@ public class GoClientHuman implements GoClient {
 	}
 	
 	/**
-	 * Decide on a move, based on the board representation.
+	 * Get a valid move from the user.
 	 * 
 	 * @param board
 	 */
-	public void doTurn(String board) {
+	public void doTurn(String boardBeforeMove) {
+		board = boardBeforeMove;
+		
 		String move = "";
 		String message;
 		boolean validInput = false;
@@ -475,24 +485,52 @@ public class GoClientHuman implements GoClient {
 		while (!validInput) {
 			move = clientTUI.getMove("Where do you want to place "
 								+ "your next marker? (Type 'pass' to pass.)");
+			
+			boolean valid;
+			
+			/** Check whether the player passed, if so, break out of loop and send message. */
+			if (move.equals(Character.toString(ProtocolMessages.PASS))) {
+//				validInput = true;
+				break;
+			} 
+			
+			/** 
+			 * Check whether move is an integer within the board of an UNOCCUPIED location, 
+			 * let user try again if not valid. 
+			 */
+			valid = moveValidator.checkValidityBeforeRemoving(move, boardDimension, board);
+			if  (!valid) {
+				clientTUI.showMessage("You move cannot be parsed to an Integer, is not within "
+						+ "the board, or the location is already taken. Please try again.");
+				continue; //breaks out of this iteration of while loop and starts over.
+			} 
+			
+			/**
+			 * Check whether removing of stoned due to the move results in a previously seen board.
+			 * If so, let user try again.
+			 */
+			
+			int location;
+			location = Integer.parseInt(move);
+			
+			//determine what the board looks like after removing stones
+			prevBoards.add(board);
+			board = board.substring(0, location) + color + board.substring(location + 1);
+			board = moveResult.determineNewBoard(board, color);
+			
+			//check whether the new board is not the same as a previous board
+			valid = moveValidator.checkValidityAfterRemoving(board, prevBoards);
+			if  (!valid) {
+				clientTUI.showMessage("Your move results in a board that has been seen before. "
+							+ "Please try again.");
+				//remove this last board as the move will be redone and this board not made
+				prevBoards.remove(prevBoards.size() - 1); 
+				continue; //breaks out of this iteration of while loop and starts over.
+			} 
+			validInput = true;
 		}
-		
-		//check validity of move
-		
-		message = ProtocolMessages.MOVE + ProtocolMessages.DELIMITER + move;
+		message = ProtocolMessages.MOVE + ProtocolMessages.DELIMITER + move; 
 		sendToGame(message);
-	}
-	
-	/**
-	 * Check whether a suggested move is valid.
-	 * 1) It does not result in a board that has been seen before
-	 * 2) The suggested place is in between 0 & board.length-1
-	 * 3) The suggested space is currently Unoccupied
-	 */
-	//checks whether a move is valid
-	public void checkValid(String move) {
-		Integer.parseInt(move);
-		//check w
 	}
 	
 	public void sendToGame(String message) {
@@ -507,9 +545,9 @@ public class GoClientHuman implements GoClient {
 		}
 	}
 	
-	public void getResult(String validChar, String board) {
+	public void getResult(String validChar, String newBoard) {
 		//add the board to the list of previous boards
-		prevBoards.add(board);
+		prevBoards.add(newBoard);
 		
 		//communicate result to the client
 		if (Character.toString(ProtocolMessages.VALID).equals(validChar)) {
@@ -518,7 +556,7 @@ public class GoClientHuman implements GoClient {
 				clientTUI.showMessage(board.substring(d * boardDimension, 
 						(d + 1) * boardDimension));
 			}
-			clientTUI.showMessage("It's now the other players turn. Please wait.");
+			clientTUI.showMessage("It's now the other player's turn. Please wait.");
 		} else {
 			clientTUI.showMessage("Your move was invalid. You lose the game.");
 			//TODO add parameter to indicate why the game ended.

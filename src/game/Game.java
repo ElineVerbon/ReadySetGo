@@ -2,6 +2,7 @@ package game;
 
 import java.util.*;
 
+import movechecker.*;
 import protocol.ProtocolMessages;
 import server.GoClientHandler;
 
@@ -31,8 +32,15 @@ public class Game {
 	private String board;
 	private List<String> prevBoards = new ArrayList<String>();
 	
+	/** Set classes to check move results. */
+	private MoveValidator moveValidator = new MoveValidator();
+	private MoveResult moveResult = new MoveResult();
 	
-	/** Constructor, sets game number. */
+	
+	
+	/** 
+	 * Constructor, sets game number. 
+	 */
 	public Game(int number) {
 		gameNumber = number;
 	}
@@ -192,13 +200,22 @@ public class Game {
 	/**
 	 * Process the move that was received.
 	 * Move was already extracted from the message!
-	 * (Move was formatted as follows: ProtocolMessages.MOVE + ProtocolMessages.DELIMITER + move)
+	 * 
+	 * First check whether the player passed. If so:
+	 * - if second pass: end the game
+	 * - if first pass: move is valid, finish turn and continue the game
+	 * 
+	 * If not: check validity of the move
 	 */
 	
 	public void processMove(String move) {
-		boolean valid;
 		
+		boolean valid;
+		char validness = ProtocolMessages.VALID;
+		
+		/** Check whether the player passed. */
 		if (move.equals(Character.toString(ProtocolMessages.PASS))) {
+			/** Check whether it is the second or the first pass. */
 			if (passed == true) {
 				//second pass: the game is over
 				//TODO decide on how to do this depending on how we decide to in the protocol
@@ -206,243 +223,56 @@ public class Game {
 				gameEnded = true;
 				endGame(ProtocolMessages.FINISHED);
 			} else {
-				//first pass: set 'passed' to true
-				//as a pass is a valid more, validness is set to true
-				//return message with the new board (= the old board)
 				passed = true;
-				char validness = ProtocolMessages.VALID;
 				giveResult(validness);
 			}
 		} else {
-			//if not passed, set passed to false
 			passed = false;
 			//check validity of the move
-			//board will be changed if the move is valid.
-			valid = checkValidity(move);
-			//if move is not valid, end the game (other player will win)
+			valid = moveValidator.checkValidityBeforeRemoving(move, boardDimension, board);
+			
 			if (!valid) {
-				char validness = ProtocolMessages.INVALID;
+				//if move is not valid, end the game (other player will win)
+				validness = ProtocolMessages.INVALID;
 				giveResult(validness);
 				endGame(ProtocolMessages.CHEAT);
 			} else {
-				char validness = ProtocolMessages.VALID;
-				//determine whether stones need to be removed due to the move & update board
-				determineNewBoard();
+				prevBoards.add(board);
+				addStone(move); 
+				
+				//determine what the new board looks like after removing stones
+				if (firstPlayersTurn) {
+					board = moveResult.determineNewBoard(board, colorPlayer1);
+				} else {
+					board = moveResult.determineNewBoard(board, colorPlayer2);
+				}
+				
+				//check whether the new board is not the same as a previous board
+				valid = moveValidator.checkValidityAfterRemoving(board, prevBoards);
+				if (!valid) {
+					validness = ProtocolMessages.INVALID;
+				} 
 				giveResult(validness);
 			}
 		}
 	}
 	
 	/**
-	 * Checks whether a move is valid. If so, changes the board according to the move. 
-	 * 
-	 * It is invalid if:
-	 * 1. the move cannot be parsed to an integer
-	 * 2. the move is not within the board
-	 * 3. the location is not currently empty
-	 * 4. the move results in a board that was seen before
-	 * 
-	 * NB: 4 is now only checked before checking the result of the move (ie, checking whether
-	 * stones need to be removed). Should I also do this afterwards? Check in rules!
-	 * 
+	 * Add a stone of the current color to the location specified by the player.
 	 * @param move
-	 * @return validness, a boolean that is true is the move is valid, otherwise false
 	 */
-	
-	public boolean checkValidity(String move) {
-		boolean validness;
+	public void addStone(String move) {
 		int location;
 		
-		//Check whether the move can be parsed to an integer
-		try {
-			location = Integer.parseInt(move);
-		} catch (NumberFormatException e) {
-			validness = false;
-			return validness;
-		}
+		//parse move to an integer (it has already been checked whether that is possible)
+		location = Integer.parseInt(move);
 		
-		//Check if the move is within the board
-		if (location < 0 || location >= boardDimension * boardDimension) {
-			validness = false;
-			return validness;
-		}
-		
-		//Check whether the location is currently empty
-		if (board.charAt(location) != ProtocolMessages.UNOCCUPIED) {
-			validness = false;
-			return validness;
-		}
-		
-		//Set location to player's color
-		String newBoard = "";
+		//Update the board to set the location to the current player's color
 		if (firstPlayersTurn) {
-			newBoard = board.substring(0, location) + colorPlayer1 + board.substring(location + 1);
+			board = board.substring(0, location) + colorPlayer1 + board.substring(location + 1);
 		} else {
-			newBoard = board.substring(0, location) + colorPlayer2 + board.substring(location + 1);
+			board = board.substring(0, location) + colorPlayer2 + board.substring(location + 1);
 		}
-		
-		//add previous board to the array of previous boards
-		prevBoards.add(board);
-		//check whether the move results in a board that was seen before
-		for (String aPrevBoard : prevBoards) {
-			if (newBoard.equals(aPrevBoard)) {
-				validness = false;
-				return validness;
-			}
-		}
-		
-		//TODO should I also check this after possibly removing stones?
-		
-		//move is valid, set newBoard to current board and return true
-		board = newBoard;
-		validness = true;
-		return validness;
-	}
-	
-	/**
-	 * Check whether stones need to be removed due to the move.
-	 * 
-	 * This consists of three subsequent methods
-	 * 1. determine new board. This will loop through all locations on the board
-	 * and will call:
-	 * 2. checkAllNeighbors. gets all neighboring locations and for the locations 
-	 * that have not yet been checked, it will call:
-	 * 3. checkColor. checks whether the color is of the currently being looked-for
-	 * color. If so, it is added to the group and the neighbors of this locations
-	 * will be checked via a call to 2. If it is unoccupied, the boolean variable 
-	 * surrounded for this group is set to false.
-	 */
-	
-	//set a few variables that will be used in the following methods
-	//to check the effect of a move
-	private boolean surrounded;
-	private char opponentsColor = 'x';
-	
-	//variable to keep track of places checked per group (cleared at end of group)
-	private List<Integer> checkedPlaces;
-	//variable to keep track of stones that are part of the currently checked group 
-	//(cleared at end of group)
-	private List<Integer> surroundedStones;
-	//variable to keep track of this colored stones that have been checked (cleared
-	//at the end of looking through this color
-	private List<Integer> checkedStonesThisColor;
-	
-	public void determineNewBoard() {
-		
-		//first check the opponent's color, capturing of a group goes before suicide
-		if (firstPlayersTurn) {
-			opponentsColor = colorPlayer2;
-		} else {
-			opponentsColor = colorPlayer1;
-		}
-		
-		checkedPlaces = new ArrayList<Integer>();
-		surroundedStones = new ArrayList<Integer>();
-		checkedStonesThisColor = new ArrayList<Integer>();
-		
-		//check the opponent's stones for captured groups
-		checkStonesOfOneColor(opponentsColor);
-		
-		//check current player's stones for captured groups (suicide is allowed)
-		if (opponentsColor == colorPlayer1) {
-			checkStonesOfOneColor(colorPlayer2);
-		} else {
-			checkStonesOfOneColor(colorPlayer1);
-		}
-		
-		//TODO check again whether board is the same as previous boards
-		
-	}
-	
-	public void checkStonesOfOneColor(char currentlyCheckedColor) {
-		//go from top left to bottom right to check for capture of a group of opponents
-		for (int x = 0; x < boardDimension; x++) {
-			for (int y = 0; y < boardDimension; y++) {
-				//get the corresponding number of the string representation. 
-				//only check it if it has not been checked as part of another group yet
-				int numberInStringRepresentation = x  + y * boardDimension;
-				if (checkedStonesThisColor.contains(numberInStringRepresentation)) {
-					break;
-				}
-				checkedPlaces.add(numberInStringRepresentation);
-				
-				//check whether this location has a stone of the currently checked color
-				if (board.charAt(numberInStringRepresentation) == currentlyCheckedColor) {
-					//set surrounded to true (will be set to false if unoccupied neighbor is found)
-					surrounded = true;
-					surroundedStones.clear();
-					checkedPlaces.clear();
-					
-					//check all surrounding stones
-					checkAllNeighbors(numberInStringRepresentation);
-				}
-				
-				//if surrounded is true at this point, the current group is surrounded
-				//and each of its stones should be removed.
-				if (surrounded == true) {
-					for (int location : surroundedStones) {
-						board = board.substring(0, location) + ProtocolMessages.UNOCCUPIED
-								 + board.substring(location + 1);
-					}
-				}
-			}
-		}
-	}
-	
-	/**
-	 * Check whether a stone is (part of a group that is) surrounded.
-	 * 
-	 * Go to all neighboring locations. If:
-	 * - also of this color: add to group, go to all neighboring locations
-	 * - of other color: go to next location
-	 * - unoccupied: set surrounded to false, but keep looking to have all stones of a group.
-	 * @param numberInStringRepresentation
-	 * @return
-	 */
-	public void checkAllNeighbors(int numberInStringRepresentation) {
-		//add this stone (= a stone of the currently checked color) to the list of stones of this 
-		//group and the list of stones of this color that were checked this turn
-		surroundedStones.add(numberInStringRepresentation);
-		checkedStonesThisColor.add(numberInStringRepresentation);
-		
-		//check for all surrounding places whether they are unoccupied, of the current player
-		//or also of the opponent. If they are also of the opponent: add to the current group
-		int locationToTheLeft = numberInStringRepresentation - 1;
-		int locationToTheRight = numberInStringRepresentation + 1;
-		int locationAbove = numberInStringRepresentation - boardDimension;
-		int locationBelow = numberInStringRepresentation + boardDimension;
-		List<Integer> locationsToCheck = new ArrayList<Integer>();
-		locationsToCheck.add(locationToTheLeft);
-		locationsToCheck.add(locationToTheRight);
-		locationsToCheck.add(locationAbove);
-		locationsToCheck.add(locationBelow);
-		
-		
-		//only check locations that are on the board
-		for (int location : locationsToCheck) {
-			if (location < 0 || location >= boardDimension * boardDimension) {
-				break;
-			}
-			//only check locations if they haven't been checked before
-			if (!checkedPlaces.contains(location)) {
-				checkColor(location);
-			}
-		}
-	}
-	
-	public void checkColor(int toBeCheckedLocation) {
-		checkedPlaces.add(toBeCheckedLocation);
-		
-		//if the location is occupied by the currently checked color, it is added to the group
-		if (board.charAt(toBeCheckedLocation) == opponentsColor) {
-			surroundedStones.add(toBeCheckedLocation);
-			checkAllNeighbors(toBeCheckedLocation);
-		//if the location is unoccupied, surrounded is set to false
-		} else if (board.charAt(toBeCheckedLocation) == ProtocolMessages.UNOCCUPIED) {
-			surrounded = false;
-			//don't break, keep looking until all connected opponent's stones 
-			//have been added to 'checkedPlaces'
-		} //if the location is of the other color, do nothing
 	}
 	
 	/**

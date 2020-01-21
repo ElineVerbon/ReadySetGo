@@ -18,7 +18,7 @@ package tests;
  * - ending a game by two passes
  * - ending a game by losing connection
  * - ending a game by invalid move
- * - ending a game by quiting
+ * - ending a game by quitting
  * 
  * 
  * @author eline.verbon

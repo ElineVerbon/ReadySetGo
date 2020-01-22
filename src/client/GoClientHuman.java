@@ -145,6 +145,7 @@ public class GoClientHuman implements GoClient {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		//TODO end game?
 	}	
 	
@@ -408,6 +409,8 @@ public class GoClientHuman implements GoClient {
 	 * (Or a result message, but that is handled in doTurn().)
 	 * 
 	 * It ends when 'Protocol.Messages.END' is received.
+	 * 
+	 * Called at the end of the start() method of this client.
 	 */
 	public void playGame() throws ServerUnavailableException, ProtocolException {
 		boolean gameEnded = false;
@@ -429,15 +432,31 @@ public class GoClientHuman implements GoClient {
 			char command = line.charAt(0);
 			switch (command) {
 				case 'T':
+					//TODO what to do if that isn't a second component
 					doTurn(commands[1]);
 					break;
 				case 'R' :
-					//TODO what to do if there aren't two other components
-					getResult(commands[1], commands[2]);
+					//check whether the other components are included and if so, use them
+					if (commands.length < 2) {
+						throw new ProtocolException("Server response does not comply with " +
+								"the protocol! It did not contain at least one component after " +
+								"the 'R' in the result message.");
+					}
+					String validity = commands[1];
+					//commands[2] can be a board, a message or nothing
+					String message = (commands.length > 1) ? commands[2] : null;
+					
+					getResult(validity, message);
 					break;
 				case 'E' :
-					//TODO
-					gameEnded = true;
+					clientTUI.showMessage(line);
+					if (commands.length < 5) {
+						throw new ProtocolException("Server response does not comply with " +
+								"the protocol! It did not contain the necessary five components " +
+								"in the endGame message.");
+					}
+					gameEnded = true; //break out of this loop, TODO not sure if necessary
+					endGame(commands[1], commands[2], commands[3], commands[4]); //end the game
 					break;
 				case '?':
 					//TODO
@@ -513,7 +532,6 @@ public class GoClientHuman implements GoClient {
 			location = Integer.parseInt(move);
 			
 			//determine what the board looks like after removing stones
-			prevBoards.add(board);
 			board = board.substring(0, location) + color + board.substring(location + 1);
 			board = moveResult.determineNewBoard(board, color);
 			
@@ -522,10 +540,11 @@ public class GoClientHuman implements GoClient {
 			if  (!valid) {
 				clientTUI.showMessage("Your move results in a board that has been seen before. "
 							+ "Please try again.");
-				//remove this last board as the move will be redone and this board not made
-				prevBoards.remove(prevBoards.size() - 1); 
-				continue; //breaks out of this iteration of while loop and starts over.
+				//set board back to previous board, break out of iteration and try again
+				board = boardBeforeMove;
+				continue; 
 			} 
+			//Do not add the board to the previous boards, this is done when the result is received
 			validInput = true;
 		}
 		message = ProtocolMessages.MOVE + ProtocolMessages.DELIMITER + move; 
@@ -544,12 +563,12 @@ public class GoClientHuman implements GoClient {
 		}
 	}
 	
-	public void getResult(String validChar, String newBoard) {
-		//add the board to the list of previous boards
-		prevBoards.add(newBoard);
+	public void getResult(String validChar, String message) {
 		
 		//communicate result to the client
 		if (Character.toString(ProtocolMessages.VALID).equals(validChar)) {
+			//move was valid: the message contains the board.
+			prevBoards.add(message);
 			clientTUI.showMessage("Your move was valid. The board now looks like this: ");
 			for (int d = 0; d < boardDimension; d++) {
 				clientTUI.showMessage(board.substring(d * boardDimension, 
@@ -558,13 +577,55 @@ public class GoClientHuman implements GoClient {
 			clientTUI.showMessage("It's now the other player's turn. Please wait.");
 		} else {
 			clientTUI.showMessage("Your move was invalid. You lose the game.");
-			//TODO add parameter to indicate why the game ended.
+			//show message if added by the server
+			if (message != null) {
+				clientTUI.showMessage("Message from the server: " + message);
+			}
 		}
-		
 	}
 	
-	public void endGame(String[] commands) {
-		//TODO
+	public void endGame(String reasonEnd, String winner, String scoreBlack, String scoreWhite) {
+		//reasonEnd is one character
+		clientTUI.showMessage(reasonEnd);
+		clientTUI.showMessage(winner);
+		clientTUI.showMessage(scoreBlack);
+		clientTUI.showMessage(scoreWhite);
+		
+		switch (reasonEnd.charAt(0)) {
+			case ProtocolMessages.FINISHED:
+				if (winner.equals(Character.toString(color))) {
+					clientTUI.showMessage("Congratulations, you won the game! Score black: " + 
+							scoreBlack + ", score white: " + scoreWhite + ".");
+				} else {
+					clientTUI.showMessage("Too bad, you lost the game! Score black: " + 
+							scoreBlack + ", score white: " + scoreWhite + ".");
+				}
+				break;
+			case ProtocolMessages.DISCONNECT:
+				clientTUI.showMessage("The other player disconnected, you win! " + "Score black " +
+							"was: " + scoreBlack + ", score white: " + scoreWhite + ".");
+				break;
+			case ProtocolMessages.CHEAT:
+				if (winner.equals(Character.toString(color))) {
+					clientTUI.showMessage("You won the game, the other player cheated. Score black:"
+							+ scoreBlack + ", score white: " + scoreWhite + ".");
+				} else {
+					clientTUI.showMessage("Too bad, you lost the game because of an invalid move. " 
+							+ "Score black: " + scoreBlack + ", score white: " + scoreWhite + ".");
+				}
+				break;
+			case ProtocolMessages.QUIT:
+				if (winner.equals(Character.toString(color))) {
+					clientTUI.showMessage("You won the game, the other player quit. Score black:"
+							+ scoreBlack + ", score white: " + scoreWhite + ".");
+				} else {
+					clientTUI.showMessage("Too bad, you lost the game because you quit. " 
+							+ "Score black: " + scoreBlack + ", score white: " + scoreWhite + ".");
+				}
+				break;
+		}
+		
+		//TODO give a chance to play again?
 	}
 	
 	/**

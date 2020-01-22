@@ -75,7 +75,6 @@ public class GameTest {
 		
 		/**
 		 * Test start game.
-		 * This will 
 		 */
 		testGame.startGame();
 		assertThat(stringWriter1.toString(), containsString("G;UUUUUUUUUUUUUUUUUUUUUUUUU;B"));

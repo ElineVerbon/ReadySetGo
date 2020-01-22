@@ -31,6 +31,7 @@ public class Game {
 	private boolean passed = false; //first pass has occurred
 	private boolean firstPlayersTurn = true; //turn of player1
 	private boolean gameEnded = false; //game has ended
+	private char reasonGameEnd;
 	
 	/** The board and all previous boards, represented as strings. */
 	private String board;
@@ -39,8 +40,6 @@ public class Game {
 	/** Set classes to check move results. */
 	private MoveValidator moveValidator = new MoveValidator();
 	private MoveResult moveResult = new MoveResult();
-	
-	
 	
 	/** 
 	 * Constructor, sets game number & creates string representation of the board. 
@@ -127,7 +126,7 @@ public class Game {
 			doTurn();
 		}
 		
-		//TODO end the game.
+		endGame();
 	}
 	
 	/**
@@ -180,10 +179,10 @@ public class Game {
 			return;
 		}
 		if (commands[0].equals("Q")) {
-			//TODO give reason why the game is quit
 			//TODO quit should be able to be called at any moment
-			//now it is only possible in one's turn
-			endGame(ProtocolMessages.QUIT);
+			reasonGameEnd = ProtocolMessages.QUIT;
+			gameEnded = true;
+			return;
 		} else if (commands[0].equals(Character.toString(ProtocolMessages.MOVE))) {
 			move = commands[1];
 		} else if (commands[0].equals("?")) {
@@ -219,56 +218,63 @@ public class Game {
 		
 		boolean valid;
 		char validness = ProtocolMessages.VALID;
+		String invalidMessage = null;
 		
 		/** Check whether the player passed. */
 		if (move.equals(Character.toString(ProtocolMessages.PASS))) {
 			/** Check whether it is the second or the first pass. */
-			if (passed == true) {
+			if (passed) {
 				//second pass: the game is over
 				//TODO decide on how to do this depending on how we decide to in the protocol
 				//i.e. end directly or first finish the turn & send the result
 				gameEnded = true;
-				endGame(ProtocolMessages.FINISHED);
+				reasonGameEnd = ProtocolMessages.FINISHED;
+//				return; //depends on decision protocol
 			} else {
 				passed = true;
-				giveResult(validness);
 			}
-			return;
-		} 
-		
-		/** If player did not pass. */
-		passed = false;
-		
-		//check validity of the move, end game if not valid
-		valid = moveValidator.checkValidityBeforeRemoving(move, boardDimension, board);
-		if (!valid) {
-			validness = ProtocolMessages.INVALID;
-			giveResult(validness);
-			endGame(ProtocolMessages.CHEAT);
-			return;
-		} 
-		
-		prevBoards.add(board);
-		
-		//parse move to an integer (it has already been checked whether that is possible)
-		int location;
-		location = Integer.parseInt(move);
-		
-		//determine what the board looks like after removing stones because of placing the new stone
-		if (firstPlayersTurn) {
-			board = board.substring(0, location) + colorPlayer1 + board.substring(location + 1);
-			board = moveResult.determineNewBoard(board, colorPlayer1);
 		} else {
-			board = board.substring(0, location) + colorPlayer2 + board.substring(location + 1);
-			board = moveResult.determineNewBoard(board, colorPlayer2);
+			/** If player did not pass. */
+			passed = false;
+			
+			//check validity of the move
+			valid = moveValidator.checkValidityBeforeRemoving(move, boardDimension, board);
+			if (!valid) {
+				validness = ProtocolMessages.INVALID;
+				reasonGameEnd = ProtocolMessages.CHEAT;
+				gameEnded = true;
+				invalidMessage = "Your move was invalid (not an integer, outside of board, " +
+							"or location already occupied).";
+			} else {
+			
+				prevBoards.add(board);
+				
+				//parse move to an integer (it has already been checked whether that is possible)
+				int location;
+				location = Integer.parseInt(move);
+				
+				//determine what the board looks like after removing stones
+				if (firstPlayersTurn) {
+					board = board.substring(0, location) + colorPlayer1 + 
+													board.substring(location + 1);
+					board = moveResult.determineNewBoard(board, colorPlayer1);
+				} else {
+					board = board.substring(0, location) + colorPlayer2 + 
+													board.substring(location + 1);
+					board = moveResult.determineNewBoard(board, colorPlayer2);
+				}
+				
+				//check whether the new board is not the same as a previous board
+				valid = moveValidator.checkValidityAfterRemoving(board, prevBoards);
+				if (!valid) {
+					validness = ProtocolMessages.INVALID;
+					reasonGameEnd = ProtocolMessages.CHEAT;
+					gameEnded = true;
+					invalidMessage = "Your move was invalid: it resulted in a board seen before.";
+				} 
+			}
 		}
-		
-		//check whether the new board is not the same as a previous board
-		valid = moveValidator.checkValidityAfterRemoving(board, prevBoards);
-		if (!valid) {
-			validness = ProtocolMessages.INVALID;
-		} 
-		giveResult(validness);
+		giveResult(validness, invalidMessage);
 	}
 	
 	/**
@@ -277,8 +283,8 @@ public class Game {
 	 * @param newBoard, String-representation of the new board.
 	 */
 	
-	public void giveResult(char validness) {
-		String resultMessage = "";
+	public void giveResult(char validness, String invalidMessage) {
+		String resultMessage = null;
 		
 		/** Set result message. */
 		if (validness == ProtocolMessages.VALID) {
@@ -287,7 +293,7 @@ public class Game {
 		} else {
 			//TODO different message with different invalid reasons?
 			resultMessage = ProtocolMessages.RESULT + ProtocolMessages.DELIMITER
-					+ validness + ProtocolMessages.DELIMITER + "Your move was invalid!";
+					+ validness + ProtocolMessages.DELIMITER + invalidMessage;
 		}
 		
 		/** Send the result to the correct player. */
@@ -303,36 +309,38 @@ public class Game {
 	 * 
 	 * @param reason One of the ProtocolMessages indicating the reason for ending the game
 	 */
-	public void endGame(char reason) {
+	public void endGame() {
 		//TODO add ProtocolMessages.DISCONNECT as a possible reason 
 		//to end the game somewhere in the code
 		
-		String winner = "";
-		String scoreBlack = "";
-		String scoreWhite = "";
+		char winner = 'x';
+		int scoreBlack = 0;
+		int scoreWhite = 0;
 		
 		//Decide on winner depending on why the game was ended
-		switch (reason) {
+		switch (reasonGameEnd) {
 			case ProtocolMessages.FINISHED:
-				//TODO
+				//TODO change to actual winner
+				winner = 'B';
 				break;
 			//if one of the other options: the not-current player wins
 			case ProtocolMessages.CHEAT:
 			case ProtocolMessages.DISCONNECT:
 			case ProtocolMessages.QUIT:
 				if (firstPlayersTurn) {
-					winner = namePlayer2;
+					winner = colorPlayer2;
 				} else {
-					winner = namePlayer1;
+					winner = colorPlayer1;
 				}
 				break;
 			default:
 				//TODO should never get here. ProtocolException?
 		}
 		
-		String endOfGameMessage = ProtocolMessages.END + ProtocolMessages.DELIMITER + reason + 
-				ProtocolMessages.DELIMITER + winner + ProtocolMessages.DELIMITER + scoreBlack +
-				ProtocolMessages.DELIMITER + scoreWhite;
+		String endOfGameMessage = ProtocolMessages.END + ProtocolMessages.DELIMITER + reasonGameEnd
+				+ ProtocolMessages.DELIMITER + winner + ProtocolMessages.DELIMITER + 
+				Integer.toString(scoreBlack) + ProtocolMessages.DELIMITER + 
+				Integer.toString(scoreWhite);
 		
 		gameEnded = true;
 		

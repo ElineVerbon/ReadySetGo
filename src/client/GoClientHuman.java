@@ -432,7 +432,11 @@ public class GoClientHuman implements GoClient {
 			char command = line.charAt(0);
 			switch (command) {
 				case 'T':
-					//TODO what to do if that isn't a second component
+					if (commands.length < 2) {
+						throw new ProtocolException("Server response does not comply with " +
+								"the protocol! It did not send the board as part of it's " +
+								"turn message.");
+					}
 					doTurn(commands[1]);
 					break;
 				case 'R' :
@@ -449,7 +453,6 @@ public class GoClientHuman implements GoClient {
 					getResult(validity, message);
 					break;
 				case 'E' :
-					clientTUI.showMessage(line);
 					if (commands.length < 5) {
 						throw new ProtocolException("Server response does not comply with " +
 								"the protocol! It did not contain the necessary five components " +
@@ -466,15 +469,6 @@ public class GoClientHuman implements GoClient {
 							"It did not send a T, R, E or ? as the first part of its message.");
 			}
 		}
-		//wait for turn message from server
-		
-		//print board
-		
-		//get user input about wanted move
-		
-		//check move
-		
-		//send move to server (then start again to wait for turn message)
 	}
 	
 	/**
@@ -502,15 +496,17 @@ public class GoClientHuman implements GoClient {
 		
 		//Ask the client for a move until a valid move is given
 		while (!validInput) {
-			move = clientTUI.getMove("Where do you want to place "
-								+ "your next marker? (Type 'pass' to pass.)");
+			move = clientTUI.getMove();
 			
 			boolean valid;
 			
 			/** Check whether the player passed, if so, break out of loop and send message. */
 			if (move.equals(Character.toString(ProtocolMessages.PASS))) {
 				break;
-			} 
+			} else if (move.equals(Character.toString(ProtocolMessages.QUIT))) {
+				sendToGame(Character.toString(ProtocolMessages.QUIT));
+				return;
+			}
 			
 			/** 
 			 * Check whether move is an integer within the board of an UNOCCUPIED location, 
@@ -586,11 +582,6 @@ public class GoClientHuman implements GoClient {
 	
 	public void endGame(String reasonEnd, String winner, String scoreBlack, String scoreWhite) {
 		//reasonEnd is one character
-		clientTUI.showMessage(reasonEnd);
-		clientTUI.showMessage(winner);
-		clientTUI.showMessage(scoreBlack);
-		clientTUI.showMessage(scoreWhite);
-		
 		switch (reasonEnd.charAt(0)) {
 			case ProtocolMessages.FINISHED:
 				if (winner.equals(Character.toString(color))) {

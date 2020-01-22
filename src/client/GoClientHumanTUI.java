@@ -227,7 +227,7 @@ public class GoClientHumanTUI {
 	 * @param question The question to show to the user
 	 * @return The user input as boolean.
 	 */
-	public String getMove(String question) {
+	public String getMove() {
 		boolean validInput = false;
 		int userInt = -1;
 		String move = "";
@@ -235,21 +235,25 @@ public class GoClientHumanTUI {
 		while (!validInput) {
 			//get userInput about move
 			String userInput = getString("Where do you want to place "
-								+ "your next marker? (Type 'pass' to pass.)");
+					+ "your next marker? (Type 'pass' to pass or 'quit' to quit.)");
 			if  (userInput.equalsIgnoreCase("pass")) {
 				if (getBoolean("Are you sure you want to pass? (yes/no)")) {
 					move = Character.toString(ProtocolMessages.PASS);
 					validInput = true;
 				}
-				
-			} else  {
+			} else  if (userInput.equalsIgnoreCase("quit")) {
+				if (getBoolean("Are you sure you want to quit? (yes/no)")) {
+					move = Character.toString(ProtocolMessages.QUIT);
+					validInput = true;
+				}
+			} else {
 				try  {
 					userInt = Integer.parseInt(userInput);
 					move = Integer.toString(userInt);
 					validInput = true;
 				} catch (NumberFormatException e) {
-					showMessage("Only an integer or 'pass' is accepted. You entered: " + userInput
-		            		           + ". Please try again.");
+					showMessage("Only an integer, 'pass' or 'quit' are accepted. You entered: " + 
+								userInput + ". Please try again.");
 				}
 			}
 		}

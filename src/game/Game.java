@@ -58,6 +58,9 @@ public class Game {
 	 * First player will get what he / she requested, otherwise BLACK, second player will get the 
 	 * remaining color.
 	 * 
+	 * When second player connects, try to send startGame message to the first player to check
+	 * whether he/she didn't disconnect while waiting for the second player.
+	 * 
 	 * Is called by the server, will only be called if the game is not full yet.
 	 * TODO need to synchronize?
 	 * 
@@ -88,24 +91,24 @@ public class Game {
 				}
 			}
 			message = name + " was added to game " + gameNumber + " as the first player.";
-		
-		//if there is already a player in the game
-		} else {
-			namePlayer2 = name;
-			in2 = in;
-			out2 = out;
-			//give player 2 the other color than player 1
-			if (colorPlayer1 == ProtocolMessages.BLACK) {
-				colorPlayer2 = ProtocolMessages.WHITE;
-			} else {
-				colorPlayer2 = ProtocolMessages.BLACK;
-			}
-			complete = true;
-			message = name + " was added to game " + gameNumber + 
-					" as the second player. The game can start!";
+			return message;
 		}
 		
-		//return message to let user of the server know what has happened.
+		//TODO would like to check whether the other player has not disconnected yet
+		
+		//if already a first player, set this player as player 2
+		namePlayer2 = name;
+		in2 = in;
+		out2 = out;
+		//give player 2 the other color than player 1
+		if (colorPlayer1 == ProtocolMessages.BLACK) {
+			colorPlayer2 = ProtocolMessages.WHITE;
+		} else {
+			colorPlayer2 = ProtocolMessages.BLACK;
+		}
+		complete = true;
+		message = name + " was added to game " + gameNumber + 
+				" as the second player. The game can start!";
 		return message;
 	}
 	
@@ -139,12 +142,12 @@ public class Game {
 	 * At the end, it will set the current player to the other player.
      */
 	public void startGame() {
-		//Send start message to both players
+		//Send start messages to the players 
 		String startMessage1 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
 				+ board + ProtocolMessages.DELIMITER + colorPlayer1;
+		sendMessageToClient(startMessage1, out1);
 		String startMessage2 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
 				+ board + ProtocolMessages.DELIMITER + colorPlayer2;
-		sendMessageToClient(startMessage1, out1);
 		sendMessageToClient(startMessage2, out2);
 		
 		//Send first turn to the player whose stones are black

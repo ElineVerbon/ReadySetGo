@@ -145,8 +145,6 @@ public class GoClientHuman implements GoClient {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		//TODO end game?
 	}	
 	
 	
@@ -401,6 +399,11 @@ public class GoClientHuman implements GoClient {
 		clientTUI.showMessage("The game has started! "
 				+ "The board is " + boardDimension + " by " + boardDimension + ". "
 				+ "\nYour color is " + clientsColor + ". Good luck!");
+		
+		//start the GUI
+		gogui = new GoGUIIntegrator(true, true, boardDimension);
+		gogui.startGUI();
+		gogui.setBoardSize(boardDimension);
 	}
 	
 	/** 
@@ -479,9 +482,22 @@ public class GoClientHuman implements GoClient {
 	public void doTurn(String boardBeforeMove) {
 		board = boardBeforeMove;
 		
+		gogui.clearBoard();
+		//go through all chars in the board string
+		for (int c = 0; c < boardDimension * boardDimension; c++) {
+			char thisLocation = board.charAt(c);
+			if (thisLocation == ProtocolMessages.WHITE) {
+				//location = x + y * boardDimension
+				gogui.addStone(c % boardDimension, c / boardDimension, true);
+			} else if (thisLocation == ProtocolMessages.BLACK) {
+				gogui.addStone(c % boardDimension, c / boardDimension, false);
+			}
+		}
+		
 		String move = "";
 		String message;
 		boolean validInput = false;
+		int location = 0;
 		
 		//add the board to the list of previous boards
 		prevBoards.add(board);
@@ -524,7 +540,6 @@ public class GoClientHuman implements GoClient {
 			 * If so, let user try again.
 			 */
 			
-			int location;
 			location = Integer.parseInt(move);
 			
 			//determine what the board looks like after removing stones
@@ -543,6 +558,16 @@ public class GoClientHuman implements GoClient {
 			//Do not add the board to the previous boards, this is done when the result is received
 			validInput = true;
 		}
+		
+		//add stone to GUI if move is not a pass
+		if (!move.equals(Character.toString(ProtocolMessages.PASS))) {
+			//add stone to board
+			int y = location / boardDimension;
+			int x = location % boardDimension;
+			boolean white = color == ProtocolMessages.WHITE;
+			gogui.addStone(x, y, white);
+		}
+		
 		message = ProtocolMessages.MOVE + ProtocolMessages.DELIMITER + move; 
 		sendToGame(message);
 	}

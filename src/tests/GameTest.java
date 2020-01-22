@@ -22,6 +22,7 @@ import game.Game;
  * -removeStonesTest tests whether the board is updated correctly according to removal of stones.
  * -wrongMovesTest tests whether move is outside of board, not an int or the location already taken
  * -repetitionBoardsTest tests whether repetition of boards is found correctly
+ * -quitOnTurnTest tests whether the game ends correctly when a user types 'quit' during turn
  * 
  * TODO:
  * -getScoreTest
@@ -126,7 +127,7 @@ public class GameTest {
 		//Player 1 gets the message that the move is invalid
 		assertThat(stringWriter1.toString(), containsString("R;I"));
 		
-		//TODO end game (and then I can use playGame instead of doTurn a certain amount of times)
+		//TODO end game 
 
 		OUTCONTENT.reset();
 		
@@ -157,7 +158,7 @@ public class GameTest {
 		//Player 2 gets the message that the move is invalid
 		assertThat(stringWriter2.toString(), containsString("R;I"));
 		
-		//TODO end game (and then I can use playGame instead of doTurn a certain amount of times)
+		//TODO end game 
 
 		OUTCONTENT.reset();
 		
@@ -188,7 +189,7 @@ public class GameTest {
 		//Player 1 gets the message that the move is invalid
 		assertThat(stringWriter2.toString(), containsString("R;I"));
 		
-		//TODO end game (and then I can use playGame instead of doTurn a certain amount of times)
+		//TODO end game 
 
 		OUTCONTENT.reset();
 		
@@ -219,7 +220,7 @@ public class GameTest {
 		//Player 2 gets the message that the move is invalid
 		assertThat(stringWriter2.toString(), containsString("R;I"));
 		
-		//TODO end game (and then I can use playGame instead of doTurn a certain amount of times)
+		//TODO end game
 
 		OUTCONTENT.reset();
 	}
@@ -421,6 +422,50 @@ public class GameTest {
 
 		OUTCONTENT.reset();
 	}
+	
+	/**
+	 * Would like to test whether the game ends cleanly after a disconnect.
+	 * However, that's hard: need to give null back, but can only give "null"
+	 * So doesn't work yet
+	 * 
+	 * @throws FileNotFoundException 
+	 */
+	
+//	@Test
+//	void disconnectAfterStartGameTest() throws FileNotFoundException {
+//		Game testGame = new Game(2);
+//		
+//      //Use a file with a command per line to represent the moves of player1
+//		BufferedReader inPlayer1 = new BufferedReader(
+//				new FileReader("src/tests/resources/" +
+//							"disconnectPlayer1AfterStartGameTest_MovesPlayer1.txt"));
+//		StringWriter stringWriter1 = new StringWriter();
+//		BufferedWriter outPlayer1 = new BufferedWriter(stringWriter1);
+//		
+//		//Use a file with a command per line to represent the moves of player2
+//		BufferedReader inPlayer2 = new BufferedReader(
+//				new FileReader("src/tests/resources/" +
+//							"disconnectPlayer1AfterStartGameTest_MovesPlayer2.txt"));
+//		StringWriter stringWriter2 = new StringWriter();
+//		BufferedWriter outPlayer2 = new BufferedWriter(stringWriter2);
+//		
+//		//add players to game
+//		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
+//		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
+//		
+//		testGame.startGame();
+//		//I have 5 lines of commands (3 for player1, 2 for player2)
+//		//first command is used in startGame, so 4 more to go.
+//		for (int x = 0; x < 4; x++) {
+//			testGame.doTurn();
+//		}
+//		//The last board seen by player 2 (B in 18 is not also removed)
+//		assertThat(stringWriter2.toString(), containsString("E;"));
+//		
+//		//TODO end game (and then I can use playGame instead of doTurgn 13 times)
+//
+//		OUTCONTENT.reset();
+//	}
 	
 	@AfterAll
 	static void restoreStream() {

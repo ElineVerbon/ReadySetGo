@@ -237,13 +237,11 @@ public class GoServer implements Runnable {
 		 * start a new game with this player as first player
 		 */
 		String message;
-		int gameNumber;
 		//save the game the player is added to
 		Game game;
 		
 		//if there are no games yet, make a new game, add the client
 		if (games.isEmpty()) {
-			gameNumber = 1;
 			game = setupGoGame();
 			tui.showMessage(game.addPlayer(nameClient, in, out, wantedColor));
 			return game;
@@ -252,13 +250,11 @@ public class GoServer implements Runnable {
 			//if not full, add player to this game
 			Game lastGame = games.get(games.size() - 1);
 			if (!lastGame.getCompleteness()) {
-				gameNumber = games.size();
 				game = lastGame;
 				tui.showMessage(lastGame.addPlayer(nameClient, in, out, wantedColor));
 				return game;
 			//otherwise, start a new game
 			} else {
-				gameNumber = nextGameNo;
 				game = setupGoGame();
 				tui.showMessage(game.addPlayer(nameClient, in, out, wantedColor));
 				return game;

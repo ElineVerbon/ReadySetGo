@@ -236,17 +236,18 @@ public class GameTest {
 	
 	@Test
 	void removeStonesTest() throws FileNotFoundException {
+		/** Remove a line of two and a single captured stone. */
 		Game testGame = new Game(2);
 		
         //Use a file with a command per line to represent the moves of player1 as the bufferedReader
 		BufferedReader inPlayer1 = new BufferedReader(
-				new FileReader("src/tests/resources/removeStonesTest_MovesPlayer1.txt"));
+				new FileReader("src/tests/resources/removeLine2Point1StonesTest_MovesPlayer1.txt"));
 		StringWriter stringWriter1 = new StringWriter();
 		BufferedWriter outPlayer1 = new BufferedWriter(stringWriter1);
 		
 		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
 		BufferedReader inPlayer2 = new BufferedReader(
-				new FileReader("src/tests/resources/removeStonesTest_MovesPlayer2.txt"));
+				new FileReader("src/tests/resources/removeLine2Point1StonesTest_MovesPlayer2.txt"));
 		StringWriter stringWriter2 = new StringWriter();
 		BufferedWriter outPlayer2 = new BufferedWriter(stringWriter2);
 		
@@ -265,8 +266,158 @@ public class GameTest {
 		//The last board seen by player 2 (B in 18 is not also removed)
 		assertThat(stringWriter2.toString(), containsString("R;V;UBBUUBUUBUUBBWUUUWUWWUUWU"));
 		
-		//TODO end game (and then I can use playGame instead of doTurgn 13 times)
-
+		OUTCONTENT.reset();
+		
+		/** Remove a corner stone. */
+		testGame = new Game(2);
+		
+        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
+		inPlayer1 = new BufferedReader(
+				new FileReader("src/tests/resources/removeCornerStoneTest_MovesPlayer1.txt"));
+		stringWriter1 = new StringWriter();
+		outPlayer1 = new BufferedWriter(stringWriter1);
+		
+		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
+		inPlayer2 = new BufferedReader(
+				new FileReader("src/tests/resources/removeCornerStoneTest_MovesPlayer2.txt"));
+		stringWriter2 = new StringWriter();
+		outPlayer2 = new BufferedWriter(stringWriter2);
+		
+		//add players to game
+		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
+		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
+		
+		testGame.startGame();
+		//I have 3 lines of commands (2 for player1, 1 for player2)
+		//first command is used in startGame, so 2 more to go.
+		for (int x = 0; x < 2; x++) {
+			testGame.doTurn();
+		}
+		//The last board seen by player 1
+		assertThat(stringWriter1.toString(), containsString("R;V;UBUUUBUUUUUUUUUUUUUUUUUUU"));
+		//The last board seen by player 2
+		assertThat(stringWriter2.toString(), containsString("R;V;WBUUUUUUUUUUUUUUUUUUUUUUU"));
+		
+		OUTCONTENT.reset();
+		
+		/** 
+		 * Remove a block of 2 by 2 in the middle. 
+		 * 
+		 * UUBBU	 UUBBU
+		 * UBWWB	 UBUUB
+		 * UBWWB --> UBUUB
+		 * UUBBU	 UUBBU
+		 * WWWUU	 WWWUU
+		 */
+		testGame = new Game(2);
+		
+        //Use a file with a command per line to represent the moves of player1
+		inPlayer1 = new BufferedReader(
+				new FileReader("src/tests/resources/remove2by2Test_MovesPlayer1.txt"));
+		stringWriter1 = new StringWriter();
+		outPlayer1 = new BufferedWriter(stringWriter1);
+		
+		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
+		inPlayer2 = new BufferedReader(
+				new FileReader("src/tests/resources/remove2by2Test_MovesPlayer2.txt"));
+		stringWriter2 = new StringWriter();
+		outPlayer2 = new BufferedWriter(stringWriter2);
+		
+		//add players to game
+		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
+		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
+		
+		testGame.startGame();
+		//I have 15 lines of commands (8 for player1, 7 for player2)
+		//first command is used in startGame, so 14 more to go.
+		for (int x = 0; x < 14; x++) {
+			testGame.doTurn();
+		}
+		//The last board seen by player 1
+		assertThat(stringWriter1.toString(), containsString("R;V;UUBBUUBUUBUBUUBUUBBUWWWUU"));
+		//The last board seen by player 2
+		assertThat(stringWriter2.toString(), containsString("R;V;UUBBUUBWWBUBWWBUUBUUWWWUU"));
+		
+		OUTCONTENT.reset();
+		
+		/** 
+		 * Remove a block of 5 stones in the middle.
+		 * 
+		 * UUBBU	 UUBBU
+		 * UBWWB	 UBUUB
+		 * BWWWB --> BUUUB
+		 * UBBBU	 UBBBU
+		 * WWWUU	 WWWUU
+		 */
+		testGame = new Game(2);
+		
+        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
+		inPlayer1 = new BufferedReader(
+				new FileReader("src/tests/resources/remove5Test_MovesPlayer1.txt"));
+		stringWriter1 = new StringWriter();
+		outPlayer1 = new BufferedWriter(stringWriter1);
+		
+		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
+		inPlayer2 = new BufferedReader(
+				new FileReader("src/tests/resources/remove5Test_MovesPlayer2.txt"));
+		stringWriter2 = new StringWriter();
+		outPlayer2 = new BufferedWriter(stringWriter2);
+		
+		//add players to game
+		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
+		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
+		
+		testGame.startGame();
+		//I have 17 lines of commands (8 for player1, 7 for player2)
+		//first command is used in startGame, so 14 more to go.
+		for (int x = 0; x < 16; x++) {
+			testGame.doTurn();
+		}
+		//The last board seen by player 1
+		assertThat(stringWriter1.toString(), containsString("R;V;UUBBUUBUUBBUUUBUBBBUWWWUU"));
+		//The last board seen by player 2
+		assertThat(stringWriter2.toString(), containsString("R;V;UUBBUUBWWBBWWWBUBBUUWWWUU"));
+		
+		OUTCONTENT.reset();
+		
+		/** 
+		 * Remove a block of 2 by 2 on the side. 
+		 * 
+		 * UBWWB	 UBUUB
+		 * UBWWB --> UBUUB
+		 * UUBBU	 UUBBU
+		 * WWUUU	 WWUUU
+		 * UUUUU	 UUUUU
+		 */
+		testGame = new Game(2);
+		
+        //Use a file with a command per line to represent the moves of player1
+		inPlayer1 = new BufferedReader(
+				new FileReader("src/tests/resources/remove2by2sideTest_MovesPlayer1.txt"));
+		stringWriter1 = new StringWriter();
+		outPlayer1 = new BufferedWriter(stringWriter1);
+		
+		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
+		inPlayer2 = new BufferedReader(
+				new FileReader("src/tests/resources/remove2by2sideTest_MovesPlayer2.txt"));
+		stringWriter2 = new StringWriter();
+		outPlayer2 = new BufferedWriter(stringWriter2);
+		
+		//add players to game
+		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
+		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
+		
+		testGame.startGame();
+		//I have 15 lines of commands (8 for player1, 7 for player2)
+		//first command is used in startGame, so 14 more to go.
+		for (int x = 0; x < 14; x++) {
+			testGame.doTurn();
+		}
+		//The last board seen by player 1
+		assertThat(stringWriter1.toString(), containsString("R;V;UBUUBUBUUBUUBBUWWUUUUUUUU"));
+		//The last board seen by player 2
+		assertThat(stringWriter2.toString(), containsString("R;V;UBWWBUBWWBUUBUUWWUUUUUUUU"));
+		
 		OUTCONTENT.reset();
 	}
 	

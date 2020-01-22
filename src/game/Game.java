@@ -173,6 +173,13 @@ public class Game {
 			reply = sendAndReceiveMessage(turnMessage, out2, in2);
 		}
 		
+		if (reply == null) {
+			//if player disconnected, end game
+			reasonGameEnd = ProtocolMessages.DISCONNECT;
+			gameEnded = true;
+			return;
+		}
+		
 		String[] commands = reply.split(ProtocolMessages.DELIMITER);
 		if (commands[0].length() != 1) {
 			//TODO return invalid command
@@ -372,7 +379,7 @@ public class Game {
 			out.newLine();
 			out.flush();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			//TODO auto-generated
 			e.printStackTrace();
 		}
 	}
@@ -388,7 +395,7 @@ public class Game {
 			out.flush();
 			reply = in.readLine();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			//TODO auto-generated
 			e.printStackTrace();
 		}
 		return reply;

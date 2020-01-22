@@ -348,10 +348,19 @@ public class Game {
 				Integer.toString(scoreBlack) + ProtocolMessages.DELIMITER + 
 				Integer.toString(scoreWhite);
 		
-		gameEnded = true;
+		//in case of a disconnect, only send the end-of-game message to the not disconnected player
+		if (reasonGameEnd == ProtocolMessages.DISCONNECT ) {
+			if (firstPlayersTurn) {
+				sendMessageToClient(endOfGameMessage, out2);
+			} else {
+				sendMessageToClient(endOfGameMessage, out1);
+			}
+		} else {
+			//otherwise, send to both players
+			sendMessageToClient(endOfGameMessage, out1);
+			sendMessageToClient(endOfGameMessage, out2);
+		}
 		
-		sendMessageToClient(endOfGameMessage, out1);
-		sendMessageToClient(endOfGameMessage, out2);
 		//TODO add possibility to play another game against the same player?
 	}
 	

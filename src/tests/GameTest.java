@@ -2,6 +2,7 @@ package tests;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.CoreMatchers.not;
 
 import java.io.*;
 
@@ -360,6 +361,63 @@ public class GameTest {
 		testGame.endGame();
 		//TODO change once I can calculate score!
 		assertThat(stringWriter1.toString(), containsString("E;F;B;0;0"));
+
+		OUTCONTENT.reset();
+	}
+	
+	@Test
+	void quitOnTurnTest() throws FileNotFoundException {
+		Game testGame = new Game(2);
+		
+        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
+		BufferedReader inPlayer1 = new BufferedReader(
+				new FileReader("src/tests/resources/quitOnTurnPlayer2Test_MovesPlayer1.txt"));
+		StringWriter stringWriter1 = new StringWriter();
+		BufferedWriter outPlayer1 = new BufferedWriter(stringWriter1);
+		
+		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
+		BufferedReader inPlayer2 = new BufferedReader(
+				new FileReader("src/tests/resources/quitOnTurnPlayer2Test_MovesPlayer2.txt"));
+		StringWriter stringWriter2 = new StringWriter();
+		BufferedWriter outPlayer2 = new BufferedWriter(stringWriter2);
+		
+		//add players to game
+		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
+		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
+		
+		testGame.startGame(); //first turn player1 (3)
+		assertThat(stringWriter1.toString(), containsString("R;V;UUUBUUUUUUUUUUUUUUUUUUUUU"));
+		
+		testGame.doTurn(); //first turn player2 (Q)
+		assertThat(stringWriter2.toString(), not(containsString("R;V;UUUBUUUUUUUUUUUUUUUUUUUUU")));
+		testGame.endGame();
+		assertThat(stringWriter2.toString(), containsString("E;Q;B;0;0")); //black wins
+
+		OUTCONTENT.reset();
+		
+		testGame = new Game(2);
+		
+        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
+		inPlayer1 = new BufferedReader(
+				new FileReader("src/tests/resources/quitOnTurnPlayer1Test_MovesPlayer1.txt"));
+		stringWriter1 = new StringWriter();
+		outPlayer1 = new BufferedWriter(stringWriter1);
+		
+		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
+		inPlayer2 = new BufferedReader(
+				new FileReader("src/tests/resources/quitOnTurnPlayer1Test_MovesPlayer2.txt"));
+		stringWriter2 = new StringWriter();
+		outPlayer2 = new BufferedWriter(stringWriter2);
+		
+		//add players to game
+		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
+		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
+		
+		testGame.startGame(); //first turn player1 (3)
+		assertThat(stringWriter1.toString(), not(containsString("R")));
+		
+		testGame.endGame();
+		assertThat(stringWriter2.toString(), containsString("E;Q;W;0;0")); //white wins
 
 		OUTCONTENT.reset();
 	}

@@ -32,6 +32,7 @@ public class Game {
 	private boolean firstPlayersTurn = true; //turn of player1
 	private boolean gameEnded = false; //game has ended
 	private char reasonGameEnd;
+	private String opponentsMove = null;
 	
 	/** The board and all previous boards, represented as strings. */
 	private String board;
@@ -165,7 +166,8 @@ public class Game {
 	 */
 	public void doTurn() {
 		// Set turn message.
-		String turnMessage = ProtocolMessages.TURN + ProtocolMessages.DELIMITER + board;
+		String turnMessage = ProtocolMessages.TURN + ProtocolMessages.DELIMITER + board + 
+						ProtocolMessages.DELIMITER + opponentsMove;
 		String reply;
 		String move = "";
 		
@@ -283,6 +285,9 @@ public class Game {
 				} 
 			}
 		}
+		
+		//at this point in the code, the move was valid. Save
+		opponentsMove = move;
 		giveResult(validness, invalidMessage);
 	}
 	

@@ -435,12 +435,13 @@ public class GoClientHuman implements GoClient {
 			char command = line.charAt(0);
 			switch (command) {
 				case 'T':
-					if (commands.length < 2) {
+					if (commands.length < 3) {
 						throw new ProtocolException("Server response does not comply with " +
-								"the protocol! It did not send the board as part of it's " +
-								"turn message.");
+								"the protocol! It did not send the board and the opponent's move " +
+								"as part of it's turn message.");
 					}
-					doTurn(commands[1]);
+					String opponentsMove = commands[2];
+					doTurn(commands[1], opponentsMove);
 					break;
 				case 'R' :
 					//check whether the other components are included and if so, use them
@@ -479,8 +480,24 @@ public class GoClientHuman implements GoClient {
 	 * 
 	 * @param board
 	 */
-	public void doTurn(String boardBeforeMove) {
+	public void doTurn(String boardBeforeMove, String opponentsMove) {
 		board = boardBeforeMove;
+		
+		//TODO add the score here!
+		if (opponentsMove.equals("null")) {
+			clientTUI.showMessage("\nYou get the first move! " + 
+					"Please check the GUI for the board size.");
+		} else {
+			if (opponentsMove.equals(Character.toString(ProtocolMessages.PASS))) {
+				clientTUI.showMessage("\nThe other player passed." + 
+						"If you pass as well, the game is over.");
+			} else {
+				int location = Integer.parseInt(opponentsMove);
+				clientTUI.showMessage("\nThe other player placed a stone in location " + location +
+					". Please check the GUI for the current board state.");
+			}
+			
+		}
 		
 		gogui.clearBoard();
 		//go through all chars in the board string
@@ -501,14 +518,6 @@ public class GoClientHuman implements GoClient {
 		
 		//add the board to the list of previous boards
 		prevBoards.add(board);
-		
-		//Show the board to the client
-		//TODO this should be a GUI
-		clientTUI.showMessage("\nIt's your turn! The board currently looks like this:");
-		for (int d = 0; d < boardDimension; d++) {
-			clientTUI.showMessage(board.substring(d * boardDimension, 
-					(d + 1) * boardDimension));
-		}
 		
 		//Ask the client for a move until a valid move is given
 		while (!validInput) {
@@ -590,10 +599,17 @@ public class GoClientHuman implements GoClient {
 		if (Character.toString(ProtocolMessages.VALID).equals(validChar)) {
 			//move was valid: the message contains the board.
 			prevBoards.add(message);
-			clientTUI.showMessage("Your move was valid. The board now looks like this: ");
-			for (int d = 0; d < boardDimension; d++) {
-				clientTUI.showMessage(board.substring(d * boardDimension, 
-						(d + 1) * boardDimension));
+			clientTUI.showMessage("Your move was valid. Check GUI for what the board looks like.");
+			gogui.clearBoard();
+			//go through all chars in the board string
+			for (int c = 0; c < boardDimension * boardDimension; c++) {
+				char thisLocation = board.charAt(c);
+				if (thisLocation == ProtocolMessages.WHITE) {
+					//location = x + y * boardDimension
+					gogui.addStone(c % boardDimension, c / boardDimension, true);
+				} else if (thisLocation == ProtocolMessages.BLACK) {
+					gogui.addStone(c % boardDimension, c / boardDimension, false);
+				}
 			}
 			clientTUI.showMessage("It's now the other player's turn. Please wait.");
 		} else {

@@ -59,15 +59,13 @@ public class GameTest {
 		
         //Use a file with a command per line to represent the moves of player1 as the bufferedReader
 		BufferedReader inPlayer1 = new BufferedReader(
-				new FileReader("/Users/eline.verbon/workspaces/proeftuin/FinalAssignment1"
-						+ "/src/tests/resources/startGameTest_MovesPlayer1.txt"));
+				new FileReader("src/tests/resources/startGameTest_MovesPlayer1.txt"));
 		StringWriter stringWriter1 = new StringWriter();
 		BufferedWriter outPlayer1 = new BufferedWriter(stringWriter1);
 		
 		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
 		BufferedReader inPlayer2 = new BufferedReader(
-				new FileReader("/Users/eline.verbon/workspaces/proeftuin/FinalAssignment1"
-						+ "/src/tests/resources/startGameTest_MovesPlayer2.txt"));
+				new FileReader("src/tests/resources/startGameTest_MovesPlayer2.txt"));
 		StringWriter stringWriter2 = new StringWriter();
 		BufferedWriter outPlayer2 = new BufferedWriter(stringWriter2);
 		
@@ -109,15 +107,13 @@ public class GameTest {
 		
         //Use a file with a command per line to represent the moves of player1 as the bufferedReader
 		BufferedReader inPlayer1 = new BufferedReader(
-				new FileReader("/Users/eline.verbon/workspaces/proeftuin/FinalAssignment1"
-						+ "/src/tests/resources/wrongMovesTest_Player1outsideBoardPlayer1.txt"));
+			   new FileReader("src/tests/resources/wrongMovesTest_Player1outsideBoardPlayer1.txt"));
 		StringWriter stringWriter1 = new StringWriter();
 		BufferedWriter outPlayer1 = new BufferedWriter(stringWriter1);
 		
 		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
 		BufferedReader inPlayer2 = new BufferedReader(
-				new FileReader("/Users/eline.verbon/workspaces/proeftuin/FinalAssignment1"
-						+ "/src/tests/resources/wrongMovesTest_Player1outsideBoardPlayer2.txt"));
+			   new FileReader("src/tests/resources/wrongMovesTest_Player1outsideBoardPlayer2.txt"));
 		StringWriter stringWriter2 = new StringWriter();
 		BufferedWriter outPlayer2 = new BufferedWriter(stringWriter2);
 		
@@ -141,15 +137,13 @@ public class GameTest {
 		
         //Use a file with a command per line to represent the moves of player1 as the bufferedReader
 		inPlayer1 = new BufferedReader(
-				new FileReader("/Users/eline.verbon/workspaces/proeftuin/FinalAssignment1"
-						+ "/src/tests/resources/wrongMovesTest_Player2outsideBoardPlayer1.txt"));
+			   new FileReader("src/tests/resources/wrongMovesTest_Player2outsideBoardPlayer1.txt"));
 		stringWriter1 = new StringWriter();
 		outPlayer1 = new BufferedWriter(stringWriter1);
 		
 		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
 		inPlayer2 = new BufferedReader(
-				new FileReader("/Users/eline.verbon/workspaces/proeftuin/FinalAssignment1"
-						+ "/src/tests/resources/wrongMovesTest_Player2outsideBoardPlayer2.txt"));
+			   new FileReader("src/tests/resources/wrongMovesTest_Player2outsideBoardPlayer2.txt"));
 		stringWriter2 = new StringWriter();
 		outPlayer2 = new BufferedWriter(stringWriter2);
 		
@@ -174,15 +168,13 @@ public class GameTest {
 		
         //Use a file with a command per line to represent the moves of player1 as the bufferedReader
 		inPlayer1 = new BufferedReader(
-				new FileReader("/Users/eline.verbon/workspaces/proeftuin/FinalAssignment1"
-						+ "/src/tests/resources/wrongMovesTest_spotAlreadyTakenPlayer1.txt"));
+				new FileReader("src/tests/resources/wrongMovesTest_spotAlreadyTakenPlayer1.txt"));
 		stringWriter1 = new StringWriter();
 		outPlayer1 = new BufferedWriter(stringWriter1);
 		
 		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
 		inPlayer2 = new BufferedReader(
-				new FileReader("/Users/eline.verbon/workspaces/proeftuin/FinalAssignment1"
-						+ "/src/tests/resources/wrongMovesTest_spotAlreadyTakenPlayer2.txt"));
+				new FileReader("src/tests/resources/wrongMovesTest_spotAlreadyTakenPlayer2.txt"));
 		stringWriter2 = new StringWriter();
 		outPlayer2 = new BufferedWriter(stringWriter2);
 		
@@ -207,15 +199,13 @@ public class GameTest {
 		
         //Use a file with a command per line to represent the moves of player1 as the bufferedReader
 		inPlayer1 = new BufferedReader(
-				new FileReader("/Users/eline.verbon/workspaces/proeftuin/FinalAssignment1"
-						+ "/src/tests/resources/wrongMovesTest_notIntegerPlayer1.txt"));
+				new FileReader("src/tests/resources/wrongMovesTest_notIntegerPlayer1.txt"));
 		stringWriter1 = new StringWriter();
 		outPlayer1 = new BufferedWriter(stringWriter1);
 		
 		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
 		inPlayer2 = new BufferedReader(
-				new FileReader("/Users/eline.verbon/workspaces/proeftuin/FinalAssignment1"
-						+ "/src/tests/resources/wrongMovesTest_notIntegerPlayer2.txt"));
+				new FileReader("src/tests/resources/wrongMovesTest_notIntegerPlayer2.txt"));
 		stringWriter2 = new StringWriter();
 		outPlayer2 = new BufferedWriter(stringWriter2);
 		
@@ -249,15 +239,13 @@ public class GameTest {
 		
         //Use a file with a command per line to represent the moves of player1 as the bufferedReader
 		BufferedReader inPlayer1 = new BufferedReader(
-				new FileReader("/Users/eline.verbon/workspaces/proeftuin/FinalAssignment1"
-						+ "/src/tests/resources/removeStonesTest_MovesPlayer1.txt"));
+				new FileReader("src/tests/resources/removeStonesTest_MovesPlayer1.txt"));
 		StringWriter stringWriter1 = new StringWriter();
 		BufferedWriter outPlayer1 = new BufferedWriter(stringWriter1);
 		
 		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
 		BufferedReader inPlayer2 = new BufferedReader(
-				new FileReader("/Users/eline.verbon/workspaces/proeftuin/FinalAssignment1"
-						+ "/src/tests/resources/removeStonesTest_MovesPlayer2.txt"));
+				new FileReader("src/tests/resources/removeStonesTest_MovesPlayer2.txt"));
 		StringWriter stringWriter2 = new StringWriter();
 		BufferedWriter outPlayer2 = new BufferedWriter(stringWriter2);
 		
@@ -296,15 +284,13 @@ public class GameTest {
 		
         //Use a file with a command per line to represent the moves of player1 as the bufferedReader
 		BufferedReader inPlayer1 = new BufferedReader(
-				new FileReader("/Users/eline.verbon/workspaces/proeftuin/FinalAssignment1"
-						+ "/src/tests/resources/repetitionBoardTest_Player1.txt"));
+				new FileReader("src/tests/resources/repetitionBoardTest_Player1.txt"));
 		StringWriter stringWriter1 = new StringWriter();
 		BufferedWriter outPlayer1 = new BufferedWriter(stringWriter1);
 		
 		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
 		BufferedReader inPlayer2 = new BufferedReader(
-				new FileReader("/Users/eline.verbon/workspaces/proeftuin/FinalAssignment1"
-						+ "/src/tests/resources/repetitionBoardTest_Player2.txt"));
+				new FileReader("src/tests/resources/repetitionBoardTest_Player2.txt"));
 		StringWriter stringWriter2 = new StringWriter();
 		BufferedWriter outPlayer2 = new BufferedWriter(stringWriter2);
 		

@@ -319,13 +319,49 @@ public class GameTest {
 	
 	/**
 	 * Test whether two passes in a row lead to and end of game.
-	 * (And that two passes not in a row do not lead to an end of game.
+	 * And that two passes not in a row do not lead to an end of game.
 	 * 
 	 * @throws FileNotFoundException
 	 */
 	@Test
 	void twoPassesTest() throws FileNotFoundException {
+		Game testGame = new Game(2);
 		
+        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
+		BufferedReader inPlayer1 = new BufferedReader(
+				new FileReader("src/tests/resources/twoPassesTest_MovesPlayer1.txt"));
+		StringWriter stringWriter1 = new StringWriter();
+		BufferedWriter outPlayer1 = new BufferedWriter(stringWriter1);
+		
+		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
+		BufferedReader inPlayer2 = new BufferedReader(
+				new FileReader("src/tests/resources/twoPassesTest_MovesPlayer2.txt"));
+		StringWriter stringWriter2 = new StringWriter();
+		BufferedWriter outPlayer2 = new BufferedWriter(stringWriter2);
+		
+		//add players to game
+		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
+		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
+		
+		testGame.startGame(); //first turn player1 (P)
+		assertThat(stringWriter1.toString(), containsString("R;V;UUUUUUUUUUUUUUUUUUUUUUUUU"));
+		
+		testGame.doTurn(); //first turn player2 (6)
+		assertThat(stringWriter2.toString(), containsString("R;V;UUUUUUWUUUUUUUUUUUUUUUUUU"));
+		
+		testGame.doTurn(); //second turn player1 (3)
+		assertThat(stringWriter1.toString(), containsString("R;V;UUUBUUWUUUUUUUUUUUUUUUUUU"));
+		
+		testGame.doTurn(); //second turn player2 (P) - second pass, but not consecutive
+		assertThat(stringWriter2.toString(), containsString("R;V;UUUBUUWUUUUUUUUUUUUUUUUUU"));
+		
+		testGame.doTurn(); //third turn player1 (P) - second consecutive pass
+		assertThat(stringWriter1.toString(), containsString("R;V;UUUBUUWUUUUUUUUUUUUUUUUUU"));
+		testGame.endGame();
+		//TODO change once I can calculate score!
+		assertThat(stringWriter1.toString(), containsString("E;F;B;0;0"));
+
+		OUTCONTENT.reset();
 	}
 	
 	@AfterAll

@@ -222,9 +222,8 @@ public class Game {
 		
 		/** Check whether the player passed. */
 		if (move.equals(Character.toString(ProtocolMessages.PASS))) {
-			/** Check whether it is the second or the first pass. */
+			/** If second pass, game is over. Return result, then end doTurn loop. */
 			if (passed) {
-				//second pass: the game is over
 				//TODO decide on how to do this depending on how we decide to in the protocol
 				//i.e. end directly or first finish the turn & send the result
 				gameEnded = true;

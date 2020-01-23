@@ -36,7 +36,7 @@ public class MoveResult {
 	private List<Integer> checkedStonesThisColor;
 	
 	/**
-	 * Determine what the board looks like after a stone is placed.
+	 * Determine which stones are captured and should be removed.
 	 * 
 	 * First check the not-current-player's color for captured stones,
 	 * as capturing of a group goes before suicide.
@@ -88,15 +88,17 @@ public class MoveResult {
 	 */
 	public void checkStonesOfOneColor(char currentlyCheckedColor) {
 		
-		//go from top left to bottom right to check for capture of a group
+		//go through all stones from top left to bottom
 		for (int x = 0; x < boardDimension; x++) {
 			for (int y = 0; y < boardDimension; y++) {
-				//get the corresponding number of the string representation. 
-				//only check it if it has not been checked as part of another group yet
+				//get the location within the string representation. 
 				int numberInStringRepresentation = x  + y * boardDimension;
+				
+				//if this location has been already seen as part of another group: go to next y
 				if (checkedStonesThisColor.contains(numberInStringRepresentation)) {
-					break;
+					continue;
 				}
+				//add it to the checked places, indepedent of the color
 				checkedPlaces.add(numberInStringRepresentation);
 				
 				//check whether this location has a stone of the currently checked color

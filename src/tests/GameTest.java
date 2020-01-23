@@ -2,6 +2,8 @@ package tests;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.hamcrest.CoreMatchers.not;
 
 import java.io.*;
@@ -11,6 +13,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import game.Game;
+import movechecker.MoveResult;
+import protocol.ProtocolMessages;
 
 /**
  * This class will test whether the Game responds correctly to certain responses of players.
@@ -235,190 +239,199 @@ public class GameTest {
 	 */
 	
 	@Test
-	void removeStonesTest() throws FileNotFoundException {
-		/** Remove a line of two and a single captured stone. */
-		Game testGame = new Game(2);
+	void removeStonesTest() {
+		MoveResult moveResult = new MoveResult();
+		String oldBoard;
+		String expectedNewBoard;
+		String newBoard;
 		
-        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
-		BufferedReader inPlayer1 = new BufferedReader(
-				new FileReader("src/tests/resources/removeLine2Point1StonesTest_MovesPlayer1.txt"));
-		StringWriter stringWriter1 = new StringWriter();
-		BufferedWriter outPlayer1 = new BufferedWriter(stringWriter1);
-		
-		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
-		BufferedReader inPlayer2 = new BufferedReader(
-				new FileReader("src/tests/resources/removeLine2Point1StonesTest_MovesPlayer2.txt"));
-		StringWriter stringWriter2 = new StringWriter();
-		BufferedWriter outPlayer2 = new BufferedWriter(stringWriter2);
-		
-		//add players to game
-		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
-		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
-		
-		testGame.startGame();
-		//I have 14 lines of commands (7 for player1, 7 for player2)
-		//first command is used in startGame, so 13 more to go.
-		for (int x = 0; x < 13; x++) {
-			testGame.doTurn();
-		}
-		//The last board seen by player 1 (W in 6 and 7 is removed, B in 18 not yet removed)
-		assertThat(stringWriter1.toString(), containsString("R;V;UBBUUBUUBUUBBWUUUWBWWUUUU"));
-		//The last board seen by player 2 (B in 18 is not also removed)
-		assertThat(stringWriter2.toString(), containsString("R;V;UBBUUBUUBUUBBWUUUWUWWUUWU"));
-		
-		OUTCONTENT.reset();
-		
-		/** Remove a corner stone. */
-		testGame = new Game(2);
-		
-        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
-		inPlayer1 = new BufferedReader(
-				new FileReader("src/tests/resources/removeCornerStoneTest_MovesPlayer1.txt"));
-		stringWriter1 = new StringWriter();
-		outPlayer1 = new BufferedWriter(stringWriter1);
-		
-		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
-		inPlayer2 = new BufferedReader(
-				new FileReader("src/tests/resources/removeCornerStoneTest_MovesPlayer2.txt"));
-		stringWriter2 = new StringWriter();
-		outPlayer2 = new BufferedWriter(stringWriter2);
-		
-		//add players to game
-		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
-		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
-		
-		testGame.startGame();
-		//I have 3 lines of commands (2 for player1, 1 for player2)
-		//first command is used in startGame, so 2 more to go.
-		for (int x = 0; x < 2; x++) {
-			testGame.doTurn();
-		}
-		//The last board seen by player 1
-		assertThat(stringWriter1.toString(), containsString("R;V;UBUUUBUUUUUUUUUUUUUUUUUUU"));
-		//The last board seen by player 2
-		assertThat(stringWriter2.toString(), containsString("R;V;WBUUUUUUUUUUUUUUUUUUUUUUU"));
-		
-		OUTCONTENT.reset();
+//		/** 
+//		 * Remove a corner. 
+//		 * 
+//		 * WBUUU	 UBUUU
+//		 * BUUUU	 BUUUU
+//		 * UUUUU --> UUUUU
+//		 * UUUUU	 UUUUU
+//		 * UUUUU	 UUUUU
+//		 */
+//		oldBoard = "WBUUUBUUUUUUUUUUUUUUUUUUU";
+//		expectedNewBoard = "UBUUUBUUUUUUUUUUUUUUUUUUU";
+//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+//		assertTrue(newBoard.equals(expectedNewBoard));
+//		
+//		/** 
+//		 * Remove other color corner. 
+//		 * 
+//		 * BWUUU	 UWUUU
+//		 * WUUUU	 WUUUU
+//		 * UUUUU --> UUUUU
+//		 * UUUUU	 UUUUU
+//		 * UUUUU	 UUUUU
+//		 */
+//		oldBoard = "BWUUUWUUUUUUUUUUUUUUUUUUU";
+//		expectedNewBoard = "UWUUUWUUUUUUUUUUUUUUUUUUU";
+//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+//		assertTrue(newBoard.equals(expectedNewBoard));
+//		
+//		/** 
+//		 * Remove bigger corner. 
+//		 * 
+//		 * UUUUU	 UUUUU
+//		 * UUUUU	 UUUUU
+//		 * UUUUU --> UUUUU
+//		 * UUUWW	 UUUWW
+//		 * UUWBB	 UUWUU
+//		 */
+//		oldBoard = "UUUUUUUUUUUUUUUUUUWWUUWBB";
+//		expectedNewBoard = "UUUUUUUUUUUUUUUUUUWWUUWUU";
+//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+//		assertTrue(newBoard.equals(expectedNewBoard));
+//		
+//		/** 
+//		 * Remove a block of 2 by 2 on the side. 
+//		 * 
+//		 * UBWWB	 UBUUB
+//		 * UBWWB --> UBUUB
+//		 * UUBBU	 UUBBU
+//		 * WWUUU	 WWUUU
+//		 * UUUUU	 UUUUU
+//		 */
+//		oldBoard = "UBWWBUBWWBUUBBUWWUUUUUUUU";
+//		expectedNewBoard = "UBUUBUBUUBUUBBUWWUUUUUUUU";
+//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+//		assertTrue(newBoard.equals(expectedNewBoard));
+//		
+//		/** 
+//		 * Remove a circle in the middle. 
+//		 * 
+//		 * UUUUUU		UUUUUU
+//		 * UBBBBU		UBBBBU
+//		 * BWWWWB --->  BUUUUB
+//		 * BWWWWB		BUUUUB
+//		 * UBBBBU		UBBBBU
+//		 * UUUUUU		UUUUUU
+//		 */
+//		oldBoard = "UUUUUUUBBBBUBWWWWBBWWWWBUBBBBUUUUUUU";
+//		expectedNewBoard = "UUUUUUUBBBBUBUUUUBBUUUUBUBBBBUUUUUUU";
+//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+//		assertTrue(newBoard.equals(expectedNewBoard));
+//		
+//		/** 
+//		 * Do not remove a circle in the middle (one liberty). 
+//		 * 
+//		 * UUUUUU		UUUUUU
+//		 * UBBBBU		UBBBBU
+//		 * BWWWWU --->  BUUUUU
+//		 * BWWWWB		BUUUUB
+//		 * UBBBBU		UBBBBU
+//		 * UUUUUU		UUUUUU
+//		 */
+//		oldBoard = "UUUUUUUBBBBUBWWWWUBWWWWBUBBBBUUUUUUU";
+//		expectedNewBoard = "UUUUUUUBBBBUBUUUUUBUUUUBUBBBBUUUUUUU";
+//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+//		assertFalse(newBoard.equals(expectedNewBoard));
+//		
+//		/** 
+//		 * Remove a donut. 
+//		 * 
+//		 * UBBBBU		UBBBBU
+//		 * BWWWWB		BUUUUB
+//		 * BWWWWB --->  BUUUUB
+//		 * BWBBWB		BUBBUB
+//		 * BWWWWB		BUUUUB
+//		 * UBBBBU		UBBBBU
+//		 */
+//		oldBoard = "UBBBBUBWWWWBBWWWWBBWBBWBBWWWWBUBBBBU";
+//		expectedNewBoard = "UBBBBUBUUUUBBUUUUBBUBBUBBUUUUBUBBBBU";
+//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+//		assertTrue(newBoard.equals(expectedNewBoard));
+//		
+//		/** 
+//		 * Do not remove a donut. 
+//		 * 
+//		 * UBBBBU		UBBBBU
+//		 * BWWWWB		BUUUUB
+//		 * BWWWWB --->  BUUUUB
+//		 * BWUUWB		BUUUUB
+//		 * BWWWWB		BUUUUB
+//		 * UBBBBU		UBBBBU
+//		 */
+//		oldBoard = "UBBBBUBWWWWBBWWWWBBWUUWBBWWWWBUBBBBU";
+//		expectedNewBoard = "UBBBBUBUUUUBBUUUUBBUUUUBBUUUUBUBBBBU";
+//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+//		assertFalse(newBoard.equals(expectedNewBoard));
+//		
+//		/** 
+//		 * Remove two pieces. 
+//		 * 
+//		 * UBBUU	 UBBUU
+//		 * BWWBU	 BUUBU
+//		 * UBBUU --> UBBUU
+//		 * UUUWW	 UUUWW
+//		 * UUWBB	 UUWUU
+//		 */
+//		oldBoard = "UBBUUBWWBUUBBUUUUUWWUUWBB";
+//		expectedNewBoard = "UBBUUBUUBUUBBUUUUUWWUUWUU";
+//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+//		assertTrue(newBoard.equals(expectedNewBoard));
+//		
+//		/** 
+//		 * Remove a two forms close to each other. 
+//		 * 
+//		 * UUBBU		UUBBU
+//		 * UBWWB --->   UBUUB
+//		 * UUBBU		UUBBU
+//		 * UUUWW		UUUWW
+//		 * UUWBB		UUWUU
+//		 */
+//		oldBoard = "UUBBUUBWWBUUBBUUUUWWUUWBB";
+//		expectedNewBoard = "UUBBUUBUUBUUBBUUUUWWUUWUU";
+//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+//		assertTrue(newBoard.equals(expectedNewBoard));
+//		
+//		/** 
+//		 * Remove two forms close to each other. 
+//		 * 
+//		 * UUBBU		UUBBU
+//		 * UBWWB --->   UBUUB
+//		 * UUBBU		UUBBU
+//		 * UBUWW		UBUWW
+//		 * UUWBB		UUWUU
+//		 */
+//		oldBoard = "UUBBUUBWWBUUBBUUUUWWUUWBB";
+//		expectedNewBoard = "UUBBUUBUUBUUBBUUUUWWUUWUU";
+//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+//		assertTrue(newBoard.equals(expectedNewBoard));
+//		
+//		/** 
+//		 * Remove a strange form + an extra corner of the same color. 
+//		 * 
+//		 * BWWBBU		BUUBBU
+//		 * BWBBWB		BUBBUB
+//		 * BWWWWB --->  BUUUUB
+//		 * UBWBBU		UBUBBU
+//		 * UUBUBB		UUBUBB
+//		 * UUUBWW		UUUBUU
+//		 */
+//		oldBoard = "BWWBBUBWBBWBBWWWWBUBWBBUUUBUBBUUUBWW";
+//		expectedNewBoard = "BUUBBUBUBBUBBUUUUBUBUBBUUUBUBBUUUBUU";
+//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+//		assertTrue(newBoard.equals(expectedNewBoard));
 		
 		/** 
-		 * Remove a block of 2 by 2 in the middle. 
+		 * Remove a strange form + an extra corner of the other color. 
 		 * 
-		 * UUBBU	 UUBBU
-		 * UBWWB	 UBUUB
-		 * UBWWB --> UBUUB
-		 * UUBBU	 UUBBU
-		 * WWWUU	 WWWUU
+		 * BWWBBU		BUUBBU
+		 * BWBBWB		BUBBUB
+		 * BWWWWB --->  BUUUUB
+		 * UBWBBU		UBUBBU
+		 * UUBUWW		UUBUWW
+		 * UUUWBB		UUUWUU
 		 */
-		testGame = new Game(2);
-		
-        //Use a file with a command per line to represent the moves of player1
-		inPlayer1 = new BufferedReader(
-				new FileReader("src/tests/resources/remove2by2Test_MovesPlayer1.txt"));
-		stringWriter1 = new StringWriter();
-		outPlayer1 = new BufferedWriter(stringWriter1);
-		
-		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
-		inPlayer2 = new BufferedReader(
-				new FileReader("src/tests/resources/remove2by2Test_MovesPlayer2.txt"));
-		stringWriter2 = new StringWriter();
-		outPlayer2 = new BufferedWriter(stringWriter2);
-		
-		//add players to game
-		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
-		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
-		
-		testGame.startGame();
-		//I have 15 lines of commands (8 for player1, 7 for player2)
-		//first command is used in startGame, so 14 more to go.
-		for (int x = 0; x < 14; x++) {
-			testGame.doTurn();
-		}
-		//The last board seen by player 1
-		assertThat(stringWriter1.toString(), containsString("R;V;UUBBUUBUUBUBUUBUUBBUWWWUU"));
-		//The last board seen by player 2
-		assertThat(stringWriter2.toString(), containsString("R;V;UUBBUUBWWBUBWWBUUBUUWWWUU"));
-		
-		OUTCONTENT.reset();
-		
-		/** 
-		 * Remove a block of 5 stones in the middle.
-		 * 
-		 * UUBBU	 UUBBU
-		 * UBWWB	 UBUUB
-		 * BWWWB --> BUUUB
-		 * UBBBU	 UBBBU
-		 * WWWUU	 WWWUU
-		 */
-		testGame = new Game(2);
-		
-        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
-		inPlayer1 = new BufferedReader(
-				new FileReader("src/tests/resources/remove5Test_MovesPlayer1.txt"));
-		stringWriter1 = new StringWriter();
-		outPlayer1 = new BufferedWriter(stringWriter1);
-		
-		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
-		inPlayer2 = new BufferedReader(
-				new FileReader("src/tests/resources/remove5Test_MovesPlayer2.txt"));
-		stringWriter2 = new StringWriter();
-		outPlayer2 = new BufferedWriter(stringWriter2);
-		
-		//add players to game
-		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
-		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
-		
-		testGame.startGame();
-		//I have 17 lines of commands (8 for player1, 7 for player2)
-		//first command is used in startGame, so 14 more to go.
-		for (int x = 0; x < 16; x++) {
-			testGame.doTurn();
-		}
-		//The last board seen by player 1
-		assertThat(stringWriter1.toString(), containsString("R;V;UUBBUUBUUBBUUUBUBBBUWWWUU"));
-		//The last board seen by player 2
-		assertThat(stringWriter2.toString(), containsString("R;V;UUBBUUBWWBBWWWBUBBUUWWWUU"));
-		
-		OUTCONTENT.reset();
-		
-		/** 
-		 * Remove a block of 2 by 2 on the side. 
-		 * 
-		 * UBWWB	 UBUUB
-		 * UBWWB --> UBUUB
-		 * UUBBU	 UUBBU
-		 * WWUUU	 WWUUU
-		 * UUUUU	 UUUUU
-		 */
-		testGame = new Game(2);
-		
-        //Use a file with a command per line to represent the moves of player1
-		inPlayer1 = new BufferedReader(
-				new FileReader("src/tests/resources/remove2by2sideTest_MovesPlayer1.txt"));
-		stringWriter1 = new StringWriter();
-		outPlayer1 = new BufferedWriter(stringWriter1);
-		
-		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
-		inPlayer2 = new BufferedReader(
-				new FileReader("src/tests/resources/remove2by2sideTest_MovesPlayer2.txt"));
-		stringWriter2 = new StringWriter();
-		outPlayer2 = new BufferedWriter(stringWriter2);
-		
-		//add players to game
-		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
-		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
-		
-		testGame.startGame();
-		//I have 15 lines of commands (8 for player1, 7 for player2)
-		//first command is used in startGame, so 14 more to go.
-		for (int x = 0; x < 14; x++) {
-			testGame.doTurn();
-		}
-		//The last board seen by player 1
-		assertThat(stringWriter1.toString(), containsString("R;V;UBUUBUBUUBUUBBUWWUUUUUUUU"));
-		//The last board seen by player 2
-		assertThat(stringWriter2.toString(), containsString("R;V;UBWWBUBWWBUUBUUWWUUUUUUUU"));
-		
-		OUTCONTENT.reset();
+		oldBoard = "BWWBBUBWBBWBBWWWWBUBWBBUUUBUWWUUUWBB";
+		expectedNewBoard = "BUUBBUBUBBUBBUUUUBUBUBBUUUBUWWUUUWUU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertTrue(newBoard.equals(expectedNewBoard));
 	}
 	
 	/**

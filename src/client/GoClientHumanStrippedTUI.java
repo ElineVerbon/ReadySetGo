@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import exceptions.*;
 import protocol.ProtocolMessages;
 
 /** 
@@ -15,11 +14,9 @@ import protocol.ProtocolMessages;
  */
 
 public class GoClientHumanStrippedTUI {
-	private GoClientHumanStripped goHumanClient;
 	
 	/** Constructor, connected to the client that called the constructor. */
-	public GoClientHumanStrippedTUI(GoClientHumanStripped goClient) {
-		this.goHumanClient = goClient;
+	public GoClientHumanStrippedTUI() {
 	}
 	
 	/**

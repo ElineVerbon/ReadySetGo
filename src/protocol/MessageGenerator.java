@@ -1,12 +1,28 @@
 package protocol;
 
+import client.ServerHandlerForHumanClient;
+
 public class MessageGenerator {
 	
-	public String errorMessage(String versionNumber, String message) {
-		
+	ServerHandlerForHumanClient serverHandler;
+	
+	public MessageGenerator(ServerHandlerForHumanClient aServerHandler) {
+		serverHandler = aServerHandler;
+	}
+	
+	public void errorMessage(String message) {
 		String errorMessage = ProtocolMessages.ERROR + ProtocolMessages.DELIMITER + 
-						versionNumber + ProtocolMessages.DELIMITER + message;
-		return errorMessage;
+						serverHandler.getVersion() + ProtocolMessages.DELIMITER + message;
+		messageSender(errorMessage);
+	}
+	
+	public void moveMessage(String move) {
 		
+		String moveMessage = ProtocolMessages.MOVE + ProtocolMessages.DELIMITER + move;
+		messageSender(moveMessage);
+	}
+	
+	public void messageSender(String message) {
+		serverHandler.sendToGame(message);
 	}
 }

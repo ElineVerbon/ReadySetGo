@@ -23,7 +23,6 @@ public class ServerHandlerForHumanClient {
 	private String usedVersion; //given back by server upon handshake
 	
 	/** The connected human client. */
-	private GoClientHuman humanClient;
 	GoClientHumanStrippedTUI clientTUI;
 	
 	public String getVersion() {

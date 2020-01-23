@@ -1,11 +1,9 @@
 package client;
 
-import java.io.IOException;
 import java.util.*;
 
 import com.nedap.go.gui.GoGUIIntegrator;
 
-import exceptions.*;
 import movechecker.MoveResult;
 import movechecker.MoveValidator;
 import protocol.*;
@@ -40,6 +38,7 @@ public class GoClientHumanStripped {
 	
 	/** Variables to keep track of game states. */
 	boolean gameEnded = false;
+	boolean doublePass = false;
 	boolean misunderstood = false;
 
 	/**
@@ -47,9 +46,9 @@ public class GoClientHumanStripped {
 	 * Does not initialize the GUI, as board size has to be known.
 	 */
 	public GoClientHumanStripped() {
-		clientTUI = new GoClientHumanStrippedTUI(this);
+		clientTUI = new GoClientHumanStrippedTUI();
 		serverHandler = new ServerHandlerForHumanClient();
-		messageGenerator = new MessageGenerator();
+		messageGenerator = new MessageGenerator(serverHandler);
 	}
 	
 	/**
@@ -58,7 +57,7 @@ public class GoClientHumanStripped {
 	 * @param args 
 	 */
 	public static void main(String[] args) {
-		(new GoClientHuman()).start();
+		(new GoClientHumanStripped()).start();
 	}
 	
 	/**
@@ -76,52 +75,16 @@ public class GoClientHumanStripped {
 	 * user is asked whether a new connection should be made.
 	 */
 	public void start() {
-		//TODO Handle incoming messages starting with '?'
 		
 		/** Create a connection and do handshake. */
 		serverHandler.startServerConnection(clientTUI);
 		
 		/** 
-		 * Wait for start game message. 
-		 * Upon reception of the message, set variables & let user know via console. 
-		 * 
-		 * Ecxeptions are handled in the method
+		 * Play the game
 		 */
-		String message = serverHandler.readLineFromServer();
-
-		
-		/**
-		 * Handle commands received.
-		 * 
-		 * No need to keep to certain order, that's the task of the server.
-		 */
-		handleServerMessage(message);
-		
-		//TODO handle message starting with '?'
-		
-		//When receiving the start game message, 
-		if (message.charAt(0) == 'G') {
-			try {
-				startGame(message);
-			} catch (ProtocolException e) {
-				//TODO print specific error message as shown in startGame
-				clientTUI.showMessage(e.getMessage());
-				//TODO what to do when the protocol is not kept?
-			} catch (ServerUnavailableException e) {
-				clientTUI.showMessage("The server could not be reached for game start.");
-				//TODO what to do when the server cannot be reached anymore? Try again? 
-				//Close connection? Check other SUE in other places, handle same way)
-			}
-		} 
-		
-		try {
-			playGame();
-		} catch (ServerUnavailableException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		while (!gameEnded) {
+			String message = serverHandler.readLineFromServer();
+			handleServerMessage(message);
 		}
 	}	
 	
@@ -134,19 +97,22 @@ public class GoClientHumanStripped {
 		
 		//First part of a server message should one character
 		if (components[0].length() != 1) {
-			sendErrorMessage("Protocol error: First component of the message is not a single character.");
+			messageGenerator.errorMessage("Protocol error: First component of the message " +
+						"is not a single character.");
 		}
 		
 		char command = components[0].charAt(0);
 		switch (command) {
 			case ProtocolMessages.ERROR:
+				//if an error message is received twice in a row:
 				if (misunderstood) {
 					clientTUI.showMessage("Server did not understand again. We cannot communicate. "
 							+ "We will send 'quit' to end the game. Sorry!");
 					serverHandler.sendToGame(Character.toString(ProtocolMessages.QUIT));
 				}
 				clientTUI.showMessage("Server did not understand the message. Please try again.");
-				//TODO go to doTurn?
+				//TODO not sure what to do after this. Cannot go to another method, because I don't 
+				//have the message components. Mayber I should save the previous message somewhere?
 				break;
 			case ProtocolMessages.GAME:
 				misunderstood = false;
@@ -165,7 +131,8 @@ public class GoClientHumanStripped {
 				endGame(components);
 				break;
 			default:
-				sendErrorMessage("Protocol error: First component of the message is not a single character.");
+				messageGenerator.errorMessage("Protocol error: First component of the server " + 
+						"message (" + command + ") is not a known command.");
 				break;
 		}
 	}
@@ -173,19 +140,31 @@ public class GoClientHumanStripped {
 	/**
 	 * Method to handle the start message.
 	 * Start message should be formatted as follows:
-	 * PROTOCOL.GAME + PROTOCOL.DELIMITER + bord + PROTOCOL.DELIMITER + 
-	 * 			ProtocolMessage.BLACK / ProtocolMessage.WHITE
+	 * ProtocolMessages.GAME + ProtocolMessages.DELIMITER + board + ProtocolMessages.DELIMITER + 
+	 * 			ProtocolMessages.BLACK / ProtocolMessages.WHITE
 	 * 
 	 * Separates the messages and sets the color and dimensions of the board.
-	 * Print a welcome message to the client.
+	 * Prints a welcome message to the client and starts the GUI.
 	 */
 	
 	public void startGame(String[] components) {
 		
-		/** The second component of the message should be a string representation of the board. */
+		/** 
+		 * The second component of the message should be a string representation of the board.
+		 * This contains only U, B and W. 
+		 */
 		board = components[1];
-		int numberOfPlaces = components[1].length();
-		boardDimension = (int) Math.sqrt(numberOfPlaces);
+		int numberOfIntersections = components[1].length();
+		boardDimension = (int) Math.sqrt(numberOfIntersections);
+		for (int intersection = 0; intersection < board.length(); intersection++) {
+			String locationStatus = Character.toString(board.charAt(intersection));
+			if  (!(locationStatus.equals("W") || locationStatus.equals("B") 
+															|| locationStatus.equals("U"))) {
+				messageGenerator.errorMessage("ProtocolException in start game message: only " +
+						"'B', 'W' and 'U' expected in the string representation of the board, " +
+						"but " + components[2] + " received.");
+			}
+		}
 		
 		/** 
 		 * The third component of the message should be either 
@@ -193,16 +172,18 @@ public class GoClientHumanStripped {
 		 */
 		String assignedColor = components[2];
 		if (assignedColor.length() != 1) {
-			clientTUI.showMessage(Integer.toString(assignedColor.length()));
-			throw new ProtocolException("ProtocolException: "
+			messageGenerator.errorMessage("ProtocolException in start game message: "
 					+ "'B' or 'W' expected as third command, but " + components[2] + " received.");
 		}
 		color = assignedColor.charAt(0);
 		if (!(color == 'W' || color == 'B')) {
-			throw new ProtocolException("ProtocolException: "
+			messageGenerator.errorMessage("ProtocolException in start game message: "
 					+ "'B' or 'W' expected as third command, but " + components[2] + " received.");
 		}
 		
+		/**
+		 * Send start message to client containing the assigned color.
+		 */
 		String clientsColor = "";
 		if (color == 'W') {
 			clientsColor = "white";
@@ -213,88 +194,38 @@ public class GoClientHumanStripped {
 				+ "The board is " + boardDimension + " by " + boardDimension + ". "
 				+ "\nYour color is " + clientsColor + ". Good luck!");
 		
-		//start the GUI
+		/**
+		 * Start the GUI.
+		 */
 		gogui = new GoGUIIntegrator(true, true, boardDimension);
 		gogui.startGUI();
 		gogui.setBoardSize(boardDimension);
 	}
 	
-	/** 
-	 * Method that waits for a message from the server and responds.
-	 * It can receive a turn message, an end message or a ?.
-	 * (Or a result message, but that is handled in doTurn().)
-	 * 
-	 * It ends when 'Protocol.Messages.END' is received.
-	 * 
-	 * Called at the end of the start() method of this client.
-	 */
-	public void playGame() throws ServerUnavailableException, ProtocolException {
-		
-		while (!gameEnded) {
-			//Wait for a message from the server
-			String line = "";
-			line = readLineFromServer();
-			
-			//Split the message into parts
-			String[] commands = line.split(ProtocolMessages.DELIMITER);
-			//if the first component is not of length 1, server does not comply with the protocol
-			if (commands[0].length() != 1) {
-				throw new ProtocolException("Server response does not comply with the protocol! " + 
-						"It did not send a char as the first part of its message.");
-			}
-			
-			//check which kind of message is received
-			char command = line.charAt(0);
-			switch (command) {
-				case 'T':
-					if (commands.length < 3) {
-						throw new ProtocolException("Server response does not comply with " +
-								"the protocol! It did not send the board and the opponent's move " +
-								"as part of it's turn message.");
-					}
-					String opponentsMove = commands[2];
-					doMove(commands[1], opponentsMove);
-					break;
-				case 'R' :
-					//check whether the other components are included and if so, use them
-					if (commands.length < 2) {
-						throw new ProtocolException("Server response does not comply with " +
-								"the protocol! It did not contain at least one component after " +
-								"the 'R' in the result message.");
-					}
-					String validity = commands[1];
-					//commands[2] can be a board, a message or nothing
-					String message = (commands.length > 1) ? commands[2] : null;
-					
-					getResult(validity, message);
-					break;
-				case 'E' :
-					if (commands.length < 5) {
-						throw new ProtocolException("Server response does not comply with " +
-								"the protocol! It did not contain the necessary five components " +
-								"in the endGame message.");
-					}
-					gameEnded = true; //break out of this loop, TODO not sure if necessary
-					endGame(commands[1], commands[2], commands[3], commands[4]); //end the game
-					return;
-				case '?':
-					//TODO
-					break;
-				default :
-					throw new ProtocolException("Server did not stick to the response protocol! " + 
-							"It did not send a T, R, E or ? as the first part of its message.");
-			}
-		}
-		closeConnection();
-	}
-	
 	/**
-	 * Get a valid move from the user.
+	 * Get a valid move from the player via the console.
 	 * 
-	 * @param board
+	 * Called upon receiving a turn message from the server, formatted like this.
+	 * ProtocolMessages.TURN + ProtocolMessages.DELIMITER + board + ProtocolMessages.DELIMITER 
+	 * 			+ opponentsLastMove
+	 * 
+	 * @param components, an array of strings extracted from the server's message
 	 */
-	public void doMove(String boardBeforeMove, String opponentsMove) {
-		board = boardBeforeMove;
+	public void doMove(String[] components) {
+		if (components.length < 3) {
+			messageGenerator.errorMessage("Server response does not comply with the protocol! It " +
+					"did not send the board and the opponent's move as part of the turn message.");
+		}
+		
+		//save board in case an invalid move is done and it needs to be reverted
+		String boardBeforeMove = components[1];
+		String opponentsMove = components[2];
+		
+		//set boolean variable to prevent printing 'its you opponents turn' after a second pass
+		boolean opponentPassed = false;
+		if (opponentsMove.equals(Character.toString(ProtocolMessages.PASS))) {
+			opponentPassed = true;
+		}
 		
 		//TODO add the score here!
 		/** Let the player know its his/her turn and what the opponent did. */
@@ -303,7 +234,7 @@ public class GoClientHumanStripped {
 					"Please check the GUI for the board size.");
 		} else {
 			if (opponentsMove.equals(Character.toString(ProtocolMessages.PASS))) {
-				clientTUI.showMessage("\nThe other player passed." + 
+				clientTUI.showMessage("\nThe other player passed. " + 
 						"If you pass as well, the game is over.");
 			} else {
 				int location = Integer.parseInt(opponentsMove);
@@ -313,21 +244,11 @@ public class GoClientHumanStripped {
 			
 		}
 		
-		/** Show the current board to the player. */
-		gogui.clearBoard();
-		for (int c = 0; c < boardDimension * boardDimension; c++) {
-			char thisLocation = board.charAt(c);
-			if (thisLocation == ProtocolMessages.WHITE) {
-				//location = x + y * boardDimension
-				gogui.addStone(c % boardDimension, c / boardDimension, true);
-			} else if (thisLocation == ProtocolMessages.BLACK) {
-				gogui.addStone(c % boardDimension, c / boardDimension, false);
-			}
-		}
+		/** Show the current board state in the GUI. */
+		showCurrentBoardState(boardBeforeMove);
 		
 		/** Ask the client for a move, keep asking until a valid move is given. */
 		String move = "";
-		String message;
 		boolean validInput = false;
 		int location = 0;
 		
@@ -340,13 +261,18 @@ public class GoClientHumanStripped {
 			
 			move = clientTUI.getMove();
 			
-			/** Check whether the player passed, if so, break out of loop (no move to check 
-			 * for validity) and send return message. 
+			/** 
+			 * Check whether the player passed or quit. If so, send appropriate message and
+			 * break out of loop.
 			 */
 			if (move.equals(Character.toString(ProtocolMessages.PASS))) {
-				break;
+				if (opponentPassed == true) {
+					doublePass = true;
+				}
+				messageGenerator.moveMessage(move);
+				return;
 			} else if (move.equals(Character.toString(ProtocolMessages.QUIT))) {
-				sendToGame(Character.toString(ProtocolMessages.QUIT));
+				serverHandler.sendToGame(Character.toString(ProtocolMessages.QUIT));
 				gameEnded = true;
 				return;
 			}
@@ -368,12 +294,9 @@ public class GoClientHumanStripped {
 			 */
 			
 			location = Integer.parseInt(move);
-			
-			//determine what the board looks like after removing stones
 			board = board.substring(0, location) + color + board.substring(location + 1);
 			board = moveResult.determineNewBoard(board, color);
 			
-			//check whether the new board is not the same as a previous board
 			valid = moveValidator.checkValidityAfterRemoving(board, prevBoards);
 			if  (!valid) {
 				clientTUI.showMessage("Your move results in a board that has been seen before. "
@@ -382,98 +305,129 @@ public class GoClientHumanStripped {
 				board = boardBeforeMove;
 				continue; 
 			} 
-			//Do not add the board to the previous boards, for security reasons, only the board
+			//NB: Do not add the board to the previous boards, for security reasons, only the board
 			//given by the server are added. Thus, it will be added when returned by the server
 			//in the result message.
 			validInput = true;
 		}
 		/** Send move to the game. */
-		message = ProtocolMessages.MOVE + ProtocolMessages.DELIMITER + move; 
-		sendToGame(message);
+		messageGenerator.moveMessage(move);
 	}
 	
-	public void getResult(String validChar, String message) {
+	/**
+	 * Get result from the server and update the GUI.
+	 * 
+	 * Called upon receiving a turn message from the server, formatted like this.
+	 * ProtocolMessages.RESULT + ProtocolMessages.DELIMITER + ProtocolMessages.VALID 
+	 * 			+ ProtocolMessages.DELIMITER + board
+	 * 
+	 * 								or
+	 * 
+	 * ProtocolMessages.RESULT + ProtocolMessages.DELIMITER + ProtocolMessages.INVALID 
+	 * 			+ optionally ProtocolMessages.DELIMITER + message
+	 * 
+	 * @param components, an array of strings extracted from the server's message
+	 */
+	public void getResult(String[] components) {
 		
-		//communicate result to the client
-		if (Character.toString(ProtocolMessages.VALID).equals(validChar)) {
-			//move was valid: the message contains the board.
-			prevBoards.add(message);
+		//check whether the other components are included and if so, use them
+		if (components.length < 2) {
+			messageGenerator.errorMessage("Server response does not comply with the protocol " +
+					"in the result message. It did not contain the validness of the move.");
+		}
+		String validity = components[1];
+		//commands[2] can be a board (if valid result), a message or nothing (if invalid result)
+		String boardOrMessage = (components.length > 1) ? components[2] : null;
+		
+		/**
+		 * Communicate the result to the client
+		 */
+		if (Character.toString(ProtocolMessages.VALID).equals(validity)) {
+			prevBoards.add(boardOrMessage);
 			clientTUI.showMessage("Your move was valid. Check GUI for what the board looks like.");
-			gogui.clearBoard();
-			//go through all chars in the board string
-			for (int c = 0; c < boardDimension * boardDimension; c++) {
-				char thisLocation = board.charAt(c);
-				if (thisLocation == ProtocolMessages.WHITE) {
-					//location = x + y * boardDimension
-					gogui.addStone(c % boardDimension, c / boardDimension, true);
-				} else if (thisLocation == ProtocolMessages.BLACK) {
-					gogui.addStone(c % boardDimension, c / boardDimension, false);
-				}
+			showCurrentBoardState(boardOrMessage);
+			if (!doublePass) {
+				clientTUI.showMessage("It's now the other player's turn. Please wait.");
 			}
-			clientTUI.showMessage("It's now the other player's turn. Please wait.");
 		} else {
 			clientTUI.showMessage("Your move was invalid. You lose the game.");
-			//show message if added by the server
-			if (message != null) {
-				clientTUI.showMessage("Message from the server: " + message);
+			if (boardOrMessage != null) {
+				clientTUI.showMessage("Message from the server: " + boardOrMessage);
 			}
 		}
 	}
 	
-	public void endGame(String reasonEnd, String winner, String scoreBlack, String scoreWhite) {
+	/**
+	 * Get an end game message from the server.
+	 * Communicate the result to the player.
+	 * 
+	 * Called upon receiving a turn message from the server, formatted like this.
+	 * ProtocolMessages.END + ProtocolMessages.DELIMITER + reasonEnd + ProtocolMessages.DELIMITER 
+	 *  + winner + ProtocolMessages.DELIMITER + scoreBlack + ProtocolMessages.DELIMITER + scoreWhite
+	 * 
+	 * @param components, an array of strings extracted from the server's message
+	 */
+	public void endGame(String[] components) {
+		
+		if (components.length < 5) {
+			messageGenerator.errorMessage("Server response does not comply with " +
+						"the protocol! It did not contain the necessary five components " +
+						"in the endGame message.");
+		}
+		
+		String reasonEnd = components[1];
+		String winner = components[2];
+		String scoreBlack = components[3];
+		String scoreWhite = components[4];
+		
 		//reasonEnd is one character
 		switch (reasonEnd.charAt(0)) {
 			case ProtocolMessages.FINISHED:
 				if (winner.equals(Character.toString(color))) {
-					clientTUI.showMessage("Congratulations, you won the game! Score black: " + 
+					clientTUI.showMessage("\nCongratulations, you won the game! Score black: " + 
 							scoreBlack + ", score white: " + scoreWhite + ".");
 				} else {
-					clientTUI.showMessage("Too bad, you lost the game! Score black: " + 
+					clientTUI.showMessage("\nToo bad, you lost the game! Score black: " + 
 							scoreBlack + ", score white: " + scoreWhite + ".");
 				}
 				break;
 			case ProtocolMessages.DISCONNECT:
-				clientTUI.showMessage("The other player disconnected, you win! " + "Score black " +
+				clientTUI.showMessage("\nThe other player disconnected, you win! Score black " +
 							"was: " + scoreBlack + ", score white: " + scoreWhite + ".");
 				break;
 			case ProtocolMessages.CHEAT:
 				if (winner.equals(Character.toString(color))) {
-					clientTUI.showMessage("You won the game, the other player cheated. Score black:"
-							+ scoreBlack + ", score white: " + scoreWhite + ".");
+					clientTUI.showMessage("\nYou won the game, the other player cheated. " +
+							"Score black: " + scoreBlack + ", score white: " + scoreWhite + ".");
 				} else {
-					clientTUI.showMessage("Too bad, you lost the game because of an invalid move. " 
+					clientTUI.showMessage("\nOh no, you lost the game because of an invalid move. " 
 							+ "Score black: " + scoreBlack + ", score white: " + scoreWhite + ".");
 				}
 				break;
 			case ProtocolMessages.QUIT:
 				if (winner.equals(Character.toString(color))) {
-					clientTUI.showMessage("You won the game, the other player quit. Score black:"
+					clientTUI.showMessage("\nYou won the game, the other player quit. Score black:"
 							+ scoreBlack + ", score white: " + scoreWhite + ".");
 				} else {
-					clientTUI.showMessage("Too bad, you lost the game because you quit. " 
+					clientTUI.showMessage("\nToo bad, you lost the game because you quit. " 
 							+ "Score black: " + scoreBlack + ", score white: " + scoreWhite + ".");
 				}
 				break;
 		}
-		closeConnection();
 	}
 	
-	public void sendErrorMessage(String message) {
-		String formattedMessage = messageGenerator.errorMessage(serverHandler.getVersion(), 
-																						message);
-		serverHandler.sendToGame(formattedMessage;
-	}
-	
-	public void sendExit() throws ServerUnavailableException {
-		char toServer = ProtocolMessages.EXIT;
-		try {
-			out.write(toServer);
-		} catch (IOException e) {
-			throw new ServerUnavailableException("Could not read "
-					+ "from server.");
+	public void showCurrentBoardState(String theBoard) {
+		/** Show the current board to the player. */
+		gogui.clearBoard();
+		for (int c = 0; c < boardDimension * boardDimension; c++) {
+			char thisLocation = theBoard.charAt(c);
+			if (thisLocation == ProtocolMessages.WHITE) {
+				//location = x + y * boardDimension
+				gogui.addStone(c % boardDimension, c / boardDimension, true);
+			} else if (thisLocation == ProtocolMessages.BLACK) {
+				gogui.addStone(c % boardDimension, c / boardDimension, false);
+			}
 		}
-		
-		closeConnection();
 	}
 }
 

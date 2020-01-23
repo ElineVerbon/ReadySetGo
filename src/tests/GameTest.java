@@ -245,178 +245,178 @@ public class GameTest {
 		String expectedNewBoard;
 		String newBoard;
 		
-//		/** 
-//		 * Remove a corner. 
-//		 * 
-//		 * WBUUU	 UBUUU
-//		 * BUUUU	 BUUUU
-//		 * UUUUU --> UUUUU
-//		 * UUUUU	 UUUUU
-//		 * UUUUU	 UUUUU
-//		 */
-//		oldBoard = "WBUUUBUUUUUUUUUUUUUUUUUUU";
-//		expectedNewBoard = "UBUUUBUUUUUUUUUUUUUUUUUUU";
-//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
-//		assertTrue(newBoard.equals(expectedNewBoard));
-//		
-//		/** 
-//		 * Remove other color corner. 
-//		 * 
-//		 * BWUUU	 UWUUU
-//		 * WUUUU	 WUUUU
-//		 * UUUUU --> UUUUU
-//		 * UUUUU	 UUUUU
-//		 * UUUUU	 UUUUU
-//		 */
-//		oldBoard = "BWUUUWUUUUUUUUUUUUUUUUUUU";
-//		expectedNewBoard = "UWUUUWUUUUUUUUUUUUUUUUUUU";
-//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
-//		assertTrue(newBoard.equals(expectedNewBoard));
-//		
-//		/** 
-//		 * Remove bigger corner. 
-//		 * 
-//		 * UUUUU	 UUUUU
-//		 * UUUUU	 UUUUU
-//		 * UUUUU --> UUUUU
-//		 * UUUWW	 UUUWW
-//		 * UUWBB	 UUWUU
-//		 */
-//		oldBoard = "UUUUUUUUUUUUUUUUUUWWUUWBB";
-//		expectedNewBoard = "UUUUUUUUUUUUUUUUUUWWUUWUU";
-//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
-//		assertTrue(newBoard.equals(expectedNewBoard));
-//		
-//		/** 
-//		 * Remove a block of 2 by 2 on the side. 
-//		 * 
-//		 * UBWWB	 UBUUB
-//		 * UBWWB --> UBUUB
-//		 * UUBBU	 UUBBU
-//		 * WWUUU	 WWUUU
-//		 * UUUUU	 UUUUU
-//		 */
-//		oldBoard = "UBWWBUBWWBUUBBUWWUUUUUUUU";
-//		expectedNewBoard = "UBUUBUBUUBUUBBUWWUUUUUUUU";
-//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
-//		assertTrue(newBoard.equals(expectedNewBoard));
-//		
-//		/** 
-//		 * Remove a circle in the middle. 
-//		 * 
-//		 * UUUUUU		UUUUUU
-//		 * UBBBBU		UBBBBU
-//		 * BWWWWB --->  BUUUUB
-//		 * BWWWWB		BUUUUB
-//		 * UBBBBU		UBBBBU
-//		 * UUUUUU		UUUUUU
-//		 */
-//		oldBoard = "UUUUUUUBBBBUBWWWWBBWWWWBUBBBBUUUUUUU";
-//		expectedNewBoard = "UUUUUUUBBBBUBUUUUBBUUUUBUBBBBUUUUUUU";
-//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
-//		assertTrue(newBoard.equals(expectedNewBoard));
-//		
-//		/** 
-//		 * Do not remove a circle in the middle (one liberty). 
-//		 * 
-//		 * UUUUUU		UUUUUU
-//		 * UBBBBU		UBBBBU
-//		 * BWWWWU --->  BUUUUU
-//		 * BWWWWB		BUUUUB
-//		 * UBBBBU		UBBBBU
-//		 * UUUUUU		UUUUUU
-//		 */
-//		oldBoard = "UUUUUUUBBBBUBWWWWUBWWWWBUBBBBUUUUUUU";
-//		expectedNewBoard = "UUUUUUUBBBBUBUUUUUBUUUUBUBBBBUUUUUUU";
-//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
-//		assertFalse(newBoard.equals(expectedNewBoard));
-//		
-//		/** 
-//		 * Remove a donut. 
-//		 * 
-//		 * UBBBBU		UBBBBU
-//		 * BWWWWB		BUUUUB
-//		 * BWWWWB --->  BUUUUB
-//		 * BWBBWB		BUBBUB
-//		 * BWWWWB		BUUUUB
-//		 * UBBBBU		UBBBBU
-//		 */
-//		oldBoard = "UBBBBUBWWWWBBWWWWBBWBBWBBWWWWBUBBBBU";
-//		expectedNewBoard = "UBBBBUBUUUUBBUUUUBBUBBUBBUUUUBUBBBBU";
-//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
-//		assertTrue(newBoard.equals(expectedNewBoard));
-//		
-//		/** 
-//		 * Do not remove a donut. 
-//		 * 
-//		 * UBBBBU		UBBBBU
-//		 * BWWWWB		BUUUUB
-//		 * BWWWWB --->  BUUUUB
-//		 * BWUUWB		BUUUUB
-//		 * BWWWWB		BUUUUB
-//		 * UBBBBU		UBBBBU
-//		 */
-//		oldBoard = "UBBBBUBWWWWBBWWWWBBWUUWBBWWWWBUBBBBU";
-//		expectedNewBoard = "UBBBBUBUUUUBBUUUUBBUUUUBBUUUUBUBBBBU";
-//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
-//		assertFalse(newBoard.equals(expectedNewBoard));
-//		
-//		/** 
-//		 * Remove two pieces. 
-//		 * 
-//		 * UBBUU	 UBBUU
-//		 * BWWBU	 BUUBU
-//		 * UBBUU --> UBBUU
-//		 * UUUWW	 UUUWW
-//		 * UUWBB	 UUWUU
-//		 */
-//		oldBoard = "UBBUUBWWBUUBBUUUUUWWUUWBB";
-//		expectedNewBoard = "UBBUUBUUBUUBBUUUUUWWUUWUU";
-//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
-//		assertTrue(newBoard.equals(expectedNewBoard));
-//		
-//		/** 
-//		 * Remove a two forms close to each other. 
-//		 * 
-//		 * UUBBU		UUBBU
-//		 * UBWWB --->   UBUUB
-//		 * UUBBU		UUBBU
-//		 * UUUWW		UUUWW
-//		 * UUWBB		UUWUU
-//		 */
-//		oldBoard = "UUBBUUBWWBUUBBUUUUWWUUWBB";
-//		expectedNewBoard = "UUBBUUBUUBUUBBUUUUWWUUWUU";
-//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
-//		assertTrue(newBoard.equals(expectedNewBoard));
-//		
-//		/** 
-//		 * Remove two forms close to each other. 
-//		 * 
-//		 * UUBBU		UUBBU
-//		 * UBWWB --->   UBUUB
-//		 * UUBBU		UUBBU
-//		 * UBUWW		UBUWW
-//		 * UUWBB		UUWUU
-//		 */
-//		oldBoard = "UUBBUUBWWBUUBBUUUUWWUUWBB";
-//		expectedNewBoard = "UUBBUUBUUBUUBBUUUUWWUUWUU";
-//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
-//		assertTrue(newBoard.equals(expectedNewBoard));
-//		
-//		/** 
-//		 * Remove a strange form + an extra corner of the same color. 
-//		 * 
-//		 * BWWBBU		BUUBBU
-//		 * BWBBWB		BUBBUB
-//		 * BWWWWB --->  BUUUUB
-//		 * UBWBBU		UBUBBU
-//		 * UUBUBB		UUBUBB
-//		 * UUUBWW		UUUBUU
-//		 */
-//		oldBoard = "BWWBBUBWBBWBBWWWWBUBWBBUUUBUBBUUUBWW";
-//		expectedNewBoard = "BUUBBUBUBBUBBUUUUBUBUBBUUUBUBBUUUBUU";
-//		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
-//		assertTrue(newBoard.equals(expectedNewBoard));
+		/** 
+		 * Remove a corner. 
+		 * 
+		 * WBUUU	 UBUUU
+		 * BUUUU	 BUUUU
+		 * UUUUU --> UUUUU
+		 * UUUUU	 UUUUU
+		 * UUUUU	 UUUUU
+		 */
+		oldBoard = "WBUUUBUUUUUUUUUUUUUUUUUUU";
+		expectedNewBoard = "UBUUUBUUUUUUUUUUUUUUUUUUU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertTrue(newBoard.equals(expectedNewBoard));
+		
+		/** 
+		 * Remove other color corner. 
+		 * 
+		 * BWUUU	 UWUUU
+		 * WUUUU	 WUUUU
+		 * UUUUU --> UUUUU
+		 * UUUUU	 UUUUU
+		 * UUUUU	 UUUUU
+		 */
+		oldBoard = "BWUUUWUUUUUUUUUUUUUUUUUUU";
+		expectedNewBoard = "UWUUUWUUUUUUUUUUUUUUUUUUU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertTrue(newBoard.equals(expectedNewBoard));
+		
+		/** 
+		 * Remove bigger corner. 
+		 * 
+		 * UUUUU	 UUUUU
+		 * UUUUU	 UUUUU
+		 * UUUUU --> UUUUU
+		 * UUUWW	 UUUWW
+		 * UUWBB	 UUWUU
+		 */
+		oldBoard = "UUUUUUUUUUUUUUUUUUWWUUWBB";
+		expectedNewBoard = "UUUUUUUUUUUUUUUUUUWWUUWUU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertTrue(newBoard.equals(expectedNewBoard));
+		
+		/** 
+		 * Remove a block of 2 by 2 on the side. 
+		 * 
+		 * UBWWB	 UBUUB
+		 * UBWWB --> UBUUB
+		 * UUBBU	 UUBBU
+		 * WWUUU	 WWUUU
+		 * UUUUU	 UUUUU
+		 */
+		oldBoard = "UBWWBUBWWBUUBBUWWUUUUUUUU";
+		expectedNewBoard = "UBUUBUBUUBUUBBUWWUUUUUUUU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertTrue(newBoard.equals(expectedNewBoard));
+		
+		/** 
+		 * Remove a circle in the middle. 
+		 * 
+		 * UUUUUU		UUUUUU
+		 * UBBBBU		UBBBBU
+		 * BWWWWB --->  BUUUUB
+		 * BWWWWB		BUUUUB
+		 * UBBBBU		UBBBBU
+		 * UUUUUU		UUUUUU
+		 */
+		oldBoard = "UUUUUUUBBBBUBWWWWBBWWWWBUBBBBUUUUUUU";
+		expectedNewBoard = "UUUUUUUBBBBUBUUUUBBUUUUBUBBBBUUUUUUU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertTrue(newBoard.equals(expectedNewBoard));
+		
+		/** 
+		 * Do not remove a circle in the middle (one liberty). 
+		 * 
+		 * UUUUUU		UUUUUU
+		 * UBBBBU		UBBBBU
+		 * BWWWWU --->  BUUUUU
+		 * BWWWWB		BUUUUB
+		 * UBBBBU		UBBBBU
+		 * UUUUUU		UUUUUU
+		 */
+		oldBoard = "UUUUUUUBBBBUBWWWWUBWWWWBUBBBBUUUUUUU";
+		expectedNewBoard = "UUUUUUUBBBBUBUUUUUBUUUUBUBBBBUUUUUUU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertFalse(newBoard.equals(expectedNewBoard));
+		
+		/** 
+		 * Remove a donut. 
+		 * 
+		 * UBBBBU		UBBBBU
+		 * BWWWWB		BUUUUB
+		 * BWWWWB --->  BUUUUB
+		 * BWBBWB		BUBBUB
+		 * BWWWWB		BUUUUB
+		 * UBBBBU		UBBBBU
+		 */
+		oldBoard = "UBBBBUBWWWWBBWWWWBBWBBWBBWWWWBUBBBBU";
+		expectedNewBoard = "UBBBBUBUUUUBBUUUUBBUBBUBBUUUUBUBBBBU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertTrue(newBoard.equals(expectedNewBoard));
+		
+		/** 
+		 * Do not remove a donut. 
+		 * 
+		 * UBBBBU		UBBBBU
+		 * BWWWWB		BUUUUB
+		 * BWWWWB --->  BUUUUB
+		 * BWUUWB		BUUUUB
+		 * BWWWWB		BUUUUB
+		 * UBBBBU		UBBBBU
+		 */
+		oldBoard = "UBBBBUBWWWWBBWWWWBBWUUWBBWWWWBUBBBBU";
+		expectedNewBoard = "UBBBBUBUUUUBBUUUUBBUUUUBBUUUUBUBBBBU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertFalse(newBoard.equals(expectedNewBoard));
+		
+		/** 
+		 * Remove two pieces. 
+		 * 
+		 * UBBUU	 UBBUU
+		 * BWWBU	 BUUBU
+		 * UBBUU --> UBBUU
+		 * UUUWW	 UUUWW
+		 * UUWBB	 UUWUU
+		 */
+		oldBoard = "UBBUUBWWBUUBBUUUUUWWUUWBB";
+		expectedNewBoard = "UBBUUBUUBUUBBUUUUUWWUUWUU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertTrue(newBoard.equals(expectedNewBoard));
+		
+		/** 
+		 * Remove a two forms close to each other. 
+		 * 
+		 * UUBBU		UUBBU
+		 * UBWWB --->   UBUUB
+		 * UUBBU		UUBBU
+		 * UUUWW		UUUWW
+		 * UUWBB		UUWUU
+		 */
+		oldBoard = "UUBBUUBWWBUUBBUUUUWWUUWBB";
+		expectedNewBoard = "UUBBUUBUUBUUBBUUUUWWUUWUU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertTrue(newBoard.equals(expectedNewBoard));
+		
+		/** 
+		 * Remove two forms close to each other. 
+		 * 
+		 * UUBBU		UUBBU
+		 * UBWWB --->   UBUUB
+		 * UUBBU		UUBBU
+		 * UBUWW		UBUWW
+		 * UUWBB		UUWUU
+		 */
+		oldBoard = "UUBBUUBWWBUUBBUUUUWWUUWBB";
+		expectedNewBoard = "UUBBUUBUUBUUBBUUUUWWUUWUU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertTrue(newBoard.equals(expectedNewBoard));
+		
+		/** 
+		 * Remove a strange form + an extra corner of the same color. 
+		 * 
+		 * BWWBBU		BUUBBU
+		 * BWBBWB		BUBBUB
+		 * BWWWWB --->  BUUUUB
+		 * UBWBBU		UBUBBU
+		 * UUBUBB		UUBUBB
+		 * UUUBWW		UUUBUU
+		 */
+		oldBoard = "BWWBBUBWBBWBBWWWWBUBWBBUUUBUBBUUUBWW";
+		expectedNewBoard = "BUUBBUBUBBUBBUUUUBUBUBBUUUBUBBUUUBUU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertTrue(newBoard.equals(expectedNewBoard));
 		
 		/** 
 		 * Remove a strange form + an extra corner of the other color. 

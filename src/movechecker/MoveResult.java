@@ -77,16 +77,18 @@ public class MoveResult {
 	/**
 	 * Check the stones of one color for captured groups.
 	 * 
-	 * Go through all locations on the board. See whether it as been 
+	 * If a stone of the color is found, set surrounded to true and check all the
+	 * neighboring locations. If after checking all the neighbors surrounded is still
+	 * true, change the stones of the found captured group to unoccupied. 
 	 * 
-	 * Once a stone of this color is found,
-	 * see whether it has not been checked yet. If not, add to checkedPlaces
-	 * check all surrounding locations. Add all 
+	 * Once a stone has been checked, it is added to the checkedStones List. Only stones not
+	 * in the list will be checked. 
+	 * 
 	 * @param currentlyCheckedColor
 	 */
 	public void checkStonesOfOneColor(char currentlyCheckedColor) {
 		
-		//go from top left to bottom right to check for capture of a group of opponents
+		//go from top left to bottom right to check for capture of a group
 		for (int x = 0; x < boardDimension; x++) {
 			for (int y = 0; y < boardDimension; y++) {
 				//get the corresponding number of the string representation. 
@@ -133,24 +135,29 @@ public class MoveResult {
 		surroundedStones.add(numberInStringRepresentation);
 		checkedStonesThisColor.add(numberInStringRepresentation);
 		
-		//check for all surrounding places whether they are unoccupied, of the current player
-		//or also of the opponent. If they are also of the opponent: add to the current group
+		//check all surrounding locations. Only check when they fall within the board.
 		int locationToTheLeft = numberInStringRepresentation - 1;
 		int locationToTheRight = numberInStringRepresentation + 1;
 		int locationAbove = numberInStringRepresentation - boardDimension;
 		int locationBelow = numberInStringRepresentation + boardDimension;
 		List<Integer> locationsToCheck = new ArrayList<Integer>();
-		locationsToCheck.add(locationToTheLeft);
-		locationsToCheck.add(locationToTheRight);
-		locationsToCheck.add(locationAbove);
-		locationsToCheck.add(locationBelow);
+		if (locationToTheLeft >= 0 && locationToTheLeft < boardDimension * boardDimension) {
+			locationsToCheck.add(locationToTheLeft);
+		}
+		if (locationToTheRight >= 0 && locationToTheRight < boardDimension * boardDimension) {
+			locationsToCheck.add(locationToTheRight);
+		}
+		if (locationAbove >= 0 && locationAbove < boardDimension * boardDimension) {
+			locationsToCheck.add(locationAbove);
+		}
+		if (locationBelow >= 0 && locationBelow < boardDimension * boardDimension) {
+			locationsToCheck.add(locationBelow);
+		}
 		
-		
+		//check for all surrounding places whether they are unoccupied, of the current player
+		//or also of the opponent. If they are also of the opponent: add to the current group
 		//only check locations that are on the board
 		for (int location : locationsToCheck) {
-			if (location < 0 || location >= boardDimension * boardDimension) {
-				break;
-			}
 			//only check locations if they haven't been checked before
 			if (!checkedPlaces.contains(location)) {
 				checkColor(location, currentlyCheckedColor);

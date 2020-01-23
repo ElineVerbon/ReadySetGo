@@ -484,6 +484,7 @@ public class GoClientHuman implements GoClient {
 		board = boardBeforeMove;
 		
 		//TODO add the score here!
+		/** Let the player know its his/her turn and what the opponent did. */
 		if (opponentsMove.equals("null")) {
 			clientTUI.showMessage("\nYou get the first move! " + 
 					"Please check the GUI for the board size.");
@@ -499,8 +500,8 @@ public class GoClientHuman implements GoClient {
 			
 		}
 		
+		/** Show the current board to the player. */
 		gogui.clearBoard();
-		//go through all chars in the board string
 		for (int c = 0; c < boardDimension * boardDimension; c++) {
 			char thisLocation = board.charAt(c);
 			if (thisLocation == ProtocolMessages.WHITE) {
@@ -511,6 +512,7 @@ public class GoClientHuman implements GoClient {
 			}
 		}
 		
+		/** Ask the client for a move, keep asking until a valid move is given. */
 		String move = "";
 		String message;
 		boolean validInput = false;
@@ -521,11 +523,13 @@ public class GoClientHuman implements GoClient {
 		
 		//Ask the client for a move until a valid move is given
 		while (!validInput) {
-			move = clientTUI.getMove();
-			
 			boolean valid;
 			
-			/** Check whether the player passed, if so, break out of loop and send message. */
+			move = clientTUI.getMove();
+			
+			/** Check whether the player passed, if so, break out of loop (no move to check 
+			 * for validity) and send return message. 
+			 */
 			if (move.equals(Character.toString(ProtocolMessages.PASS))) {
 				break;
 			} else if (move.equals(Character.toString(ProtocolMessages.QUIT))) {
@@ -535,7 +539,7 @@ public class GoClientHuman implements GoClient {
 			
 			/** 
 			 * Check whether move is an integer within the board of an UNOCCUPIED location, 
-			 * let user try again if not valid. 
+			 * let user try again if this is not the case. 
 			 */
 			valid = moveValidator.checkValidityBeforeRemoving(move, boardDimension, board);
 			if  (!valid) {
@@ -545,8 +549,8 @@ public class GoClientHuman implements GoClient {
 			} 
 			
 			/**
-			 * Check whether removing of stoned due to the move results in a previously seen board.
-			 * If so, let user try again.
+			 * Add stone to the board, remove captured stones and check whether this results 
+			 * in a previously seen board. If so, let user try again.
 			 */
 			
 			location = Integer.parseInt(move);
@@ -564,19 +568,22 @@ public class GoClientHuman implements GoClient {
 				board = boardBeforeMove;
 				continue; 
 			} 
-			//Do not add the board to the previous boards, this is done when the result is received
+			//Do not add the board to the previous boards, for security reasons, only the board
+			//given by the server are added. Thus, it will be added when returned by the server
+			//in the result message.
 			validInput = true;
 		}
+//		
+//		//add stone to GUI if move is not a pass
+//		if (!move.equals(Character.toString(ProtocolMessages.PASS))) {
+//			//add stone to board
+//			int y = location / boardDimension;
+//			int x = location % boardDimension;
+//			boolean white = color == ProtocolMessages.WHITE;
+//			gogui.addStone(x, y, white);
+//		}
 		
-		//add stone to GUI if move is not a pass
-		if (!move.equals(Character.toString(ProtocolMessages.PASS))) {
-			//add stone to board
-			int y = location / boardDimension;
-			int x = location % boardDimension;
-			boolean white = color == ProtocolMessages.WHITE;
-			gogui.addStone(x, y, white);
-		}
-		
+		/** Send move to the game. */
 		message = ProtocolMessages.MOVE + ProtocolMessages.DELIMITER + move; 
 		sendToGame(message);
 	}

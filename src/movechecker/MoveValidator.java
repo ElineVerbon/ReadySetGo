@@ -15,7 +15,8 @@ import protocol.ProtocolMessages;
 public class MoveValidator {
 
 	/**
-	 * Checks whether a move is valid. If so, changes the board according to the move. 
+	 * Checks whether a non-pass and non-quit move is valid. 
+	 * If so, changes the board according to the move. 
 	 * 
 	 * It is invalid if:
 	 * 1. the move cannot be parsed to an integer
@@ -26,7 +27,6 @@ public class MoveValidator {
 	 * @return validness, a boolean that is true is the move is valid, otherwise false
 	 */
 	
-	//TODO maybe give a move here instead of a String? Then check before whether it is maybe a PASS.
 	public boolean checkValidityBeforeRemoving(String move, int boardDimension, String board) {
 		
 		boolean validness = true;

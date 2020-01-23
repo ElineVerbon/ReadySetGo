@@ -163,28 +163,32 @@ public class Game {
 	
 	/**
 	 * Send message to a player to tell him/her that its their turn & receive reply.
+	 * Check whether first component of the reply is one character & is not 'Q' (for quit)
+	 * If this is the case (protocol is kept), send the move (second component) to 
+	 * processMove()
 	 */
 	public void doTurn() {
-		// Set turn message.
-		String turnMessage = ProtocolMessages.TURN + ProtocolMessages.DELIMITER + board + 
-						ProtocolMessages.DELIMITER + opponentsMove;
+
 		String reply;
 		String move = "";
 		
-		/** Send message to client & wait for reply. */
+		/** Send turn message to client & wait for reply. */
+		String turnMessage = ProtocolMessages.TURN + ProtocolMessages.DELIMITER + board + 
+						ProtocolMessages.DELIMITER + opponentsMove;
 		if (firstPlayersTurn) {
 			reply = sendAndReceiveMessage(turnMessage, out1, in1);
 		} else {
 			reply = sendAndReceiveMessage(turnMessage, out2, in2);
 		}
 		
+		/** End game if client disconnected. */
 		if (reply == null) {
-			//if player disconnected, end game
 			reasonGameEnd = ProtocolMessages.DISCONNECT;
 			gameEnded = true;
 			return;
 		}
 		
+		/** Check 1st component of the reply. If of length 1 and not Q, send to 'processMove()'. */
 		String[] commands = reply.split(ProtocolMessages.DELIMITER);
 		if (commands[0].length() != 1) {
 			//TODO return invalid command
@@ -204,7 +208,7 @@ public class Game {
 		}
 		processMove(move);
 		
-		//set turn to the other
+		/** Turn is over and processed: set turn to other player. */
 		if (firstPlayersTurn) {
 			firstPlayersTurn = false;
 		} else {
@@ -214,16 +218,17 @@ public class Game {
 	
 	/**
 	 * Process the move that was received.
-	 * Move was already extracted from the message!
+	 * Move was already extracted from the message.
 	 * 
 	 * First check whether the player passed. If so:
-	 * - if second pass: end the game
-	 * - if first pass: move is valid, finish turn and continue the game
+	 * - if second pass: return move is valid message, break out of doTurn-loop to endGame
+	 * - if first pass: return move is valid message and continue the game
 	 * 
 	 * If player did not pass:
-	 * - check validity of move (if not valid, end game)
+	 * - check validity of move (if not valid, return move is invalid message and end game)
 	 * - determine the new board
-	 * - check whether board has not been seen before (if it has: end game)
+	 * - check whether board has not been seen before (if it has: return move is invalid 
+	 *   message and end game)
 	 */
 	
 	public void processMove(String move) {
@@ -232,23 +237,30 @@ public class Game {
 		char validness = ProtocolMessages.VALID;
 		String invalidMessage = null;
 		
-		/** Check whether the player passed. */
+		/** 
+		 * Check whether the player passed. 
+		 * If so, check whether it is the second pass. If it is: set gameEnded to true
+		 * to break out of doTurn loop. 
+		 * Whether second pass or not: send valid move message back to the player.
+		 */
 		if (move.equals(Character.toString(ProtocolMessages.PASS))) {
-			/** If second pass, game is over. Return result, then end doTurn loop. */
 			if (passed) {
-				//TODO decide on how to do this depending on how we decide to in the protocol
-				//i.e. end directly or first finish the turn & send the result
 				gameEnded = true;
 				reasonGameEnd = ProtocolMessages.FINISHED;
-//				return; //depends on decision protocol
 			} else {
 				passed = true;
 			}
 		} else {
-			/** If player did not pass. */
+			/** 
+			 * If player did not pass, do validity checks and update board.
+			 * 
+			 * First validity checks check whether move is an integer, falls within the board
+			 * and points to an unoccupied location.
+			 * Next, the stone is added to the board and stones are removed if necessary.
+			 * Finally, it is checked whether the move results in a replication of a previous board.
+			 */
 			passed = false;
 			
-			//check validity of the move
 			valid = moveValidator.checkValidityBeforeRemoving(move, boardDimension, board);
 			if (!valid) {
 				validness = ProtocolMessages.INVALID;
@@ -257,14 +269,13 @@ public class Game {
 				invalidMessage = "Your move was invalid (not an integer, outside of board, " +
 							"or location already occupied).";
 			} else {
-			
 				prevBoards.add(board);
 				
 				//parse move to an integer (it has already been checked whether that is possible)
 				int location;
 				location = Integer.parseInt(move);
 				
-				//determine what the board looks like after removing stones
+				//Add stone to the board, remove possible captured stones
 				if (firstPlayersTurn) {
 					board = board.substring(0, location) + colorPlayer1 + 
 													board.substring(location + 1);

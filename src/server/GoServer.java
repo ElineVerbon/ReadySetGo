@@ -230,7 +230,7 @@ public class GoServer implements Runnable {
 	}
 	
 	//TODO synchronize this! (right? else games & gameNo & client and clientNO can go wrong)
-	public Game addClientToGame(
+	public synchronized Game addClientToGame(
 				String nameClient, BufferedReader in, BufferedWriter out, String wantedColor) {
 		/**
 		 * add the player to an existing game, or (if no game available with one player)

@@ -16,11 +16,11 @@ import protocol.*;
  * is listening to start the game.
  */
 
-public class GoClientHumanStripped {
+public class HumanClient {
 	
 	//variables used to start a connection with the server
-	private GoClientHumanStrippedTUI clientTUI;
-	private ServerHandlerForHumanClient serverHandler;
+	private HumanClientTUI clientTUI;
+	private HumanClientServerCommunicator serverHandler;
 	private MessageGenerator messageGenerator;
 	
 	//variables to play a game
@@ -45,9 +45,9 @@ public class GoClientHumanStripped {
 	 * Constructs a new GoClient. Initializes the TUI.
 	 * Does not initialize the GUI, as board size has to be known.
 	 */
-	public GoClientHumanStripped() {
-		clientTUI = new GoClientHumanStrippedTUI();
-		serverHandler = new ServerHandlerForHumanClient();
+	public HumanClient() {
+		clientTUI = new HumanClientTUI();
+		serverHandler = new HumanClientServerCommunicator();
 		messageGenerator = new MessageGenerator(serverHandler);
 	}
 	
@@ -57,7 +57,7 @@ public class GoClientHumanStripped {
 	 * @param args 
 	 */
 	public static void main(String[] args) {
-		(new GoClientHumanStripped()).start();
+		(new HumanClient()).start();
 	}
 	
 	/**

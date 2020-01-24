@@ -1,12 +1,12 @@
 package protocol;
 
-import client.ServerHandlerForHumanClient;
+import client.HumanClientServerCommunicator;
 
 public class MessageGenerator {
 	
-	ServerHandlerForHumanClient serverHandler;
+	HumanClientServerCommunicator serverHandler;
 	
-	public MessageGenerator(ServerHandlerForHumanClient aServerHandler) {
+	public MessageGenerator(HumanClientServerCommunicator aServerHandler) {
 		serverHandler = aServerHandler;
 	}
 	

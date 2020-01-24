@@ -8,7 +8,6 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 
 import protocol.ProtocolMessages;
-import game.*;
 
 
 public class GoClientHandler implements Runnable {

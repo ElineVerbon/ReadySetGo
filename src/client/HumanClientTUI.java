@@ -13,10 +13,10 @@ import protocol.ProtocolMessages;
  *
  */
 
-public class GoClientHumanStrippedTUI {
+public class HumanClientTUI {
 	
 	/** Constructor, connected to the client that called the constructor. */
-	public GoClientHumanStrippedTUI() {
+	public HumanClientTUI() {
 	}
 	
 	/**

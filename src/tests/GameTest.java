@@ -12,9 +12,9 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import game.Game;
 import movechecker.MoveResult;
 import protocol.ProtocolMessages;
+import server.Game;
 
 /**
  * This class will test whether the Game responds correctly to certain responses of players.

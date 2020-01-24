@@ -13,7 +13,7 @@ import exceptions.ProtocolException;
 import exceptions.ServerUnavailableException;
 import protocol.ProtocolMessages;
 
-public class ServerHandlerForHumanClient {
+public class HumanClientServerCommunicator {
 	/** The socket and In- and OutputStreams. */
 	private BufferedReader in;
 	private BufferedWriter out;
@@ -23,13 +23,13 @@ public class ServerHandlerForHumanClient {
 	private String usedVersion; //given back by server upon handshake
 	
 	/** The connected human client. */
-	GoClientHumanStrippedTUI clientTUI;
+	HumanClientTUI clientTUI;
 	
 	public String getVersion() {
 		return usedVersion;
 	}
 	
-	public void startServerConnection(GoClientHumanStrippedTUI givenClientTUI) {
+	public void startServerConnection(HumanClientTUI givenClientTUI) {
 		clientTUI = givenClientTUI;
 		
 		

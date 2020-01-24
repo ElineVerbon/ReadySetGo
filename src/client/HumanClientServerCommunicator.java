@@ -25,13 +25,15 @@ public class HumanClientServerCommunicator {
 	/** The connected human client. */
 	HumanClientTUI clientTUI;
 	
+	public HumanClientServerCommunicator(HumanClientTUI givenClientTUI) {
+		clientTUI = givenClientTUI;
+	}
+	
 	public String getVersion() {
 		return usedVersion;
 	}
 	
-	public void startServerConnection(HumanClientTUI givenClientTUI) {
-		clientTUI = givenClientTUI;
-		
+	public void startServerConnection() {
 		
 		/** 
 		 * Try to create a connection to a server. 

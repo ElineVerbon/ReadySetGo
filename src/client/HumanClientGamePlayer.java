@@ -47,7 +47,7 @@ public class HumanClientGamePlayer {
 	 */
 	public HumanClientGamePlayer() {
 		clientTUI = new HumanClientTUI();
-		serverHandler = new HumanClientServerCommunicator();
+		serverHandler = new HumanClientServerCommunicator(clientTUI);
 		messageGenerator = new MessageGenerator(serverHandler);
 	}
 	
@@ -77,7 +77,7 @@ public class HumanClientGamePlayer {
 	public void start() {
 		
 		/** Create a connection and do handshake. */
-		serverHandler.startServerConnection(clientTUI);
+		serverHandler.startServerConnection();
 		
 		/** 
 		 * Play the game

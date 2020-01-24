@@ -19,10 +19,14 @@ public class ServerClientStartingUpTest {
 	private final static PrintStream ORIGINALOUT = System.out;
 
 	//Create two clients
-	GoClientHuman client1 = new GoClientHuman();
-	GoClientHuman client2 = new GoClientHuman();
-	GoClientHuman client3 = new GoClientHuman();
-	GoClientHuman client4 = new GoClientHuman();
+	HumanClientGamePlayer client1 = new HumanClientGamePlayer();
+	HumanClientTUI humanClientTUI1 = new HumanClientTUI();
+	HumanClientServerCommunicator humanClientServerCommunicator1 = 
+			 					new HumanClientServerCommunicator(humanClientTUI1);
+	HumanClientGamePlayer client2 = new HumanClientGamePlayer();
+	HumanClientTUI humanClientTUI2 = new HumanClientTUI();
+	HumanClientServerCommunicator humanClientServerCommunicator2 = 
+			 					new HumanClientServerCommunicator(humanClientTUI2);
 	
 	@BeforeAll
 	static public void setUpStream() {
@@ -43,7 +47,7 @@ public class ServerClientStartingUpTest {
 		/**
 		 * Test creating a connection. 
 		 */
-		client1.createConnection(addr, port);
+		humanClientServerCommunicator1.createConnection(addr, port);
 		//Client indicates it made a successful connection
 		assertThat(OUTCONTENT.toString(), 
 				containsString("You made a succesful connection!"));
@@ -51,12 +55,12 @@ public class ServerClientStartingUpTest {
 		
 		/**
 		 * Test the handshake coming from the client.
-		 * Player will be added to a game in this step.
-		 * (As no is message received from the player after it gets the returning handshake)
+		 * Player is added to a game in this step.
+		 * After the second handshake, a start game message is received
 		 * 
 		 * Note: cannot test with wrong input, because that is caught by the TUI (not user here)
 		 */
-		client1.doHandshake("Eline", 'B');
+		humanClientServerCommunicator1.doHandshake("Eline", 'B');
 		//Client prints a message to indicate which communication version will be used
 		assertThat(OUTCONTENT.toString(), containsString("Communication will proceed according"));
 		//Client also prints the message from the server: a welcome & to which game it was added
@@ -67,19 +71,13 @@ public class ServerClientStartingUpTest {
 		assertThat(OUTCONTENT.toString(), not(containsString("The game can start!")));
 		OUTCONTENT.reset();
 		
-		/**
-		 * Test creating a second connection. 
-		 */
-		client2.createConnection(addr, port);
+		humanClientServerCommunicator2.createConnection(addr, port);
 		//Client indicates it made a successful connection
 		assertThat(OUTCONTENT.toString(), 
 				containsString("You made a succesful connection!"));
 		OUTCONTENT.reset();
 		
-		/**
-		 * Add another client via the client doHandshake and test whether the game begins
-		 */
-		client2.doHandshake("Joep", 'B');
+		humanClientServerCommunicator2.doHandshake("Joep", 'B');
 		//Client prints a message to indicate which communication version will be used
 		assertThat(OUTCONTENT.toString(), containsString("Communication will proceed according"));
 		//Client also prints the message from the server: a welcome & to which game it was added
@@ -90,11 +88,72 @@ public class ServerClientStartingUpTest {
 		assertThat(OUTCONTENT.toString(), containsString("The game can start!"));
 		OUTCONTENT.reset();
 		
-		/**
-		 * TODO: test ending a game (if I want to do that via the server)
-		 */
-		// Exit the program
-//		client.sendExit();
+		//TODO close connections?
+	}
+	
+	/**
+	 * Test adding one player to a game, disconnecting, then adding two players.
+	 * Game should only start after the third player connected.
+	 */
+	@Test
+	void testDisconnectBeforeStartGame() 
+			throws ExitProgram, ServerUnavailableException, ProtocolException, IOException {
+//		HumanClientGamePlayer client3 = new HumanClientGamePlayer();
+		HumanClientTUI humanClientTUI3 = new HumanClientTUI();
+		HumanClientServerCommunicator humanClientServerCommunicator3 = 
+				 					new HumanClientServerCommunicator(humanClientTUI3);
+//		HumanClientGamePlayer client4 = new HumanClientGamePlayer();
+		HumanClientTUI humanClientTUI4 = new HumanClientTUI();
+		HumanClientServerCommunicator humanClientServerCommunicator4 = 
+				 					new HumanClientServerCommunicator(humanClientTUI4);
+//		HumanClientGamePlayer client5 = new HumanClientGamePlayer();
+		HumanClientTUI humanClientTUI5 = new HumanClientTUI();
+		HumanClientServerCommunicator humanClientServerCommunicator5 = 
+				 					new HumanClientServerCommunicator(humanClientTUI5);
+		
+		/** Preparation: start server with local host and port 8888 and let it listen for clients.*/
+		GoServer testServer = new GoServer();
+		InetAddress addr = InetAddress.getLocalHost();
+		int port = 8889;
+		testServer.createSocket(addr, port);
+		new Thread(testServer).start();
+		
+		//Connect and disconnect first client
+		humanClientServerCommunicator3.createConnection(addr, port);
+		assertThat(OUTCONTENT.toString(), 
+				containsString("You made a succesful connection!"));
+		
+		humanClientServerCommunicator3.doHandshake("Eline", 'B');
+		//Client prints a message to indicate which communication version will be used
+		assertThat(OUTCONTENT.toString(), containsString("Communication will proceed according"));
+		//Server prints does not yet print that the game can start
+		assertThat(OUTCONTENT.toString(), not(containsString("The game can start!")));
+		humanClientServerCommunicator3.closeConnection();
+		OUTCONTENT.reset();
+		
+		//Connect second client
+		humanClientServerCommunicator4.createConnection(addr, port);
+		assertThat(OUTCONTENT.toString(), 
+				containsString("You made a succesful connection!"));
+		
+		humanClientServerCommunicator4.doHandshake("Eline", 'B');
+		//Client prints a message to indicate which communication version will be used
+		assertThat(OUTCONTENT.toString(), containsString("Communication will proceed according"));
+		//Server prints does not yet print that the game can start
+		assertThat(OUTCONTENT.toString(), not(containsString("The game can start!")));
+		
+		//Connect third client
+		humanClientServerCommunicator5.createConnection(addr, port);
+		assertThat(OUTCONTENT.toString(), 
+				containsString("You made a succesful connection!"));
+		
+		humanClientServerCommunicator5.doHandshake("Eline", 'B');
+		//Client prints a message to indicate which communication version will be used
+		assertThat(OUTCONTENT.toString(), containsString("Communication will proceed according"));
+		//Server prints does not yet print that the game can start
+		assertThat(OUTCONTENT.toString(), containsString("The game can start!"));
+		
+		//TODO close connection?
 	}
 	
 	@AfterAll

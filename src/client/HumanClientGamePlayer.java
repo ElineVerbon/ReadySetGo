@@ -16,7 +16,7 @@ import protocol.*;
  * is listening to start the game.
  */
 
-public class HumanClient {
+public class HumanClientGamePlayer {
 	
 	//variables used to start a connection with the server
 	private HumanClientTUI clientTUI;
@@ -45,7 +45,7 @@ public class HumanClient {
 	 * Constructs a new GoClient. Initializes the TUI.
 	 * Does not initialize the GUI, as board size has to be known.
 	 */
-	public HumanClient() {
+	public HumanClientGamePlayer() {
 		clientTUI = new HumanClientTUI();
 		serverHandler = new HumanClientServerCommunicator();
 		messageGenerator = new MessageGenerator(serverHandler);
@@ -57,7 +57,7 @@ public class HumanClient {
 	 * @param args 
 	 */
 	public static void main(String[] args) {
-		(new HumanClient()).start();
+		(new HumanClientGamePlayer()).start();
 	}
 	
 	/**

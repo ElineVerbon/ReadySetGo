@@ -112,7 +112,7 @@ public class GoClientHumanStripped {
 				}
 				clientTUI.showMessage("Server did not understand the message. Please try again.");
 				//TODO not sure what to do after this. Cannot go to another method, because I don't 
-				//have the message components. Mayber I should save the previous message somewhere?
+				//have the message components. Maybe I should save the previous message somewhere?
 				break;
 			case ProtocolMessages.GAME:
 				misunderstood = false;
@@ -162,7 +162,7 @@ public class GoClientHumanStripped {
 															|| locationStatus.equals("U"))) {
 				messageGenerator.errorMessage("ProtocolException in start game message: only " +
 						"'B', 'W' and 'U' expected in the string representation of the board, " +
-						"but " + components[2] + " received.");
+						"but " + board + " received.");
 			}
 		}
 		
@@ -173,12 +173,12 @@ public class GoClientHumanStripped {
 		String assignedColor = components[2];
 		if (assignedColor.length() != 1) {
 			messageGenerator.errorMessage("ProtocolException in start game message: "
-					+ "'B' or 'W' expected as third command, but " + components[2] + " received.");
+					+ "'B' or 'W' expected as third command, but " + assignedColor + " received.");
 		}
 		color = assignedColor.charAt(0);
 		if (!(color == 'W' || color == 'B')) {
 			messageGenerator.errorMessage("ProtocolException in start game message: "
-					+ "'B' or 'W' expected as third command, but " + components[2] + " received.");
+					+ "'B' or 'W' expected as third command, but " + assignedColor + " received.");
 		}
 		
 		/**

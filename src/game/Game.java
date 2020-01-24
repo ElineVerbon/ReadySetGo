@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import movechecker.*;
 import protocol.ProtocolMessages;
@@ -95,9 +96,52 @@ public class Game {
 			return message;
 		}
 		
-		//TODO would like to check whether the other player has not disconnected yet
+		//Check whether player1 has disconnected by sending the start message in two parts (if
+		//disconnected, the second flush will give an IO exception)
+		try {
+			String startMessage1part1 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER;
+			out1.write(startMessage1part1);
+			out1.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		
-		//if already a first player, set this player as player 2
+		//Need to wait, otherwise it does not go into the exception
+		try {
+			TimeUnit.SECONDS.sleep(1);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		
+		//If the other has disconnected, set this player as player 1
+		try {
+			String startMessage1part2 = board + ProtocolMessages.DELIMITER + colorPlayer1;
+			out1.write(startMessage1part2);
+			out1.newLine();
+			out1.flush();
+		} catch (IOException e) {
+			//player 1 has disconnected
+			namePlayer1 = name;
+			in1 = in;
+			out1 = out;
+			//if no provided wanted color (or of length 1, give black)
+			if (wantedColor == null || wantedColor.length() != 1) {
+				colorPlayer1 = ProtocolMessages.BLACK;
+			} else {
+				if (wantedColor.charAt(0) == ProtocolMessages.BLACK) {
+					colorPlayer1 = ProtocolMessages.BLACK;
+				} else if (wantedColor.charAt(0) == ProtocolMessages.WHITE) {
+					colorPlayer1 = ProtocolMessages.WHITE;
+				} else {
+					colorPlayer1 = ProtocolMessages.BLACK;
+				}
+			}
+			message = "Player 1 disconnected, " + name + " was added to game " + 
+									gameNumber + " as the first player.";
+			return message;
+		}
+		
+		//if there is already a connected player1, set this player as player2
 		namePlayer2 = name;
 		in2 = in;
 		out2 = out;
@@ -144,9 +188,9 @@ public class Game {
      */
 	public void startGame() {
 		//Send start messages to the players 
-		String startMessage1 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
-				+ board + ProtocolMessages.DELIMITER + colorPlayer1;
-		sendMessageToClient(startMessage1, out1);
+//		String startMessage1 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
+//				+ board + ProtocolMessages.DELIMITER + colorPlayer1;
+//		sendMessageToClient(startMessage1, out1);
 		String startMessage2 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
 				+ board + ProtocolMessages.DELIMITER + colorPlayer2;
 		sendMessageToClient(startMessage2, out2);

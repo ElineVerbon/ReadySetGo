@@ -10,19 +10,21 @@ import java.util.concurrent.TimeUnit;
 
 import protocol.ProtocolMessages;
 
+/**
+ * The GoClientHandler handles all communication between the server and the client.
+ */
 
 public class GoClientHandler implements Runnable, Handler {
 	
-	/** The socket and In- and OutputStreams. */
+	/** The In- and OutputStreams to communicate with the client. */
 	private BufferedReader in;
 	private BufferedWriter out;
 	private Socket sock;
 	
-	/** The connected HotelServer. */
+	/** The connected Server. */
 	private GoServer srv;
 
-	
-	/** Name of the attached client. */
+	/** Name of the connected client. */
 	private String clientName;
 	
 	/** The game connected with this ClientHandler. */
@@ -52,34 +54,29 @@ public class GoClientHandler implements Runnable, Handler {
 			shutdown();
 		}
 	}
-//	public GoClientHandler(GoServer server, BufferedReader givenIn, 
-//										BufferedWriter givenOut) {
-//		in = givenIn;
-//		out = givenOut;
-//		srv = server;
-//	}
 
 	/**
-	 * Listens for handshake message & lets the client start playing.
+	 * This method is called from the server immediately upon construction of the handler. It 
+	 * listens for a handshake message. Once it receives this message, it instructs the server 
+	 * to return the handshake and add the client as a player to a game.
+	 * If it is the second player added to the game, the game will start and be run from the Game
+	 * object. The Game controls the flow of information, which is transmitted via the handler.
 	 */
 	public void run() {
 		String msg;
 		try {
 			msg = in.readLine();
-			
-			//call server's handshake method
 			if (msg.charAt(0) == ProtocolMessages.HANDSHAKE) {
-				//Don't use the returned game here, only in the tests
 				doHandshakeAndAddToGame(msg);
+				
+			} else {
+				errorMessage("The client did not comply with the protocol: a handshake message" +
+							"was expected, but " + msg + " was received.");
 			}
 			
-			//if this was the second player added to the game, start the game
-			if (thisClientsGame.getTwoPlayers()) {
+			if (thisClientsGame.hasTwoPlayers()) {
 				thisClientsGame.runGame();
 			}
-			
-			//TODO shutdown client when necessary
-//			shutdown();
 		} catch (IOException e) {
 			shutdown();
 		}
@@ -90,17 +87,15 @@ public class GoClientHandler implements Runnable, Handler {
 	 * PROTOCOL.handshake + PROTOCOL.delimiter + requestedVersion + PROTOCOL.delimiter + naamClient 
 	 * optionally these at the end: + PROTOCOL.delimiter + PROTOCOL.white/black
 	 * 
-	 * Upon receiving a handshake message from the client, send handshake
-	 * command to the server. Get the response. Add the client to a game.
-	 * Send response + message about game back to client.
-	 * 
-	 * Return the Game for testing purposes!
+	 * Upon receiving a handshake message from the client, send handshake command to the server. 
+	 * The server will check the handshake, construct the appropriate reply and add the client 
+	 * to a game. The reply + information about the game are send back to the client.
 	 */
 	
 	private void doHandshakeAndAddToGame(String msg) {
 		
 		/**
-		 * Get handshake message from client and split into pieces.
+		 * Split the handshake message from client into the components.
 		 */
 		String[] commands = msg.split(ProtocolMessages.DELIMITER);
 		
@@ -116,15 +111,13 @@ public class GoClientHandler implements Runnable, Handler {
 		/**
 		 * Send message to the server and record the returning handshake message.
 		 * In addition, let server add the client to a game
-		 * 
-		 * Send returning handshake message + game info to the client.
 		 */
 		
 		String handshakeResponse = srv.doHandshake(requestedVersion, clientName);
 		
 		thisClientsGame = srv.addClientToGame(clientName, wantedColor, this);
 		String gameMessage = "";
-		if (thisClientsGame.getTwoPlayers()) {
+		if (thisClientsGame.hasTwoPlayers()) {
 			gameMessage = " You have been added to game " + thisClientsGame.getGameNumber() + ". " +
 					"You are the second player, the game will start soon!"; 
 		} else {
@@ -132,20 +125,19 @@ public class GoClientHandler implements Runnable, Handler {
 					"You are the first player, please wait for the second player."; 
 		}
 		
-		//Send the response to the client
+		//Send the server's handshake message + game info to the client.
 		String message = handshakeResponse + gameMessage;
 		try {
 			out.write(message);
 			out.newLine();
 			out.flush();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
 	/**
-	 * Methods to send messages formatted according to the protocol to the client. 
+	 * Send error message to the client. 
 	 */
 	
 	public void errorMessage(String message) {
@@ -154,12 +146,22 @@ public class GoClientHandler implements Runnable, Handler {
 		sendMessageToClient(errorMessage);
 	}
 	
+	/**
+	 * Send start game message to the client
+	 */
 	public void startGameMessage(String board, char color) {
 		String startMessage = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
 				+ board + ProtocolMessages.DELIMITER + color;
 		sendMessageToClient(startMessage);
 	}
 	
+	/**
+	 * Send start game message to the first connected client when the second player it to be added
+	 * to the same game to check whether the first player did not disconnect.
+	 * @param board
+	 * @param color
+	 * @throws IOException, used to check whether client is still connected
+	 */
 	public void startGameMessageInTwoParts(String board, char color) throws IOException {
 		//Check whether player1 has disconnected by sending the start message in two parts (if
 		//disconnected, the second flush will give an IO exception)
@@ -184,6 +186,9 @@ public class GoClientHandler implements Runnable, Handler {
 		out.flush();
 	}
 	
+	/**
+	 * Send doTurn message to the client.
+	 */
 	public String doTurnMessage(String board, String opponentsMove) {
 		String turnMessage = ProtocolMessages.TURN + ProtocolMessages.DELIMITER + board + 
 				ProtocolMessages.DELIMITER + opponentsMove;
@@ -193,6 +198,9 @@ public class GoClientHandler implements Runnable, Handler {
 		return reply;
 	}
 	
+	/**
+	 * Send the result of player's move to the client.
+	 */
 	public void giveResultMessage(boolean valid, String msg) {
 		String resultMessage = "";
 		
@@ -206,6 +214,9 @@ public class GoClientHandler implements Runnable, Handler {
 		sendMessageToClient(resultMessage);
 	}
 	
+	/**
+	 * Send an endGameMessage to the client.
+	 */
 	public void endGameMessage(char reasonGameEnd, char winner, 
 									String scoreBlack, String scoreWhite) {
 		String endOfGameMessage = ProtocolMessages.END + ProtocolMessages.DELIMITER + reasonGameEnd
@@ -217,7 +228,7 @@ public class GoClientHandler implements Runnable, Handler {
 	}
 	
 	/**
-	 * Send message from game to client.
+	 * Send a message from to the client.
 	 */
 	public void sendMessageToClient(String msg) {
 		try {
@@ -231,7 +242,7 @@ public class GoClientHandler implements Runnable, Handler {
 	}
 	
 	/**
-	 * Send message to and get message from client.
+	 * Get a message from client.
 	 */
 	public String getReply() {
 		String reply = "";

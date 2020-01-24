@@ -44,10 +44,11 @@ public class GoServer implements Runnable {
 	
 	/** Available versions of this server. */
 	private List<String> availableVersions = new ArrayList<String>();
+	private String usedVersion;
 
 	/**  
 	 * The TUI of this GoServer.
-	 * Needed to ask for IP address and port number
+	 * Required to ask for IP address and port number
 	 */
 	private GoServerTUI tui;
 	
@@ -55,28 +56,19 @@ public class GoServer implements Runnable {
 
 	/** 
 	 * Start a new GoServer.
-	 * A GoServer is constructed and then its run() method is called
-	 * in a new thread to listen for new clients. 
+	 * A GoServer is constructed, a serverSocket set up and then its run() 
+	 * method is called in a new thread to continuously listen for new clients. 
 	 */
 	public static void main(String[] args) {
 		GoServer server = new GoServer();
 		System.out.println("Welcome to the GoServer! Starting...");
 		
-		/**
-		 * Set up a ServerSocket.
-		 * First, get user input for IP and port
-		 * Then create the socket
-		 */
 		try {
 			server.setup();
 		} catch (ExitProgram e1) {
-			// If setup() throws an ExitProgram exception, stop the program.
 			return;
 		}
 		
-		/**
-		 * Start listening for connections in a separate thread
-		 */
 		new Thread(server).start();
 	}
 	
@@ -91,45 +83,15 @@ public class GoServer implements Runnable {
 		nextGameNo = 1;
 		tui = new GoServerTUI();
 		
-		//add all known versions
 		availableVersions.add("0.01");
 	}
 	
-	/**
-	 * Create connections with clients.
-	 * The ServerSocket listens for new clients, makes a clientHandler 
-	 * for each connected client and starts the clientHandler in a new 
-	 * thread (so the ServerSocket can continue listening for new clients).
-	 */
-	
-	public void run() {
-		boolean openNewSocket = true;
-		while (openNewSocket) {
-			try {
-				Socket sock = ssock.accept();
-				tui.showMessage("Client number " + nextClientNo + " just connected!");
-				
-				GoClientHandler handler = 
-						new GoClientHandler(sock, this);
-				new Thread(handler).start();
-				
-				//add the handler to the list of handlers
-				clients.add(handler);
-				nextClientNo++;
-			} catch (IOException e) {
-				System.out.println("A server IO error occurred: " 
-						+ e.getMessage());
-				System.out.println("The server will shut down.");
-			}
-		}
-	}
-
 	/**
 	 * Sets up a ServerSocket on a user-defined IP address and port.
 	 * 
 	 * The user of the server is asked to input a port and an IP address, 
 	 * after which a socket is attempted to be opened. If the attempt succeeds, 
-	 * the method ends. If the attempt fails, the user can decide to try again, 
+	 * the method ends. If the attempt fails, the user can decide whether to try again, 
 	 * after which an ExitProgram exception is thrown or a new port is entered.
 	 * 
 	 * @throws ExitProgram if a connection can not be created on the given 
@@ -174,11 +136,31 @@ public class GoServer implements Runnable {
 	}
 	
 	/**
-	 * Removes a clientHandler from the client list.
-	 * @requires client != null
+	 * Create connections with clients via the server's ServerSocket.
+	 * 
+	 * The ServerSocket listens for new clients, makes a clientHandler 
+	 * for each connected client and starts the clientHandler in a new 
+	 * thread (so the ServerSocket can continue listening for new clients).
 	 */
-	public void removeClient(GoClientHandler client) {
-		this.clients.remove(client);
+	
+	public void run() {
+		boolean openNewSocket = true;
+		while (openNewSocket) {
+			try {
+				Socket sock = ssock.accept();
+				tui.showMessage("Client number " + nextClientNo + " just connected!");
+				
+				GoClientHandler handler = new GoClientHandler(sock, this);
+				new Thread(handler).start();
+				
+				clients.add(handler);
+				nextClientNo++;
+			} catch (IOException e) {
+				tui.showMessage("A server IO error occurred: " 
+						+ e.getMessage() + " The server will shut down.");
+				openNewSocket = false;
+			}
+		}
 	}
 	
 	/**
@@ -197,13 +179,12 @@ public class GoServer implements Runnable {
 	public String doHandshake(String requestedVersion, String nameClient) {
 		String response;
 		
-		
 		/**
 		 * check if requested version is available, if so:
 		 * it will be used for communication with this client, if not:
 		 * version 1.0 will be used. 
 		 */
-		String usedVersion = "1.0";
+		usedVersion = "1.0";
 		for (String version : availableVersions) {
 			if (version.equals(requestedVersion)) {
 				usedVersion = requestedVersion;
@@ -216,9 +197,6 @@ public class GoServer implements Runnable {
 		
 		response = ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER 
 				+ usedVersion + ProtocolMessages.DELIMITER + message;
-		
-		//TODO take out this print statement
-		tui.showMessage("Server's doHandshake() response: " + response);
 		
 		return response;
 	}
@@ -235,37 +213,51 @@ public class GoServer implements Runnable {
 	public synchronized Game addClientToGame(
 				String nameClient, String wantedColor, GoClientHandler thisClientsHandler) {
 		
+		//if no games yet or the last game has already started, make a new game, add the client
 		if (games.isEmpty() || games.get(games.size() - 1).getStarted()) {
 			Game newGame = setupGoGame();
 			addClientAsPlayer1(nameClient, wantedColor, newGame, thisClientsHandler);
 			tui.showMessage(nameClient + " was added to game number " + newGame.getGameNumber() +
 					 " as the first player.");
 			return newGame;
+			
 		} else {
+			
+			//if there is a not-yet-started game, check whether the first player is still connected
 			Game lastGame = games.get(games.size() - 1);
+			GoClientHandler player1goClientHandler = (GoClientHandler) 
+															lastGame.getClientHandlerPlayer1();;
 			try {
-				GoClientHandler player1goClientHandler = (GoClientHandler) 
-															lastGame.getClientHandlerPlayer1();
 				player1goClientHandler.startGameMessageInTwoParts(lastGame.getBoard(), 
-																	lastGame.getColorPlayer1());
+															lastGame.getColorPlayer1());
 			} catch (IOException e) {
+				//if not connected anymore: set current client as the first player in the game
+				removeClient(player1goClientHandler);
 				addClientAsPlayer1(nameClient, wantedColor, lastGame, thisClientsHandler);
 				tui.showMessage("Player 1 disconnected, " + nameClient + " was added to game " + 
 										lastGame.getGameNumber() + " as the first player.");
 				return lastGame;
 			}
-			//otherwise, set player as second player
-			addClientAsPlayer2(nameClient, lastGame, thisClientsHandler);
 			
+			//otherwise, set current client as the second player in the game
+			addClientAsPlayer2(nameClient, lastGame, thisClientsHandler);
 			tui.showMessage(nameClient + " was added to game " + lastGame.getGameNumber() + 
 					" as the second player. The game can start!");
 			return lastGame;
 		}
 	}
 	
+	/**
+	 * Removes a clientHandler from the client list.
+	 * @requires client != null
+	 */
+	public void removeClient(GoClientHandler client) {
+		this.clients.remove(client);
+	}
+	
 	/** 
 	 * Adds a first player to a game. The player gets the color that he / she requested.
-	 * If not color requested, the player will get BLACK.
+	 * If no color requested, the player will get BLACK.
 	 * 
 	 * @param name, the name of the player
 	 * @param wantedColor, the color requested by the player (null if not specified by the player)
@@ -277,7 +269,7 @@ public class GoServer implements Runnable {
 		game.setNamePlayer1(nameClient);
 		game.setClientHandlerPlayer1(thisClientsHandler);
 		
-		//if no provided wanted color (or of length 1, give black)
+		//if no provided wanted color (or wanted color not of length 1), give black
 		if (wantedColor == null || wantedColor.length() != 1) {
 			game.setColorPlayer1(ProtocolMessages.BLACK);
 		} else {
@@ -317,7 +309,7 @@ public class GoServer implements Runnable {
 	 */
 	//TODO need to add the version as a variable
 	public Game setupGoGame() {
-		Game aGame = new Game(nextGameNo, "1.0");
+		Game aGame = new Game(nextGameNo, usedVersion);
 		
 		//increase next game number by one
 		nextGameNo++;

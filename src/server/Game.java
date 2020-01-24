@@ -22,6 +22,7 @@ public class Game {
 	
 	private Handler goClientHandlerPlayer1;
 	private Handler goClientHandlerPlayer2;
+	private Handler currentPlayersHandler;
 	
 	/** Variable to keep track of game states. */
 	private boolean twoPlayers = false; //two players have been added
@@ -52,6 +53,9 @@ public class Game {
         board = new String(charArray);
 	}
 	
+	/**
+	 * Getters and setters for the instance variables of Game.
+	 */
 	public void setColorPlayer1(char color) {
 		colorPlayer1 = color;
 	}
@@ -108,27 +112,21 @@ public class Game {
 		this.twoPlayers = twoPlayers;
 	}
 	
-	public boolean getTwoPlayers() {
+	public boolean hasTwoPlayers() {
 		return twoPlayers;
 	}
 	
 	/**
 	 * Runs the game.
 	 * Starts the game (send start messages, send first turn message), 
-	 * keep sending turns to alternating players until game end. Then end game.
+	 * keeps sending turns to alternating players until game end.
 	 */
 	public void runGame() {
-
 		started = true;
-		
-        // Send start game message to both players (via their clientHandler).
 		startGame();
-		
-		// Keep calling doTurn until the game has ended.
 		while (!gameEnded) {
 			doTurn();
 		}
-		
 		endGame();
 	}
 	
@@ -167,41 +165,48 @@ public class Game {
 		String move = "";
 		
 		if (firstPlayersTurn) {
-			reply = goClientHandlerPlayer1.doTurnMessage(board, opponentsMove);
+			currentPlayersHandler = goClientHandlerPlayer1;
 		} else {
-			reply = goClientHandlerPlayer2.doTurnMessage(board, opponentsMove);
+			currentPlayersHandler = goClientHandlerPlayer2;
 		}
+		reply = currentPlayersHandler.doTurnMessage(board, opponentsMove);
 		
-		
-		/** 
-		 * End game if client disconnected. 
-		 */
+		// End game if client disconnected. 
 		if (reply == null) {
 			reasonGameEnd = ProtocolMessages.DISCONNECT;
 			gameEnded = true;
 			return;
 		}
 		
-		/** 
-		 * Check 1st component of the reply. 
-		 * If of length 1 and not Q, send to 'processMove()'. 
-		 */
-		String[] commands = reply.split(ProtocolMessages.DELIMITER);
-		if (commands[0].length() != 1) {
-			//TODO return invalid command
+		// Check 1st component of the move message received from the player. 
+		String[] components = reply.split(ProtocolMessages.DELIMITER);
+		if (components[0].length() != 1) {
+			//TODO not sure what to do after sending an error message. doTurn() again?
+			currentPlayersHandler.errorMessage("Player did not keep to the protoc l: the first "
+						+ "part of its move message ( " + reply + ") was not a single character.");
 			return;
 		}
-		if (commands[0].equals("Q")) {
-			reasonGameEnd = ProtocolMessages.QUIT;
-			gameEnded = true;
-			return;
-		} else if (commands[0].equals(Character.toString(ProtocolMessages.MOVE))) {
-			move = commands[1];
-		} else if (commands[0].equals("?")) {
-			//TODO
-		} else {
-			//TODO ProtocolException, not kept to protocol, send ? back.
+		
+		char command = components[0].charAt(0);
+		switch(command) {
+			case (ProtocolMessages.QUIT):
+				reasonGameEnd = ProtocolMessages.QUIT;
+				gameEnded = true;
+				return;
+			case (ProtocolMessages.MOVE):
+				move = components[1];
+				break;
+			case (ProtocolMessages.ERROR):
+				//TODO what to do if the player did not understand a message? End game?
+			default:
+				//TODO not sure what to do after sending an error message. doTurn() again?
+				currentPlayersHandler.errorMessage("Player did not keep to the protocol: '"
+					+ ProtocolMessages.QUIT + "', '" + ProtocolMessages.ERROR + "' or '" +
+					ProtocolMessages.MOVE + "' expected as first part of the message, but '" +
+					command + "' received.");
+				return;
 		}
+		
 		processMove(move);
 		
 		/** Turn is over and processed: set turn to other player. */
@@ -214,7 +219,6 @@ public class Game {
 	
 	/**
 	 * Process the move that was received.
-	 * Move was already extracted from the message.
 	 * 
 	 * First check whether the player passed. If so:
 	 * - if second pass: return move is valid message, break out of doTurn-loop to endGame
@@ -231,12 +235,7 @@ public class Game {
 		
 		boolean valid = true;
 		
-		/** 
-		 * Check whether the player passed. 
-		 * If so, check whether it is the second pass. If it is: set gameEnded to true
-		 * to break out of doTurn loop. 
-		 * Whether second pass or not: send valid move message back to the player.
-		 */
+		// Check whether the player passed. 
 		if (move.equals(Character.toString(ProtocolMessages.PASS))) {
 			if (passed) {
 				gameEnded = true;
@@ -245,21 +244,12 @@ public class Game {
 				passed = true;
 			}
 		} else {
-			/** 
-			 * If player did not pass, do validity checks and update board.
-			 * 
-			 * First validity checks check whether move is an integer, falls within the board
-			 * and points to an unoccupied location.
-			 * Next, the stone is added to the board and stones are removed if necessary.
-			 * Finally, it is checked whether the move results in a replication of a previous board.
-			 */
+			// If player did not pass, do validity checks and update board.
 			passed = false;
 			
 			prevBoards.add(board);
 			
-			/**
-			 * Check validity of the move
-			 */
+			// Check validity of the move
 			if (firstPlayersTurn) {
 				valid = moveValidator.processMove(move, boardDimension, board, 
 															colorPlayer1, prevBoards);
@@ -268,9 +258,7 @@ public class Game {
 															colorPlayer2, prevBoards);
 			}
 			
-			/**
-			 * If the move was valid, update the current board.
-			 */
+			// If the move was valid, update the current board.
 			if (valid) {
 				int location;
 				location = Integer.parseInt(move);
@@ -285,7 +273,7 @@ public class Game {
 				}
 			}
 		}
-		
+		//give the result to the player
 		opponentsMove = move;
 		giveResult(valid);
 	}
@@ -299,14 +287,14 @@ public class Game {
 	public void giveResult(boolean valid) {
 		String message = "";
 		
-		/** Set result message. */
+		// Set result message.
 		if (valid) {
 			message = board;
 		} else {
 			message = "Your move was invalid. You lose the game.";
 		}
 		
-		/** Send the result to the current player. */
+		// Send the result to the current player.
 		if (firstPlayersTurn) {
 			goClientHandlerPlayer1.giveResultMessage(valid, message);
 		} else {
@@ -320,15 +308,13 @@ public class Game {
 	 * @param reason One of the ProtocolMessages indicating the reason for ending the game
 	 */
 	public void endGame() {
-		//TODO add ProtocolMessages.DISCONNECT as a possible reason 
-		//to end the game somewhere in the code
 		
 		char winner = 'x';
 		double scoreBlack = 0;
 		double scoreWhite = 0;
 		
-		//Decide on winner depending on why the game was ended
 		switch (reasonGameEnd) {
+			//if game ended after a double pass, decide on winner based on the scores
 			case ProtocolMessages.FINISHED:
 				//TODO change to actual winner
 				winner = 'B';
@@ -337,7 +323,7 @@ public class Game {
 				goClientHandlerPlayer2.endGameMessage(reasonGameEnd, winner, 
 						Double.toString(scoreBlack), Double.toString(scoreWhite));
 				break;
-			//if one of the other options: the not-current player wins
+			//if one of the other game end reasons: the not-current player wins
 			case ProtocolMessages.CHEAT:
 			case ProtocolMessages.QUIT:
 				if (firstPlayersTurn) {
@@ -350,7 +336,7 @@ public class Game {
 				goClientHandlerPlayer2.endGameMessage(reasonGameEnd, winner, 
 						Double.toString(scoreBlack), Double.toString(scoreWhite));
 				break;
-			//in case of a disconnect, only the other player gets a message
+			//in case of a disconnect, only the still-connected player gets a message
 			case ProtocolMessages.DISCONNECT:
 				if (firstPlayersTurn) {
 					winner = colorPlayer2;
@@ -361,17 +347,14 @@ public class Game {
 					goClientHandlerPlayer1.endGameMessage(reasonGameEnd, winner, 
 							Double.toString(scoreBlack), Double.toString(scoreWhite));
 				}
-				
-				
 				break;
 			default:
-				if (firstPlayersTurn) {
-					goClientHandlerPlayer1.errorMessage("Protocol exception: reason game end 'F', "
-							+ "'C', 'D' or 'Q' expected, was: " + reasonGameEnd);
-				} else {
-					goClientHandlerPlayer2.errorMessage("Protocol exception: reason game end 'F', "
-							+ "'C', 'D' or 'Q' expected, was: " + reasonGameEnd);
-				}
+				//TODO not sure what to do after sending the error messages. Maybe nothing, only
+				//used for debugging?
+				goClientHandlerPlayer1.errorMessage("Sorry, the winner cannot be decided. Known " +
+						"reason game end (" + reasonGameEnd + ") is unknown.");
+				goClientHandlerPlayer2.errorMessage("Sorry, the winner cannot be decided. Known " +
+						"reason game end (" + reasonGameEnd + ") is unknown.");
 		}
 	}
 }

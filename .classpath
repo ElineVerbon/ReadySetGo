@@ -16,5 +16,6 @@
 	<classpathentry kind="lib" path="lib/javafx-sdk-11.0.2/lib/javafx.swing.jar"/>
 	<classpathentry kind="lib" path="lib/javafx-sdk-11.0.2/lib/javafx.web.jar"/>
 	<classpathentry kind="lib" path="lib/goGui/gui-1.1.jar" sourcepath="lib/goGui/src/main/java/"/>
+	<classpathentry kind="lib" path="lib/easymock-4.1/easymock-4.1.jar" sourcepath="lib/easymock-4.1/easymock-4.1-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

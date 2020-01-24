@@ -27,6 +27,7 @@ public class HumanClientServerCommunicator {
 	
 	public HumanClientServerCommunicator(HumanClientTUI givenClientTUI) {
 		clientTUI = givenClientTUI;
+		wantedVersion = "1.0";
 	}
 	
 	public String getVersion() {
@@ -172,6 +173,7 @@ public class HumanClientServerCommunicator {
 				clientTUI.showMessage("Only 'black' and 'white' are allowed as answer.");
 			}
 		}
+		clientTUI.showMessage("Name client: " + nameClient + ", wanted color: " + wantedColor);
 		
 		//perform the handshake
 		doHandshake(nameClient, wantedColor);
@@ -195,6 +197,8 @@ public class HumanClientServerCommunicator {
 		String message = ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER + wantedVersion + 
 				ProtocolMessages.DELIMITER + nameClient + ProtocolMessages.DELIMITER + wantedColor;
 		
+		clientTUI.showMessage(message);
+		
 		//send handshake message to the server, read the response.
 		String line = "";
 		try {
@@ -213,6 +217,8 @@ public class HumanClientServerCommunicator {
 		 * PROTOCOL.handshake + PROTOCOL.delimiter + finalVersion (string) 
 		 * optionally these at the end: PROTOCOL.delimiter + message (string)
 		 */ 
+		
+		clientTUI.showMessage(line);
 		
 		//check whether the handshake character came first, if not: throw exception
 		String[] serverResponse = line.split(ProtocolMessages.DELIMITER);

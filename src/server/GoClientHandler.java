@@ -6,11 +6,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.concurrent.TimeUnit;
 
 import protocol.ProtocolMessages;
 
 
-public class GoClientHandler implements Runnable {
+public class GoClientHandler implements Runnable, Handler {
+	
 	/** The socket and In- and OutputStreams. */
 	private BufferedReader in;
 	private BufferedWriter out;
@@ -19,8 +21,6 @@ public class GoClientHandler implements Runnable {
 	/** The connected HotelServer. */
 	private GoServer srv;
 
-	/** Name of this ClientHandler. */
-	private String handlerName;
 	
 	/** Name of the attached client. */
 	private String clientName;
@@ -28,10 +28,9 @@ public class GoClientHandler implements Runnable {
 	/** The game connected with this ClientHandler. */
 	private Game thisClientsGame;
 	
-//	/** Communication version of this client-server combination) */
-//	private String version;
-	//TODO implement this to keep track of the protocol version. 
-	//Not sure if this is necessary, depends on how the protocols differ
+	/** Communication version of this client-server combination). */
+	//TODO this is not implemented neatly yet (not set anywhere yet)
+	private String version;
 
 	/**
 	 * Constructs a new GoClientHandler. Opens the In- and OutputStreams.
@@ -40,7 +39,8 @@ public class GoClientHandler implements Runnable {
 	 * @param srv  The connected server
 	 * @param name The name of this ClientHandler
 	 */
-	public GoClientHandler(Socket sock, GoServer srv, String name) {
+	
+	public GoClientHandler(Socket sock, GoServer srv) {
 		try {
 			in = new BufferedReader(
 					new InputStreamReader(sock.getInputStream()));
@@ -48,11 +48,16 @@ public class GoClientHandler implements Runnable {
 					new OutputStreamWriter(sock.getOutputStream()));
 			this.sock = sock;
 			this.srv = srv;
-			this.handlerName = name;
 		} catch (IOException e) {
 			shutdown();
 		}
 	}
+//	public GoClientHandler(GoServer server, BufferedReader givenIn, 
+//										BufferedWriter givenOut) {
+//		in = givenIn;
+//		out = givenOut;
+//		srv = server;
+//	}
 
 	/**
 	 * Listens for handshake message & lets the client start playing.
@@ -61,20 +66,15 @@ public class GoClientHandler implements Runnable {
 		String msg;
 		try {
 			msg = in.readLine();
-			//TODO check whether it is not a quit or '?' message 
-					//Those are the only other possible methods at this point
 			
-			//send handshake to server, send response of server to the client
-			//client will not respond, so can add client to player as well.
+			//call server's handshake method
 			if (msg.charAt(0) == ProtocolMessages.HANDSHAKE) {
 				//Don't use the returned game here, only in the tests
 				doHandshakeAndAddToGame(msg);
 			}
 			
 			//if this was the second player added to the game, start the game
-			//TODO From here, the flow of the game is handled by the Game instance
-			//server is not involved anymore, will only get back at the end!
-			if (thisClientsGame.getCompleteness()) {
+			if (thisClientsGame.getTwoPlayers()) {
 				thisClientsGame.runGame();
 			}
 			
@@ -98,27 +98,42 @@ public class GoClientHandler implements Runnable {
 	 */
 	
 	private void doHandshakeAndAddToGame(String msg) {
-		String message = "";
-		String handshakeResponse = "";
-		String addToGameResponse = "";
 		
-		//break message into pieces
+		/**
+		 * Get handshake message from client and split into pieces.
+		 */
 		String[] commands = msg.split(ProtocolMessages.DELIMITER);
 		
 		String command = commands[0];
 		if (command.length() != 1) {
-			//TODO does not keep to the protocol!
+			errorMessage("Client did not keep to the handshake protocol. Excepted 'H' as first "
+					+ "component of the message, received " + command + ".");
 		}
 		String requestedVersion = commands[1];
 		clientName = commands[2];
 		String wantedColor = (commands.length > 3) ? commands[3] : null; 
 		
-		//let server check handshake and get the response
-		handshakeResponse = doHandshake(requestedVersion, clientName);
-		addToGameResponse = addToGame(wantedColor);
+		/**
+		 * Send message to the server and record the returning handshake message.
+		 * In addition, let server add the client to a game
+		 * 
+		 * Send returning handshake message + game info to the client.
+		 */
 		
-		message = handshakeResponse + addToGameResponse;
+		String handshakeResponse = srv.doHandshake(requestedVersion, clientName);
+		
+		thisClientsGame = srv.addClientToGame(clientName, wantedColor, this);
+		String gameMessage = "";
+		if (thisClientsGame.getTwoPlayers()) {
+			gameMessage = " You have been added to game " + thisClientsGame.getGameNumber() + ". " +
+					"You are the second player, the game will start soon!"; 
+		} else {
+			gameMessage = " You have been added to game " + thisClientsGame.getGameNumber() + ". " +
+					"You are the first player, please wait for the second player."; 
+		}
+		
 		//Send the response to the client
+		String message = handshakeResponse + gameMessage;
 		try {
 			out.write(message);
 			out.newLine();
@@ -127,95 +142,106 @@ public class GoClientHandler implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-//		return thisClientsGame;
-	}
-	
-	/** 
-	 * Get handshake message of the client, send handshake command to server
-	 * Send response back to client. (No response expected)
-	 * 
-	 * @return a String formatted according to handshake format,
-	 * with information about the server communication & the game.
-	 */
-	private String doHandshake(String command, String name) {
-		
-		//let the server check the handshake and return a message
-		String response = srv.doHandshake(command, name);
-		
-		return response;
 	}
 	
 	/**
-	 * Add client to a game.
-	 * 
-	 * @return a string with game number and player number
+	 * Methods to send messages formatted according to the protocol to the client. 
 	 */
 	
-	private String addToGame(String wantedColor) {
+	public void errorMessage(String message) {
+		String errorMessage = ProtocolMessages.ERROR + ProtocolMessages.DELIMITER + 
+						version + ProtocolMessages.DELIMITER + message;
+		sendMessageToClient(errorMessage);
+	}
+	
+	public void startGameMessage(String board, char color) {
+		String startMessage = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
+				+ board + ProtocolMessages.DELIMITER + color;
+		sendMessageToClient(startMessage);
+	}
+	
+	public void startGameMessageInTwoParts(String board, char color) throws IOException {
+		//Check whether player1 has disconnected by sending the start message in two parts (if
+		//disconnected, the second flush will give an IO exception)
+		String startMessage1part1 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER;
+		String startMessage1part2 = board + ProtocolMessages.DELIMITER + color;
+		try {
+			out.write(startMessage1part1);
+			out.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		
-		//let the server add the client to a game
-		thisClientsGame = srv.addClientToGame(clientName, in, out, wantedColor);
-		int gameNumber = thisClientsGame.getNumber();
-		boolean gameComplete = thisClientsGame.getCompleteness();
-		String message = "";
+		//Need to wait, otherwise it does not go into the exception
+		try {
+			TimeUnit.SECONDS.sleep(1); //TODO try with shorter time step
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		
-		//send appropriate message to the client (cannot be send by server,
-		//server is returning the game so the clientHandler can organize the 
-		//client - game communication
-		if (gameComplete) {
-			message = " You have been added to game " + gameNumber + ". " +
-					"You are the second player, the game will start soon!"; 
+		out.write(startMessage1part2);
+		out.newLine();
+		out.flush();
+	}
+	
+	public String doTurnMessage(String board, String opponentsMove) {
+		String turnMessage = ProtocolMessages.TURN + ProtocolMessages.DELIMITER + board + 
+				ProtocolMessages.DELIMITER + opponentsMove;
+		sendMessageToClient(turnMessage);
+		
+		String reply = getReply();
+		return reply;
+	}
+	
+	public void giveResultMessage(boolean valid, String msg) {
+		String resultMessage = "";
+		
+		if (valid) {
+			resultMessage = ProtocolMessages.RESULT + ProtocolMessages.DELIMITER
+					+ ProtocolMessages.VALID + ProtocolMessages.DELIMITER + msg;
 		} else {
-			message = " You have been added to game " + gameNumber + ". " +
-					"You are the first player, please wait for the second player."; 
+			resultMessage = ProtocolMessages.RESULT + ProtocolMessages.DELIMITER
+					+ ProtocolMessages.INVALID + ProtocolMessages.DELIMITER + msg;
 		}
-		
-		return message;
+		sendMessageToClient(resultMessage);
 	}
-
-	/**
-	 * If correct, the clientHandler (this) will attach a game to this clientHandler.
-	 *
-	 */
 	
-	
-	/**
-	 * Handles commands received from the client by calling the according 
-	 * methods at the GoServer and sending the output to the client.
-	 * 
-	 * If the received input is not valid, send an "?" message to the client.
-	 * 
-	 * @param msg command from client
-	 * @throws IOException if an IO errors occur.
-	 */
-	
-	private void handleCommand(String msg) throws IOException {
-		String response = "";
+	public void endGameMessage(char reasonGameEnd, char winner, 
+									String scoreBlack, String scoreWhite) {
+		String endOfGameMessage = ProtocolMessages.END + ProtocolMessages.DELIMITER + reasonGameEnd
+				+ ProtocolMessages.DELIMITER + winner + ProtocolMessages.DELIMITER + 
+				scoreBlack + ProtocolMessages.DELIMITER + 
+				scoreWhite;
+		sendMessageToClient(endOfGameMessage);
 		
-		char command = msg.charAt(0);
-		
-		switch (command) {
-			//made a separate thing for the handshake
-			case ProtocolMessages.GAME:
-				//TO DO, see above
-				break;
-			case ProtocolMessages.TURN:
-				//TO DO, see above
-				break;
-			case ProtocolMessages.MOVE:
-				//TO DO, see above
-				break;
-			case ProtocolMessages.RESULT:
-				//TO DO, see above
-				break;
-			case ProtocolMessages.END:
-				//TO DO, see above
-				break;
-			case ProtocolMessages.QUIT:
-				//TO DO, see above
-				break;
+	}
+	
+	/**
+	 * Send message from game to client.
+	 */
+	public void sendMessageToClient(String msg) {
+		try {
+			out.write(msg);
+			out.newLine();
+			out.flush();
+		} catch (IOException e) {
+			//TODO auto-generated
+			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Send message to and get message from client.
+	 */
+	public String getReply() {
+		String reply = "";
+		try {
+			reply = in.readLine();
+		} catch (IOException e) {
+			//TODO auto-generated
+			e.printStackTrace();
+		}
+		return reply;
 	}
 	
 	/**
@@ -223,7 +249,7 @@ public class GoClientHandler implements Runnable {
 	 * the In- and OutputStreams.
 	 */
 	private void shutdown() {
-		System.out.println("> [" + handlerName + "] Shutting down.");
+		System.out.println("> Handler of client " + clientName + " is shutting down.");
 		try {
 			in.close();
 			out.close();

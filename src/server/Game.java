@@ -1,10 +1,6 @@
 package server;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import protocol.ProtocolMessages;
 import ruleimplementations.*;
@@ -16,19 +12,20 @@ public class Game {
 	
 	/** Save the game number, might need it later for a leader board. */
 	private int gameNumber;
+	private String version;
 	
 	/** Variable to keep track of and connect to the players. */
 	private String namePlayer1 = null; //name of player1
 	private String namePlayer2 = null; //name of player2
 	private char colorPlayer1 = 'x'; //color of player1
 	private char colorPlayer2 = 'x'; //color of player2
-	private BufferedReader in1;
-	private BufferedWriter out1;
-	private BufferedReader in2;
-	private BufferedWriter out2;
+	
+	private Handler goClientHandlerPlayer1;
+	private Handler goClientHandlerPlayer2;
 	
 	/** Variable to keep track of game states. */
-	private boolean complete = false; //two players have been added
+	private boolean twoPlayers = false; //two players have been added
+	private boolean started = false;
 	private boolean passed = false; //first pass has occurred
 	private boolean firstPlayersTurn = true; //turn of player1
 	private boolean gameEnded = false; //game has ended
@@ -46,115 +43,73 @@ public class Game {
 	/** 
 	 * Constructor, sets game number & creates string representation of the board. 
 	 */
-	public Game(int number) {
+	public Game(int number, String chosenVersion) {
 		gameNumber = number;
-		
+		version = chosenVersion;
 		// Create a string representation of the empty board.
         char[] charArray = new char[boardDimension * boardDimension];
         Arrays.fill(charArray, ProtocolMessages.UNOCCUPIED);
         board = new String(charArray);
 	}
 	
-	/** 
-	 * Adds a player to the game & sets the color of the player's stones.
-	 * First player will get what he / she requested, otherwise BLACK, second player will get the 
-	 * remaining color.
-	 * 
-	 * When second player connects, try to send startGame message to the first player to check
-	 * whether he/she didn't disconnect while waiting for the second player.
-	 * 
-	 * Is called by the server, will only be called if the game is not full yet.
-	 * TODO need to synchronize?
-	 * 
-	 * @param name, the name of the player
-	 * @param goClientHandler, the handler of the player
-	 * @param wantedColor, the color requested by the player (null if not specified by the player)
-	 * @return message, a String that shows the Server user that a player was added to the game
-	 */
-	public String addPlayer(String name, BufferedReader in, BufferedWriter out, 
-																	String wantedColor) {
-		String message = "";
-		
-		//if no player1 yet:
-		if (namePlayer1 == null) {
-			namePlayer1 = name;
-			in1 = in;
-			out1 = out;
-			//if no provided wanted color (or of length 1, give black)
-			if (wantedColor == null || wantedColor.length() != 1) {
-				colorPlayer1 = ProtocolMessages.BLACK;
-			} else {
-				if (wantedColor.charAt(0) == ProtocolMessages.BLACK) {
-					colorPlayer1 = ProtocolMessages.BLACK;
-				} else if (wantedColor.charAt(0) == ProtocolMessages.WHITE) {
-					colorPlayer1 = ProtocolMessages.WHITE;
-				} else {
-					colorPlayer1 = ProtocolMessages.BLACK;
-				}
-			}
-			message = name + " was added to game " + gameNumber + " as the first player.";
-			return message;
-		}
-		
-		//Check whether player1 has disconnected by sending the start message in two parts (if
-		//disconnected, the second flush will give an IO exception)
-		try {
-			String startMessage1part1 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER;
-			out1.write(startMessage1part1);
-			out1.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		//Need to wait, otherwise it does not go into the exception
-		try {
-			TimeUnit.SECONDS.sleep(1);
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
-		}
-		
-		//If the other has disconnected, set this player as player 1
-		try {
-			String startMessage1part2 = board + ProtocolMessages.DELIMITER + colorPlayer1;
-			out1.write(startMessage1part2);
-			out1.newLine();
-			out1.flush();
-		} catch (IOException e) {
-			//player 1 has disconnected
-			namePlayer1 = name;
-			in1 = in;
-			out1 = out;
-			//if no provided wanted color (or of length 1, give black)
-			if (wantedColor == null || wantedColor.length() != 1) {
-				colorPlayer1 = ProtocolMessages.BLACK;
-			} else {
-				if (wantedColor.charAt(0) == ProtocolMessages.BLACK) {
-					colorPlayer1 = ProtocolMessages.BLACK;
-				} else if (wantedColor.charAt(0) == ProtocolMessages.WHITE) {
-					colorPlayer1 = ProtocolMessages.WHITE;
-				} else {
-					colorPlayer1 = ProtocolMessages.BLACK;
-				}
-			}
-			message = "Player 1 disconnected, " + name + " was added to game " + 
-									gameNumber + " as the first player.";
-			return message;
-		}
-		
-		//if there is already a connected player1, set this player as player2
+	public void setColorPlayer1(char color) {
+		colorPlayer1 = color;
+	}
+	
+	public void setColorPlayer2(char color) {
+		colorPlayer2 = color;
+	}
+	
+	public char getColorPlayer1() {
+		return colorPlayer1;
+	}
+	
+	public char getColorPlayer2() {
+		return colorPlayer2;
+	}
+	
+	public void setNamePlayer1(String name) {
+		namePlayer1 = name;
+	}
+	
+	public void setNamePlayer2(String name) {
 		namePlayer2 = name;
-		in2 = in;
-		out2 = out;
-		//give player 2 the other color than player 1
-		if (colorPlayer1 == ProtocolMessages.BLACK) {
-			colorPlayer2 = ProtocolMessages.WHITE;
-		} else {
-			colorPlayer2 = ProtocolMessages.BLACK;
-		}
-		complete = true;
-		message = name + " was added to game " + gameNumber + 
-				" as the second player. The game can start!";
-		return message;
+	}
+	
+	public void setClientHandlerPlayer1(Handler goClientHandler) {
+		goClientHandlerPlayer1 = goClientHandler;
+	}
+	
+	public void setClientHandlerPlayer2(Handler goClientHandler) {
+		goClientHandlerPlayer2 = goClientHandler;
+	}
+	
+	public Handler getClientHandlerPlayer1() {
+		return goClientHandlerPlayer1;
+	}
+	
+	public Handler getClientHandlerPlayer2() {
+		return goClientHandlerPlayer2;
+	}
+	
+	public String getBoard() {
+		return board;
+	}
+	
+	public int getGameNumber() {
+		return gameNumber;
+	}
+	
+	public boolean getStarted() {
+		return started;
+	}
+	
+	public void setTwoPlayers(boolean twoPlayers) {
+		this.twoPlayers = twoPlayers;
+	}
+	
+	public boolean getTwoPlayers() {
+		return twoPlayers;
 	}
 	
 	/**
@@ -164,7 +119,7 @@ public class Game {
 	 */
 	public void runGame() {
 
-		//TODO check whether both players are still connected
+		started = true;
 		
         // Send start game message to both players (via their clientHandler).
 		startGame();
@@ -187,13 +142,8 @@ public class Game {
 	 * At the end, it will set the current player to the other player.
      */
 	public void startGame() {
-		//Send start messages to the players 
-//		String startMessage1 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
-//				+ board + ProtocolMessages.DELIMITER + colorPlayer1;
-//		sendMessageToClient(startMessage1, out1);
-		String startMessage2 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
-				+ board + ProtocolMessages.DELIMITER + colorPlayer2;
-		sendMessageToClient(startMessage2, out2);
+		//Send start message to player 2 
+		goClientHandlerPlayer2.startGameMessage(board, colorPlayer2);
 		
 		//Send first turn to the player whose stones are black
 		if (colorPlayer1 == ProtocolMessages.BLACK) {
@@ -216,30 +166,32 @@ public class Game {
 		String reply;
 		String move = "";
 		
-		/** Send turn message to client & wait for reply. */
-		String turnMessage = ProtocolMessages.TURN + ProtocolMessages.DELIMITER + board + 
-						ProtocolMessages.DELIMITER + opponentsMove;
 		if (firstPlayersTurn) {
-			reply = sendAndReceiveMessage(turnMessage, out1, in1);
+			reply = goClientHandlerPlayer1.doTurnMessage(board, opponentsMove);
 		} else {
-			reply = sendAndReceiveMessage(turnMessage, out2, in2);
+			reply = goClientHandlerPlayer2.doTurnMessage(board, opponentsMove);
 		}
 		
-		/** End game if client disconnected. */
+		
+		/** 
+		 * End game if client disconnected. 
+		 */
 		if (reply == null) {
 			reasonGameEnd = ProtocolMessages.DISCONNECT;
 			gameEnded = true;
 			return;
 		}
 		
-		/** Check 1st component of the reply. If of length 1 and not Q, send to 'processMove()'. */
+		/** 
+		 * Check 1st component of the reply. 
+		 * If of length 1 and not Q, send to 'processMove()'. 
+		 */
 		String[] commands = reply.split(ProtocolMessages.DELIMITER);
 		if (commands[0].length() != 1) {
 			//TODO return invalid command
 			return;
 		}
 		if (commands[0].equals("Q")) {
-			//TODO quit should be able to be called at any moment
 			reasonGameEnd = ProtocolMessages.QUIT;
 			gameEnded = true;
 			return;
@@ -305,6 +257,9 @@ public class Game {
 			
 			prevBoards.add(board);
 			
+			/**
+			 * Check validity of the move
+			 */
 			if (firstPlayersTurn) {
 				valid = moveValidator.processMove(move, boardDimension, board, 
 															colorPlayer1, prevBoards);
@@ -314,8 +269,7 @@ public class Game {
 			}
 			
 			/**
-			 * If the move was valid, add the previous board to the prevBoards list
-			 * and update the current board.
+			 * If the move was valid, update the current board.
 			 */
 			if (valid) {
 				int location;
@@ -343,24 +297,20 @@ public class Game {
 	 */
 	
 	public void giveResult(boolean valid) {
-		String resultMessage = null;
+		String message = "";
 		
 		/** Set result message. */
 		if (valid) {
-			resultMessage = ProtocolMessages.RESULT + ProtocolMessages.DELIMITER
-					+ ProtocolMessages.VALID + ProtocolMessages.DELIMITER + board;
+			message = board;
 		} else {
-			//TODO different message with different invalid reasons?
-			resultMessage = ProtocolMessages.RESULT + ProtocolMessages.DELIMITER
-					+ ProtocolMessages.INVALID + ProtocolMessages.DELIMITER + 
-					"Your move was invalid. You lose the game.";
+			message = "Your move was invalid. You lose the game.";
 		}
 		
-		/** Send the result to the correct player. */
+		/** Send the result to the current player. */
 		if (firstPlayersTurn) {
-			sendMessageToClient(resultMessage, out1);
+			goClientHandlerPlayer1.giveResultMessage(valid, message);
 		} else {
-			sendMessageToClient(resultMessage, out2);
+			goClientHandlerPlayer2.giveResultMessage(valid, message);
 		}
 	}
 	
@@ -374,96 +324,54 @@ public class Game {
 		//to end the game somewhere in the code
 		
 		char winner = 'x';
-		int scoreBlack = 0;
-		int scoreWhite = 0;
+		double scoreBlack = 0;
+		double scoreWhite = 0;
 		
 		//Decide on winner depending on why the game was ended
 		switch (reasonGameEnd) {
 			case ProtocolMessages.FINISHED:
 				//TODO change to actual winner
 				winner = 'B';
+				goClientHandlerPlayer1.endGameMessage(reasonGameEnd, winner, 
+						Double.toString(scoreBlack), Double.toString(scoreWhite));
+				goClientHandlerPlayer2.endGameMessage(reasonGameEnd, winner, 
+						Double.toString(scoreBlack), Double.toString(scoreWhite));
 				break;
 			//if one of the other options: the not-current player wins
 			case ProtocolMessages.CHEAT:
-			case ProtocolMessages.DISCONNECT:
 			case ProtocolMessages.QUIT:
 				if (firstPlayersTurn) {
 					winner = colorPlayer2;
 				} else {
 					winner = colorPlayer1;
 				}
+				goClientHandlerPlayer1.endGameMessage(reasonGameEnd, winner, 
+						Double.toString(scoreBlack), Double.toString(scoreWhite));
+				goClientHandlerPlayer2.endGameMessage(reasonGameEnd, winner, 
+						Double.toString(scoreBlack), Double.toString(scoreWhite));
+				break;
+			//in case of a disconnect, only the other player gets a message
+			case ProtocolMessages.DISCONNECT:
+				if (firstPlayersTurn) {
+					winner = colorPlayer2;
+					goClientHandlerPlayer2.endGameMessage(reasonGameEnd, winner, 
+							Double.toString(scoreBlack), Double.toString(scoreWhite));
+				} else {
+					winner = colorPlayer1;
+					goClientHandlerPlayer1.endGameMessage(reasonGameEnd, winner, 
+							Double.toString(scoreBlack), Double.toString(scoreWhite));
+				}
+				
+				
 				break;
 			default:
-				//TODO should never get here. ProtocolException?
-		}
-		
-		String endOfGameMessage = ProtocolMessages.END + ProtocolMessages.DELIMITER + reasonGameEnd
-				+ ProtocolMessages.DELIMITER + winner + ProtocolMessages.DELIMITER + 
-				Integer.toString(scoreBlack) + ProtocolMessages.DELIMITER + 
-				Integer.toString(scoreWhite);
-		
-		//in case of a disconnect, only send the end-of-game message to the not disconnected player
-		if (reasonGameEnd == ProtocolMessages.DISCONNECT) {
-			if (firstPlayersTurn) {
-				sendMessageToClient(endOfGameMessage, out2);
-			} else {
-				sendMessageToClient(endOfGameMessage, out1);
-			}
-		} else {
-			//otherwise, send to both players
-			sendMessageToClient(endOfGameMessage, out1);
-			sendMessageToClient(endOfGameMessage, out2);
-		}
-		
-		//TODO add possibility to play another game against the same player?
-	}
-	
-	/**
-	 * Calculates the scores of the two players
-	 */
-	
-	
-	/** returns whether two players were added to this game. */
-	public boolean getCompleteness() {
-		return complete;
-	}
-	
-	/** return identified (=number) of the game. */
-	public int getNumber() {
-		return gameNumber;
-	}
-	
-	/**
-	 * Send message from game to client.
-	 */
-	public void sendMessageToClient(String msg, BufferedWriter out) {
-		try {
-			out.write(msg);
-			out.newLine();
-			out.flush();
-		} catch (IOException e) {
-			//TODO auto-generated
-			e.printStackTrace();
+				if (firstPlayersTurn) {
+					goClientHandlerPlayer1.errorMessage("Protocol exception: reason game end 'F', "
+							+ "'C', 'D' or 'Q' expected, was: " + reasonGameEnd);
+				} else {
+					goClientHandlerPlayer2.errorMessage("Protocol exception: reason game end 'F', "
+							+ "'C', 'D' or 'Q' expected, was: " + reasonGameEnd);
+				}
 		}
 	}
-	
-	/**
-	 * Send message to and get message from client.
-	 */
-	public String sendAndReceiveMessage(String msg, BufferedWriter out, BufferedReader in) {
-		String reply = "";
-		try {
-			out.write(msg);
-			out.newLine();
-			out.flush();
-			reply = in.readLine();
-		} catch (IOException e) {
-			//TODO auto-generated
-			e.printStackTrace();
-		}
-		return reply;
-	}
-	
-	
-	
 }

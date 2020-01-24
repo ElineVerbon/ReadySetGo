@@ -5,7 +5,6 @@ import java.util.*;
 import com.nedap.go.gui.GoGUIIntegrator;
 
 import protocol.*;
-import ruleimplementations.MoveResultGenerator;
 import ruleimplementations.MoveValidator;
 
 /**
@@ -34,7 +33,6 @@ public class HumanClientGamePlayer {
 	
 	/** Set classes to check move results. */
 	private MoveValidator moveValidator = new MoveValidator();
-	private MoveResultGenerator moveResult = new MoveResultGenerator();
 	
 	/** Variables to keep track of game states. */
 	boolean gameEnded = false;
@@ -255,7 +253,6 @@ public class HumanClientGamePlayer {
 		 */
 		String move = "";
 		boolean validInput = false;
-		int location = 0;
 		
 		while (!validInput) {
 			boolean valid;

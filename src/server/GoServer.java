@@ -1,7 +1,5 @@
 package server;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -97,11 +95,6 @@ public class GoServer implements Runnable {
 		availableVersions.add("0.01");
 	}
 	
-	//For testign purposes: getter for socket
-	public ServerSocket getSsock() {
-		return ssock;
-	}
-	
 	/**
 	 * Create connections with clients.
 	 * The ServerSocket listens for new clients, makes a clientHandler 
@@ -116,11 +109,8 @@ public class GoServer implements Runnable {
 				Socket sock = ssock.accept();
 				tui.showMessage("Client number " + nextClientNo + " just connected!");
 				
-				//construct a client handler to handle the communication with the client
-				//and start this in a new thread
 				GoClientHandler handler = 
-						new GoClientHandler(sock, this, "Client " 
-								+ String.format("%02d", nextClientNo));
+						new GoClientHandler(sock, this);
 				new Thread(handler).start();
 				
 				//add the handler to the list of handlers
@@ -135,7 +125,7 @@ public class GoServer implements Runnable {
 	}
 
 	/**
-	 * Sets up a ServerSocket at localhost on a user-defined port.
+	 * Sets up a ServerSocket on a user-defined IP address and port.
 	 * 
 	 * The user of the server is asked to input a port and an IP address, 
 	 * after which a socket is attempted to be opened. If the attempt succeeds, 
@@ -207,6 +197,7 @@ public class GoServer implements Runnable {
 	public String doHandshake(String requestedVersion, String nameClient) {
 		String response;
 		
+		
 		/**
 		 * check if requested version is available, if so:
 		 * it will be used for communication with this client, if not:
@@ -225,48 +216,108 @@ public class GoServer implements Runnable {
 		
 		response = ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER 
 				+ usedVersion + ProtocolMessages.DELIMITER + message;
+		
+		//TODO take out this print statement
+		tui.showMessage("Server's doHandshake() response: " + response);
+		
 		return response;
 	}
 	
-	//TODO synchronize this! (right? else games & gameNo & client and clientNO can go wrong)
+	/**
+	 * Add a client to a game.
+	 * If no games started yet or all games have already started, start a new game.
+	 * 
+	 * Otherwise, add the player to an existing game. When second player connects, 
+	 * try to send startGame message to the first player to check
+	 * whether he/she didn't disconnect while waiting for the second player.
+	 */
+	
 	public synchronized Game addClientToGame(
-				String nameClient, BufferedReader in, BufferedWriter out, String wantedColor) {
-		/**
-		 * add the player to an existing game, or (if no game available with one player)
-		 * start a new game with this player as first player
-		 */
-		String message;
-		//save the game the player is added to
-		Game game;
+				String nameClient, String wantedColor, GoClientHandler thisClientsHandler) {
 		
-		//if there are no games yet, make a new game, add the client
-		if (games.isEmpty()) {
-			game = setupGoGame();
-			tui.showMessage(game.addPlayer(nameClient, in, out, wantedColor));
-			return game;
+		if (games.isEmpty() || games.get(games.size() - 1).getStarted()) {
+			Game newGame = setupGoGame();
+			addClientAsPlayer1(nameClient, wantedColor, newGame, thisClientsHandler);
+			tui.showMessage(nameClient + " was added to game number " + newGame.getGameNumber() +
+					 " as the first player.");
+			return newGame;
 		} else {
-			//check whether last game is already full
-			//if not full, add player to this game
 			Game lastGame = games.get(games.size() - 1);
-			if (!lastGame.getCompleteness()) {
-				game = lastGame;
-				tui.showMessage(lastGame.addPlayer(nameClient, in, out, wantedColor));
-				return game;
-			//otherwise, start a new game
-			} else {
-				game = setupGoGame();
-				tui.showMessage(game.addPlayer(nameClient, in, out, wantedColor));
-				return game;
+			try {
+				GoClientHandler player1goClientHandler = (GoClientHandler) 
+															lastGame.getClientHandlerPlayer1();
+				player1goClientHandler.startGameMessageInTwoParts(lastGame.getBoard(), 
+																	lastGame.getColorPlayer1());
+			} catch (IOException e) {
+				addClientAsPlayer1(nameClient, wantedColor, lastGame, thisClientsHandler);
+				tui.showMessage("Player 1 disconnected, " + nameClient + " was added to game " + 
+										lastGame.getGameNumber() + " as the first player.");
+				return lastGame;
+			}
+			//otherwise, set player as second player
+			addClientAsPlayer2(nameClient, lastGame, thisClientsHandler);
+			
+			tui.showMessage(nameClient + " was added to game " + lastGame.getGameNumber() + 
+					" as the second player. The game can start!");
+			return lastGame;
+		}
+	}
+	
+	/** 
+	 * Adds a first player to a game. The player gets the color that he / she requested.
+	 * If not color requested, the player will get BLACK.
+	 * 
+	 * @param name, the name of the player
+	 * @param wantedColor, the color requested by the player (null if not specified by the player)
+	 * @param game, the game that the client is added to
+	 */
+	
+	public void addClientAsPlayer1(String nameClient, String wantedColor, Game game, 
+														GoClientHandler thisClientsHandler) {
+		game.setNamePlayer1(nameClient);
+		game.setClientHandlerPlayer1(thisClientsHandler);
+		
+		//if no provided wanted color (or of length 1, give black)
+		if (wantedColor == null || wantedColor.length() != 1) {
+			game.setColorPlayer1(ProtocolMessages.BLACK);
+		} else {
+			if (wantedColor.charAt(0) == ProtocolMessages.WHITE) {
+				game.setColorPlayer1(ProtocolMessages.WHITE);
+			} else { 
+				game.setColorPlayer1(ProtocolMessages.BLACK);
 			}
 		}
 	}
 	
-	public Game setupGoGame() {
-		Game aGame = new Game(nextGameNo);
+	/** 
+	 * Adds a second player to a game. 
+	 * He/she will get the other color than player 1.
+	 * 
+	 * @param nameClient, the name of the player
+	 * @param game, the game that the client is added to
+	 */
+	public void addClientAsPlayer2(String nameClient, Game game, 
+														GoClientHandler thisClientsHandler) {
+		game.setNamePlayer2(nameClient);
+		game.setClientHandlerPlayer2(thisClientsHandler);
 		
-		//let server user know what's happening
-		String name = "Game " 
-				+ String.format("%02d", nextGameNo);
+		//give player 2 the other color than player 1
+		if (game.getColorPlayer1() == ProtocolMessages.BLACK) {
+			game.setColorPlayer2(ProtocolMessages.WHITE);
+		} else {
+			game.setColorPlayer2(ProtocolMessages.WHITE);
+		}
+		game.setTwoPlayers(true);
+	}
+	
+	/**
+	 * Start a new Game.
+	 * 
+	 * @return the newly created game.
+	 */
+	//TODO need to add the version as a variable
+	public Game setupGoGame() {
+		Game aGame = new Game(nextGameNo, "1.0");
 		
 		//increase next game number by one
 		nextGameNo++;

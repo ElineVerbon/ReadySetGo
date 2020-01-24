@@ -7,14 +7,21 @@ import static org.junit.Assert.assertTrue;
 import static org.hamcrest.CoreMatchers.not;
 
 import java.io.*;
+import java.net.InetAddress;
 
+import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import exceptions.ExitProgram;
 import protocol.ProtocolMessages;
 import ruleimplementations.MoveResultGenerator;
 import server.Game;
+import server.GoClientHandler;
+import server.GoServer;
+import server.Handler;
+import ss.week7.hotel.server.HotelServer;
 
 /**
  * This class will test whether the Game responds correctly to certain responses of players.
@@ -52,181 +59,176 @@ public class GameTest {
 	}
 	
 	/**
-	 * Test game start.
-	 * 
-	 * Give one move for player 1. Except messages starting with 
-	 * G, T and R.
+	 * Test game start: 
+	 * - second player's handler's startGame message is called 
+	 * (first player's handler is called in the addPlayer call of the second)
+	 * - black player gets first turn.
 	 * 
 	 * @throws FileNotFoundException 
 	 */
+	
 	@Test
-	void startGameTest() throws FileNotFoundException  {
-		Game testGame = new Game(1);
+	void startGameTest() {
 		
-        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
-		BufferedReader inPlayer1 = new BufferedReader(
-				new FileReader("src/tests/resources/startGameTest_MovesPlayer1.txt"));
-		StringWriter stringWriter1 = new StringWriter();
-		BufferedWriter outPlayer1 = new BufferedWriter(stringWriter1);
+		//arrange
+		Game game1 = new Game(1, "1.0");
+		Handler handler1 = EasyMock.createMock(Handler.class);
+		Handler handler2 = EasyMock.createMock(Handler.class);
+		game1.setClientHandlerPlayer1(handler1);
+		game1.setClientHandlerPlayer2(handler2);
+		game1.setColorPlayer1(ProtocolMessages.BLACK);
+		game1.setColorPlayer2(ProtocolMessages.WHITE);
 		
-		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
-		BufferedReader inPlayer2 = new BufferedReader(
-				new FileReader("src/tests/resources/startGameTest_MovesPlayer2.txt"));
-		StringWriter stringWriter2 = new StringWriter();
-		BufferedWriter outPlayer2 = new BufferedWriter(stringWriter2);
+		Game game2 = new Game(2, "1.0");
+		Handler handler3 = EasyMock.createMock(Handler.class);
+		Handler handler4 = EasyMock.createMock(Handler.class);
+		game2.setClientHandlerPlayer1(handler3);
+		game2.setClientHandlerPlayer2(handler4);
+		game2.setColorPlayer1(ProtocolMessages.WHITE);
+		game2.setColorPlayer2(ProtocolMessages.BLACK);
 		
-		//add players to game
-		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
-		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
+		// --> set expectations
+		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
+		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).andReturn("");
+		handler4.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'B');
+		EasyMock.expect(handler4.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).andReturn("");
+		EasyMock.replay(handler1, handler2, handler3, handler4);
 		
-		/**
-		 * Test start game.
-		 */
-		testGame.startGame();
-		assertThat(stringWriter1.toString(), containsString("G;UUUUUUUUUUUUUUUUUUUUUUUUU;B"));
-		assertThat(stringWriter1.toString(), containsString("T;UUUUUUUUUUUUUUUUUUUUUUUUU"));
-		assertThat(stringWriter1.toString(), containsString("R;V;UUUBUUUUUUUUUUUUUUUUUUUUU"));
+		//act
+		game1.startGame();
+		game2.startGame();
 		
-		//TODO end game
-		
-		OUTCONTENT.reset();
+		//assert
+		EasyMock.verify(handler1, handler2);
 	}
 	
 	/**
-	 * Test whether wrong moves are recognized as invalid.
-	 * TODO: check whether game is ended & correct player is called the winner
-	 * 
-	 * Wrong moves are: outside of the board, a location that is not empty or 
-	 * something that cannot be parsed to an integer.
-	 * 
-	 * @throws FileNotFoundException 
+	 * Test valid first turns (use edge cases 0 and 24).
 	 */
 	
 	@Test
-	void wrongMovesTest() throws FileNotFoundException {
+	void validFirstTurnTest() {
 		
-		/** 
-		 * Test move outside of board player1. 
-		 */
-		Game testGame = new Game(3);
+		//arrange
+		Game game1 = new Game(1, "1.0");
+		Handler handler1 = EasyMock.createMock(Handler.class);
+		Handler handler2 = EasyMock.createMock(Handler.class);
+		game1.setClientHandlerPlayer1(handler1);
+		game1.setClientHandlerPlayer2(handler2);
+		game1.setColorPlayer1(ProtocolMessages.BLACK);
+		game1.setColorPlayer2(ProtocolMessages.WHITE);
 		
-        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
-		BufferedReader inPlayer1 = new BufferedReader(
-			   new FileReader("src/tests/resources/wrongMovesTest_Player1outsideBoardPlayer1.txt"));
-		StringWriter stringWriter1 = new StringWriter();
-		BufferedWriter outPlayer1 = new BufferedWriter(stringWriter1);
+		Game game2 = new Game(2, "1.0");
+		Handler handler3 = EasyMock.createMock(Handler.class);
+		Handler handler4 = EasyMock.createMock(Handler.class);
+		game2.setClientHandlerPlayer1(handler3);
+		game2.setClientHandlerPlayer2(handler4);
+		game2.setColorPlayer1(ProtocolMessages.WHITE);
+		game2.setColorPlayer2(ProtocolMessages.BLACK);
 		
-		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
-		BufferedReader inPlayer2 = new BufferedReader(
-			   new FileReader("src/tests/resources/wrongMovesTest_Player1outsideBoardPlayer2.txt"));
-		StringWriter stringWriter2 = new StringWriter();
-		BufferedWriter outPlayer2 = new BufferedWriter(stringWriter2);
+		// --> set expectations
+		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
+		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).andReturn("M;0");
+		handler1.giveResultMessage(true, "BUUUUUUUUUUUUUUUUUUUUUUUU");
+		handler4.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'B');
+		EasyMock.expect(handler4.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null))
+																			.andReturn("M;24");
+		handler4.giveResultMessage(true, "UUUUUUUUUUUUUUUUUUUUUUUUB");
+		EasyMock.replay(handler1, handler2, handler3, handler4);
 		
-		//add players to game
-		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
-		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
+		//act
+		game1.startGame();
+		game2.startGame();
 		
-		testGame.startGame(); //player1 makes a wrong move in the first turn
+		//assert
+		EasyMock.verify(handler1, handler2);
+	}
+	
+	/** Test outside-of-board invalid first turn. */
+	
+	@Test
+	void outsideOfBoardInvalidTurnTest() {
 		
-		//Player 1 gets the message that the move is invalid
-		assertThat(stringWriter1.toString(), containsString("R;I"));
+		//arrange
+		Game game = new Game(1, "1.0");
+		Handler handler1 = EasyMock.createMock(Handler.class);
+		Handler handler2 = EasyMock.createMock(Handler.class);
+		game.setClientHandlerPlayer1(handler1);
+		game.setClientHandlerPlayer2(handler2);
+		game.setColorPlayer1(ProtocolMessages.BLACK);
+		game.setColorPlayer2(ProtocolMessages.WHITE);
 		
-		//TODO end game 
-
-		OUTCONTENT.reset();
+		// --> set expectations
+		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
+		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
+																		andReturn("M;-1");
+		handler1.giveResultMessage(false, "Your move was invalid. You lose the game.");
+		EasyMock.replay(handler1, handler2);
 		
-		/** 
-		 * Test move outside of board player2. 
-		 */
-		testGame = new Game(4);
+		//act
+		game.startGame();
 		
-        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
-		inPlayer1 = new BufferedReader(
-			   new FileReader("src/tests/resources/wrongMovesTest_Player2outsideBoardPlayer1.txt"));
-		stringWriter1 = new StringWriter();
-		outPlayer1 = new BufferedWriter(stringWriter1);
+		//assert
+		EasyMock.verify(handler1, handler2);
+	}
+	
+	/** Test occupied-location invalid turn. */
+	@Test
+	void occupiedLocationInvalidTurnTest() {
 		
-		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
-		inPlayer2 = new BufferedReader(
-			   new FileReader("src/tests/resources/wrongMovesTest_Player2outsideBoardPlayer2.txt"));
-		stringWriter2 = new StringWriter();
-		outPlayer2 = new BufferedWriter(stringWriter2);
+		//arrange
+		Game game = new Game(1, "1.0");
+		Handler handler1 = EasyMock.createMock(Handler.class);
+		Handler handler2 = EasyMock.createMock(Handler.class);
+		game.setClientHandlerPlayer1(handler1);
+		game.setClientHandlerPlayer2(handler2);
+		game.setColorPlayer1(ProtocolMessages.BLACK);
+		game.setColorPlayer2(ProtocolMessages.WHITE);
 		
-		//add players to game
-		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
-		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
+		// --> set expectations
+		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
+		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
+																		andReturn("M;3");
+		handler1.giveResultMessage(true, "UUUBUUUUUUUUUUUUUUUUUUUUU");
+		EasyMock.expect(handler2.doTurnMessage("UUUBUUUUUUUUUUUUUUUUUUUUU", "3")).
+																		andReturn("M;3");
+		handler2.giveResultMessage(false, "Your move was invalid. You lose the game.");
+		EasyMock.replay(handler1, handler2);
 		
-		testGame.startGame(); 
-		testGame.doTurn(); //player2 makes a wrong move in the first turn
+		//act
+		game.startGame();
+		game.doTurn();
 		
-		//Player 2 gets the message that the move is invalid
-		assertThat(stringWriter2.toString(), containsString("R;I"));
+		//assert
+		EasyMock.verify(handler1, handler2);
+	}
+	
+	/** Test non-integer invalid turn. */
+	@Test
+	void nonIntegerInvalidTurnTest() {
 		
-		//TODO end game 
-
-		OUTCONTENT.reset();
+		//arrange
+		Game game = new Game(1, "1.0");
+		Handler handler1 = EasyMock.createMock(Handler.class);
+		Handler handler2 = EasyMock.createMock(Handler.class);
+		game.setClientHandlerPlayer1(handler1);
+		game.setClientHandlerPlayer2(handler2);
+		game.setColorPlayer1(ProtocolMessages.BLACK);
+		game.setColorPlayer2(ProtocolMessages.WHITE);
 		
-		/** 
-		 * Test move to a spot already taken (by player2). 
-		 */
-		testGame = new Game(4);
+		// --> set expectations
+		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
+		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
+																		andReturn("M;g");
+		handler1.giveResultMessage(false, "Your move was invalid. You lose the game.");
+		EasyMock.replay(handler1, handler2);
 		
-        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
-		inPlayer1 = new BufferedReader(
-				new FileReader("src/tests/resources/wrongMovesTest_spotAlreadyTakenPlayer1.txt"));
-		stringWriter1 = new StringWriter();
-		outPlayer1 = new BufferedWriter(stringWriter1);
+		//act
+		game.startGame();
+		game.doTurn();
 		
-		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
-		inPlayer2 = new BufferedReader(
-				new FileReader("src/tests/resources/wrongMovesTest_spotAlreadyTakenPlayer2.txt"));
-		stringWriter2 = new StringWriter();
-		outPlayer2 = new BufferedWriter(stringWriter2);
-		
-		//add players to game
-		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
-		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
-		
-		testGame.startGame(); 
-		testGame.doTurn(); //player2 makes a wrong move in the first turn
-		
-		//Player 1 gets the message that the move is invalid
-		assertThat(stringWriter2.toString(), containsString("R;I"));
-		
-		//TODO end game 
-
-		OUTCONTENT.reset();
-		
-		/** 
-		 * Test move that is not an integer - and also not pass (by player2). 
-		 */
-		testGame = new Game(4);
-		
-        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
-		inPlayer1 = new BufferedReader(
-				new FileReader("src/tests/resources/wrongMovesTest_notIntegerPlayer1.txt"));
-		stringWriter1 = new StringWriter();
-		outPlayer1 = new BufferedWriter(stringWriter1);
-		
-		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
-		inPlayer2 = new BufferedReader(
-				new FileReader("src/tests/resources/wrongMovesTest_notIntegerPlayer2.txt"));
-		stringWriter2 = new StringWriter();
-		outPlayer2 = new BufferedWriter(stringWriter2);
-		
-		//add players to game
-		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
-		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
-		
-		testGame.startGame(); 
-		testGame.doTurn(); //player2 makes a wrong move in the first turn
-		
-		//Player 2 gets the message that the move is invalid
-		assertThat(stringWriter2.toString(), containsString("R;I"));
-		
-		//TODO end game
-
-		OUTCONTENT.reset();
+		//assert
+		EasyMock.verify(handler1, handler2);
 	}
 	
 	/**
@@ -445,7 +447,7 @@ public class GameTest {
 	
 	@Test
 	void repetitionBoardTest() throws FileNotFoundException {
-		Game testGame = new Game(2);
+		Game testGame = new Game(2, "1.0");
 		
         //Use a file with a command per line to represent the moves of player1 as the bufferedReader
 		BufferedReader inPlayer1 = new BufferedReader(
@@ -492,7 +494,7 @@ public class GameTest {
 	 */
 	@Test
 	void twoPassesTest() throws FileNotFoundException {
-		Game testGame = new Game(2);
+		Game testGame = new Game(2, "1.0");
 		
         //Use a file with a command per line to represent the moves of player1 as the bufferedReader
 		BufferedReader inPlayer1 = new BufferedReader(
@@ -533,7 +535,7 @@ public class GameTest {
 	
 	@Test
 	void quitOnTurnTest() throws FileNotFoundException {
-		Game testGame = new Game(2);
+		Game testGame = new Game(2, "1.0");
 		
         //Use a file with a command per line to represent the moves of player1 as the bufferedReader
 		BufferedReader inPlayer1 = new BufferedReader(
@@ -561,7 +563,7 @@ public class GameTest {
 
 		OUTCONTENT.reset();
 		
-		testGame = new Game(2);
+		testGame = new Game(2, "1.0");
 		
         //Use a file with a command per line to represent the moves of player1 as the bufferedReader
 		inPlayer1 = new BufferedReader(

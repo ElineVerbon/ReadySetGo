@@ -6,8 +6,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import movechecker.*;
 import protocol.ProtocolMessages;
+import ruleimplementations.*;
 
 public class Game {
 	/** Set board dimension (= length of board). */
@@ -41,7 +41,7 @@ public class Game {
 	
 	/** Set classes to check move results. */
 	private MoveValidator moveValidator = new MoveValidator();
-	private MoveResult moveResult = new MoveResult();
+	private MoveResultGenerator moveResult = new MoveResultGenerator();
 	
 	/** 
 	 * Constructor, sets game number & creates string representation of the board. 
@@ -277,9 +277,7 @@ public class Game {
 	
 	public void processMove(String move) {
 		
-		boolean valid;
-		char validness = ProtocolMessages.VALID;
-		String invalidMessage = null;
+		boolean valid = true;
 		
 		/** 
 		 * Check whether the player passed. 
@@ -305,21 +303,23 @@ public class Game {
 			 */
 			passed = false;
 			
-			valid = moveValidator.checkValidityBeforeRemoving(move, boardDimension, board);
-			if (!valid) {
-				validness = ProtocolMessages.INVALID;
-				reasonGameEnd = ProtocolMessages.CHEAT;
-				gameEnded = true;
-				invalidMessage = "Your move was invalid (not an integer, outside of board, " +
-							"or location already occupied).";
+			prevBoards.add(board);
+			
+			if (firstPlayersTurn) {
+				valid = moveValidator.processMove(move, boardDimension, board, 
+															colorPlayer1, prevBoards);
 			} else {
-				prevBoards.add(board);
-				
-				//parse move to an integer (it has already been checked whether that is possible)
+				valid = moveValidator.processMove(move, boardDimension, board, 
+															colorPlayer2, prevBoards);
+			}
+			
+			/**
+			 * If the move was valid, add the previous board to the prevBoards list
+			 * and update the current board.
+			 */
+			if (valid) {
 				int location;
 				location = Integer.parseInt(move);
-				
-				//Add stone to the board, remove possible captured stones
 				if (firstPlayersTurn) {
 					board = board.substring(0, location) + colorPlayer1 + 
 													board.substring(location + 1);
@@ -329,21 +329,11 @@ public class Game {
 													board.substring(location + 1);
 					board = moveResult.determineNewBoard(board, colorPlayer2);
 				}
-				
-				//check whether the new board is not the same as a previous board
-				valid = moveValidator.checkValidityAfterRemoving(board, prevBoards);
-				if (!valid) {
-					validness = ProtocolMessages.INVALID;
-					reasonGameEnd = ProtocolMessages.CHEAT;
-					gameEnded = true;
-					invalidMessage = "Your move was invalid: it resulted in a board seen before.";
-				} 
 			}
 		}
 		
-		//at this point in the code, the move was valid. Save
 		opponentsMove = move;
-		giveResult(validness, invalidMessage);
+		giveResult(valid);
 	}
 	
 	/**
@@ -352,17 +342,18 @@ public class Game {
 	 * @param newBoard, String-representation of the new board.
 	 */
 	
-	public void giveResult(char validness, String invalidMessage) {
+	public void giveResult(boolean valid) {
 		String resultMessage = null;
 		
 		/** Set result message. */
-		if (validness == ProtocolMessages.VALID) {
+		if (valid) {
 			resultMessage = ProtocolMessages.RESULT + ProtocolMessages.DELIMITER
-					+ validness + ProtocolMessages.DELIMITER + board;
+					+ ProtocolMessages.VALID + ProtocolMessages.DELIMITER + board;
 		} else {
 			//TODO different message with different invalid reasons?
 			resultMessage = ProtocolMessages.RESULT + ProtocolMessages.DELIMITER
-					+ validness + ProtocolMessages.DELIMITER + invalidMessage;
+					+ ProtocolMessages.INVALID + ProtocolMessages.DELIMITER + 
+					"Your move was invalid. You lose the game.";
 		}
 		
 		/** Send the result to the correct player. */
@@ -412,7 +403,7 @@ public class Game {
 				Integer.toString(scoreWhite);
 		
 		//in case of a disconnect, only send the end-of-game message to the not disconnected player
-		if (reasonGameEnd == ProtocolMessages.DISCONNECT ) {
+		if (reasonGameEnd == ProtocolMessages.DISCONNECT) {
 			if (firstPlayersTurn) {
 				sendMessageToClient(endOfGameMessage, out2);
 			} else {

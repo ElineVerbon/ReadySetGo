@@ -1,4 +1,4 @@
-package movechecker;
+package ruleimplementations;
 
 import java.util.List;
 
@@ -14,9 +14,34 @@ import protocol.ProtocolMessages;
 
 public class MoveValidator {
 
+	MoveResultGenerator moveResultGenerator = new MoveResultGenerator();
+	String board;
+	
+	public boolean processMove(String move, int boardDimension, String theBoard, 
+			char color, List<String> prevBoards) {
+		
+		board = theBoard;
+		
+		//check validity of the move, return if false 
+		boolean validity;
+		validity = checkValidityBeforeRemoving(move, boardDimension);
+		if (validity == false) {
+			return validity;
+		}
+		
+		//update the board
+		int location = Integer.parseInt(move);
+		board = theBoard.substring(0, location) + color + theBoard.substring(location + 1);
+		board = moveResultGenerator.determineNewBoard(board, color);
+		
+		//check validity of the move (= does not result in repetition of the board)
+		validity = checkValidityAfterRemoving(board, prevBoards);
+		
+		return validity;
+	}
+	
 	/**
 	 * Checks whether a non-pass and non-quit move is valid. 
-	 * If so, changes the board according to the move. 
 	 * 
 	 * It is invalid if:
 	 * 1. the move cannot be parsed to an integer
@@ -26,8 +51,7 @@ public class MoveValidator {
 	 * @param move
 	 * @return validness, a boolean that is true is the move is valid, otherwise false
 	 */
-	
-	public boolean checkValidityBeforeRemoving(String move, int boardDimension, String board) {
+	public boolean checkValidityBeforeRemoving(String move, int boardDimension) {
 		
 		boolean validness = true;
 		int location;

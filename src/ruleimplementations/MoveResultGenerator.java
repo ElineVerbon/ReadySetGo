@@ -1,4 +1,4 @@
-package movechecker;
+package ruleimplementations;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ import protocol.ProtocolMessages;
  * procedure is repeated from starting from method 1, but this time for the opposite color.
  */
 
-public class MoveResult {
+public class MoveResultGenerator {
 	
 	private boolean surrounded;
 	private char opponentsColor = 'x';

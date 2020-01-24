@@ -4,9 +4,9 @@ import java.util.*;
 
 import com.nedap.go.gui.GoGUIIntegrator;
 
-import movechecker.MoveResult;
-import movechecker.MoveValidator;
 import protocol.*;
+import ruleimplementations.MoveResultGenerator;
+import ruleimplementations.MoveValidator;
 
 /**
  * Class that allows someone play GO by using the console to input moves
@@ -34,7 +34,7 @@ public class HumanClientGamePlayer {
 	
 	/** Set classes to check move results. */
 	private MoveValidator moveValidator = new MoveValidator();
-	private MoveResult moveResult = new MoveResult();
+	private MoveResultGenerator moveResult = new MoveResultGenerator();
 	
 	/** Variables to keep track of game states. */
 	boolean gameEnded = false;
@@ -212,28 +212,29 @@ public class HumanClientGamePlayer {
 	 * @param components, an array of strings extracted from the server's message
 	 */
 	public void doMove(String[] components) {
+		
+		//set game state variable for printing correct message after submitting move
+		boolean opponentPassed = false;
+		
+		//Get all components of the message
+		//TODO could check whether components are correct (see eg startGame())
 		if (components.length < 3) {
 			messageGenerator.errorMessage("Server response does not comply with the protocol! It " +
 					"did not send the board and the opponent's move as part of the turn message.");
 		}
-		
-		//save board in case an invalid move is done and it needs to be reverted
-		String boardBeforeMove = components[1];
+		board = components[1];
 		String opponentsMove = components[2];
 		
-		//set boolean variable to prevent printing 'its you opponents turn' after a second pass
-		boolean opponentPassed = false;
-		if (opponentsMove.equals(Character.toString(ProtocolMessages.PASS))) {
-			opponentPassed = true;
-		}
-		
 		//TODO add the score here!
-		/** Let the player know its his/her turn and what the opponent did. */
+		/** 
+		 * Let the player know its his/her turn and what the opponent did. 
+		 */
 		if (opponentsMove.equals("null")) {
 			clientTUI.showMessage("\nYou get the first move! " + 
 					"Please check the GUI for the board size.");
 		} else {
 			if (opponentsMove.equals(Character.toString(ProtocolMessages.PASS))) {
+				opponentPassed = true;
 				clientTUI.showMessage("\nThe other player passed. " + 
 						"If you pass as well, the game is over.");
 			} else {
@@ -241,30 +242,27 @@ public class HumanClientGamePlayer {
 				clientTUI.showMessage("\nThe other player placed a stone in location " + location +
 					". Please check the GUI for the current board state.");
 			}
-			
 		}
 		
-		/** Show the current board state in the GUI. */
-		showCurrentBoardState(boardBeforeMove);
+		/** 
+		 * Show the current board state in the GUI and add board to previous boards. 
+		 */
+		showCurrentBoardState(board);
+		prevBoards.add(board);
 		
-		/** Ask the client for a move, keep asking until a valid move is given. */
+		/** 
+		 * Keep asking the client for a move, until a valid move is given. 
+		 */
 		String move = "";
 		boolean validInput = false;
 		int location = 0;
 		
-		//add the board to the list of previous boards
-		prevBoards.add(board);
-		
-		//Ask the client for a move until a valid move is given
 		while (!validInput) {
 			boolean valid;
 			
 			move = clientTUI.getMove();
 			
-			/** 
-			 * Check whether the player passed or quit. If so, send appropriate message and
-			 * break out of loop.
-			 */
+			//If the move is a pass or quit, send appropriate message and break out of loop.
 			if (move.equals(Character.toString(ProtocolMessages.PASS))) {
 				if (opponentPassed == true) {
 					doublePass = true;
@@ -277,37 +275,12 @@ public class HumanClientGamePlayer {
 				return;
 			}
 			
-			/** 
-			 * Check whether move is an integer within the board of an UNOCCUPIED location, 
-			 * let user try again if this is not the case. 
-			 */
-			valid = moveValidator.checkValidityBeforeRemoving(move, boardDimension, board);
+			valid = moveValidator.processMove(move, boardDimension, board, color, prevBoards);
 			if  (!valid) {
-				clientTUI.showMessage("You move cannot be parsed to an Integer, is not within "
-						+ "the board, or the location is already taken. Please try again.");
-				continue; //breaks out of this iteration of while loop and starts over.
-			} 
-			
-			/**
-			 * Add stone to the board, remove captured stones and check whether this results 
-			 * in a previously seen board. If so, let user try again.
-			 */
-			
-			location = Integer.parseInt(move);
-			board = board.substring(0, location) + color + board.substring(location + 1);
-			board = moveResult.determineNewBoard(board, color);
-			
-			valid = moveValidator.checkValidityAfterRemoving(board, prevBoards);
-			if  (!valid) {
-				clientTUI.showMessage("Your move results in a board that has been seen before. "
+				clientTUI.showMessage("Your move was invalid. "
 							+ "Please try again.");
-				//set board back to previous board, break out of iteration and try again
-				board = boardBeforeMove;
-				continue; 
+				continue; //continue from start of while loop (ask for new input)
 			} 
-			//NB: Do not add the board to the previous boards, for security reasons, only the board
-			//given by the server are added. Thus, it will be added when returned by the server
-			//in the result message.
 			validInput = true;
 		}
 		/** Send move to the game. */

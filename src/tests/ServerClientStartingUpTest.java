@@ -18,24 +18,27 @@ public class ServerClientStartingUpTest {
 	private final static ByteArrayOutputStream OUTCONTENT = new ByteArrayOutputStream();
 	private final static PrintStream ORIGINALOUT = System.out;
 
-	//Create two clients
-	HumanClientGamePlayer client1 = new HumanClientGamePlayer();
-	HumanClientTUI humanClientTUI1 = new HumanClientTUI();
-	HumanClientServerCommunicator humanClientServerCommunicator1 = 
-			 					new HumanClientServerCommunicator(humanClientTUI1);
-	HumanClientGamePlayer client2 = new HumanClientGamePlayer();
-	HumanClientTUI humanClientTUI2 = new HumanClientTUI();
-	HumanClientServerCommunicator humanClientServerCommunicator2 = 
-			 					new HumanClientServerCommunicator(humanClientTUI2);
-	
 	@BeforeAll
 	static public void setUpStream() {
 	    System.setOut(new PrintStream(OUTCONTENT));
 	}
 	
+	/**
+	 * Test creating a connection and doing a handshake. 
+	 * After two players have done this, the game can start.
+	 * 
+	 * Note: cannot test with wrong input, because that is caught by the TUI (not user here)
+	 */
 	@Test
 	void testServer() 
 			throws ExitProgram, ServerUnavailableException, ProtocolException, IOException {
+		
+		HumanClientTUI humanClientTUI1 = new HumanClientTUI();
+		HumanClientServerCommunicator humanClientServerCommunicator1 = 
+				 					new HumanClientServerCommunicator(humanClientTUI1);
+		HumanClientTUI humanClientTUI2 = new HumanClientTUI();
+		HumanClientServerCommunicator humanClientServerCommunicator2 = 
+				 					new HumanClientServerCommunicator(humanClientTUI2);
 		
 		/** Preparation: start server with local host and port 8888 and let it listen for clients.*/
 		GoServer testServer = new GoServer();
@@ -53,13 +56,7 @@ public class ServerClientStartingUpTest {
 				containsString("You made a succesful connection!"));
 		OUTCONTENT.reset();
 		
-		/**
-		 * Test the handshake coming from the client.
-		 * Player is added to a game in this step.
-		 * After the second handshake, a start game message is received
-		 * 
-		 * Note: cannot test with wrong input, because that is caught by the TUI (not user here)
-		 */
+		
 		humanClientServerCommunicator1.doHandshake("Eline", 'B');
 		//Client prints a message to indicate which communication version will be used
 		assertThat(OUTCONTENT.toString(), containsString("Communication will proceed according"));
@@ -98,15 +95,12 @@ public class ServerClientStartingUpTest {
 	@Test
 	void testDisconnectBeforeStartGame() 
 			throws ExitProgram, ServerUnavailableException, ProtocolException, IOException {
-//		HumanClientGamePlayer client3 = new HumanClientGamePlayer();
 		HumanClientTUI humanClientTUI3 = new HumanClientTUI();
 		HumanClientServerCommunicator humanClientServerCommunicator3 = 
 				 					new HumanClientServerCommunicator(humanClientTUI3);
-//		HumanClientGamePlayer client4 = new HumanClientGamePlayer();
 		HumanClientTUI humanClientTUI4 = new HumanClientTUI();
 		HumanClientServerCommunicator humanClientServerCommunicator4 = 
 				 					new HumanClientServerCommunicator(humanClientTUI4);
-//		HumanClientGamePlayer client5 = new HumanClientGamePlayer();
 		HumanClientTUI humanClientTUI5 = new HumanClientTUI();
 		HumanClientServerCommunicator humanClientServerCommunicator5 = 
 				 					new HumanClientServerCommunicator(humanClientTUI5);

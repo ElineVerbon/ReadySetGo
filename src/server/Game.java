@@ -116,6 +116,10 @@ public class Game {
 		return twoPlayers;
 	}
 	
+	public boolean hasEnded() {
+		return gameEnded;
+	}
+	
 	/**
 	 * Runs the game.
 	 * Starts the game (send start messages, send first turn message), 
@@ -188,15 +192,15 @@ public class Game {
 		}
 		
 		char command = components[0].charAt(0);
-		switch(command) {
-			case (ProtocolMessages.QUIT):
+		switch (command) {
+			case ProtocolMessages.QUIT:
 				reasonGameEnd = ProtocolMessages.QUIT;
 				gameEnded = true;
 				return;
-			case (ProtocolMessages.MOVE):
+			case ProtocolMessages.MOVE:
 				move = components[1];
 				break;
-			case (ProtocolMessages.ERROR):
+			case ProtocolMessages.ERROR:
 				//TODO what to do if the player did not understand a message? End game?
 			default:
 				//TODO not sure what to do after sending an error message. doTurn() again?
@@ -209,11 +213,13 @@ public class Game {
 		
 		processMove(move);
 		
-		/** Turn is over and processed: set turn to other player. */
-		if (firstPlayersTurn) {
-			firstPlayersTurn = false;
-		} else {
-			firstPlayersTurn = true;
+		/** Turn is over and processed: set turn to other player if game has not ended. */
+		if (!gameEnded) {
+			if (firstPlayersTurn) {
+				firstPlayersTurn = false;
+			} else {
+				firstPlayersTurn = true;
+			}
 		}
 	}
 	
@@ -272,6 +278,11 @@ public class Game {
 					board = moveResult.determineNewBoard(board, colorPlayer2);
 				}
 			}
+		}
+		
+		if (!valid) {
+			gameEnded = true;
+			reasonGameEnd = ProtocolMessages.CHEAT;
 		}
 		//give the result to the player
 		opponentsMove = move;

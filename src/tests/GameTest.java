@@ -1,27 +1,19 @@
 package tests;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.hamcrest.CoreMatchers.not;
 
 import java.io.*;
-import java.net.InetAddress;
 
 import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import exceptions.ExitProgram;
 import protocol.ProtocolMessages;
 import ruleimplementations.MoveResultGenerator;
 import server.Game;
-import server.GoClientHandler;
-import server.GoServer;
 import server.Handler;
-import ss.week7.hotel.server.HotelServer;
 
 /**
  * This class will test whether the Game responds correctly to certain responses of players.
@@ -64,7 +56,8 @@ public class GameTest {
 	 * (first player's handler is called in the addPlayer call of the second)
 	 * - black player gets first turn.
 	 * 
-	 * @throws FileNotFoundException 
+	 * Test valid first turns (use edge cases 0 and 24). (Cannot test it without 
+	 * the first turn: then I get an invalid move message that is not expected.)
 	 */
 	
 	@Test
@@ -89,46 +82,8 @@ public class GameTest {
 		
 		// --> set expectations
 		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
-		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).andReturn("");
-		handler4.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'B');
-		EasyMock.expect(handler4.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).andReturn("");
-		EasyMock.replay(handler1, handler2, handler3, handler4);
-		
-		//act
-		game1.startGame();
-		game2.startGame();
-		
-		//assert
-		EasyMock.verify(handler1, handler2);
-	}
-	
-	/**
-	 * Test valid first turns (use edge cases 0 and 24).
-	 */
-	
-	@Test
-	void validFirstTurnTest() {
-		
-		//arrange
-		Game game1 = new Game(1, "1.0");
-		Handler handler1 = EasyMock.createMock(Handler.class);
-		Handler handler2 = EasyMock.createMock(Handler.class);
-		game1.setClientHandlerPlayer1(handler1);
-		game1.setClientHandlerPlayer2(handler2);
-		game1.setColorPlayer1(ProtocolMessages.BLACK);
-		game1.setColorPlayer2(ProtocolMessages.WHITE);
-		
-		Game game2 = new Game(2, "1.0");
-		Handler handler3 = EasyMock.createMock(Handler.class);
-		Handler handler4 = EasyMock.createMock(Handler.class);
-		game2.setClientHandlerPlayer1(handler3);
-		game2.setClientHandlerPlayer2(handler4);
-		game2.setColorPlayer1(ProtocolMessages.WHITE);
-		game2.setColorPlayer2(ProtocolMessages.BLACK);
-		
-		// --> set expectations
-		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
-		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).andReturn("M;0");
+		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null))
+																			.andReturn("M;0");
 		handler1.giveResultMessage(true, "BUUUUUUUUUUUUUUUUUUUUUUUU");
 		handler4.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'B');
 		EasyMock.expect(handler4.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null))
@@ -141,7 +96,7 @@ public class GameTest {
 		game2.startGame();
 		
 		//assert
-		EasyMock.verify(handler1, handler2);
+		EasyMock.verify(handler1, handler2, handler3, handler4);
 	}
 	
 	/** Test outside-of-board invalid first turn. */
@@ -163,10 +118,12 @@ public class GameTest {
 		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
 																		andReturn("M;-1");
 		handler1.giveResultMessage(false, "Your move was invalid. You lose the game.");
+		handler1.endGameMessage('C', 'W', "0.0", "0.0");
+		handler2.endGameMessage('C', 'W', "0.0", "0.0");
 		EasyMock.replay(handler1, handler2);
 		
 		//act
-		game.startGame();
+		game.runGame();
 		
 		//assert
 		EasyMock.verify(handler1, handler2);
@@ -193,11 +150,12 @@ public class GameTest {
 		EasyMock.expect(handler2.doTurnMessage("UUUBUUUUUUUUUUUUUUUUUUUUU", "3")).
 																		andReturn("M;3");
 		handler2.giveResultMessage(false, "Your move was invalid. You lose the game.");
+		handler1.endGameMessage('C', 'B', "0.0", "0.0");
+		handler2.endGameMessage('C', 'B', "0.0", "0.0");
 		EasyMock.replay(handler1, handler2);
 		
 		//act
-		game.startGame();
-		game.doTurn();
+		game.runGame();
 		
 		//assert
 		EasyMock.verify(handler1, handler2);
@@ -221,11 +179,192 @@ public class GameTest {
 		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
 																		andReturn("M;g");
 		handler1.giveResultMessage(false, "Your move was invalid. You lose the game.");
+		handler1.endGameMessage('C', 'W', "0.0", "0.0");
+		handler2.endGameMessage('C', 'W', "0.0", "0.0");
 		EasyMock.replay(handler1, handler2);
 		
 		//act
-		game.startGame();
+		game.runGame();
+		
+		//assert
+		EasyMock.verify(handler1, handler2);
+	}
+	
+	/**
+	 * Test whether two passes in a row lead to an end of game.
+	 */
+	@Test
+	void twoPassesTest() {
+		
+		//arrange
+		Game game = new Game(1, "1.0");
+		Handler handler1 = EasyMock.createMock(Handler.class);
+		Handler handler2 = EasyMock.createMock(Handler.class);
+		game.setClientHandlerPlayer1(handler1);
+		game.setClientHandlerPlayer2(handler2);
+		game.setColorPlayer1(ProtocolMessages.BLACK);
+		game.setColorPlayer2(ProtocolMessages.WHITE);
+		
+		// --> set expectations
+		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
+		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
+																		andReturn("M;P");
+		handler1.giveResultMessage(true, "UUUUUUUUUUUUUUUUUUUUUUUUU");
+		EasyMock.expect(handler2.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", "P")).
+																		andReturn("M;P");
+		handler2.giveResultMessage(true, "UUUUUUUUUUUUUUUUUUUUUUUUU");	
+		//adjust this to the ko (W will win)
+		handler1.endGameMessage('F', 'B', "0.0", "0.0");
+		handler2.endGameMessage('F', 'B', "0.0", "0.0");
+		EasyMock.replay(handler1, handler2);
+	
+		//act
+		game.runGame();
+		
+		//assert
+		EasyMock.verify(handler1, handler2);
+	}
+	
+	/**
+	 * Test whether two passes not in a row do not lead to an end of game.
+	 */
+	
+	@Test
+	void twoNonConsecutivePassesTest() {
+		
+		//arrange
+		Game game = new Game(1, "1.0");
+		Handler handler1 = EasyMock.createMock(Handler.class);
+		Handler handler2 = EasyMock.createMock(Handler.class);
+		game.setClientHandlerPlayer1(handler1);
+		game.setClientHandlerPlayer2(handler2);
+		game.setColorPlayer1(ProtocolMessages.BLACK);
+		game.setColorPlayer2(ProtocolMessages.WHITE);
+		
+		// --> set expectations
+		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
+		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
+																		andReturn("M;P");
+		handler1.giveResultMessage(true, "UUUUUUUUUUUUUUUUUUUUUUUUU");
+		EasyMock.expect(handler2.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", "P")).
+																		andReturn("M;3");
+		handler2.giveResultMessage(true, "UUUWUUUUUUUUUUUUUUUUUUUUU");	
+		EasyMock.expect(handler1.doTurnMessage("UUUWUUUUUUUUUUUUUUUUUUUUU", "3")).
+																		andReturn("M;4");
+		handler1.giveResultMessage(true, "UUUWBUUUUUUUUUUUUUUUUUUUU");
+		EasyMock.expect(handler2.doTurnMessage("UUUWBUUUUUUUUUUUUUUUUUUUU", "4")).
+																		andReturn("M;P");
+		handler2.giveResultMessage(true, "UUUWBUUUUUUUUUUUUUUUUUUUU");	
+		EasyMock.replay(handler1, handler2);
+	
+		//act
+		game.startGame(); //first doTurn called in this method)
 		game.doTurn();
+		game.doTurn();
+		game.doTurn();
+		game.hasEnded();
+		
+		//assert
+		EasyMock.verify(handler1, handler2);
+		assertFalse(game.hasEnded());
+	}
+
+	/**
+	 * Test whether quitting leads to an end of game.
+	 */
+	
+	@Test
+	void quitOnTurnTest() {
+		
+		//arrange
+		Game game = new Game(1, "1.0");
+		Handler handler1 = EasyMock.createMock(Handler.class);
+		Handler handler2 = EasyMock.createMock(Handler.class);
+		game.setClientHandlerPlayer1(handler1);
+		game.setClientHandlerPlayer2(handler2);
+		game.setColorPlayer1(ProtocolMessages.BLACK);
+		game.setColorPlayer2(ProtocolMessages.WHITE);
+		
+		// --> set expectations
+		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
+		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
+																		andReturn("M;7");
+		handler1.giveResultMessage(true, "UUUUUUUBUUUUUUUUUUUUUUUUU");
+		EasyMock.expect(handler2.doTurnMessage("UUUUUUUBUUUUUUUUUUUUUUUUU", "7")).
+																		andReturn("Q");
+		handler1.endGameMessage('Q', 'B', "0.0", "0.0");
+		handler2.endGameMessage('Q', 'B', "0.0", "0.0");
+		EasyMock.replay(handler1, handler2);
+	
+		//act
+		game.runGame();
+		
+		//assert
+		EasyMock.verify(handler1, handler2);
+	}
+	
+	/**
+	 * Test the ko rule. 
+	 * 
+	 * Explanation of the rule:
+	 * U B U U U 	0  1  2  3  4
+	 * B U B U U	5  6  7  8  9
+	 * W U W U U	10 11 12 13 14 
+	 * U W U U U	15 16 17 18 19
+	 * U U U U U	20 21 22 23 24
+	 * After this board, B may place a stone in 11 and then W may place a stone in 6 to 
+	 * capture B. However, B may not subsequently place another stone in 11 to capture W 
+	 * back again (repetition of previous board).
+	 */
+	
+	@Test
+	void koRuleTest() {
+		
+		//arrange
+		Game game = new Game(1, "1.0");
+		Handler handler1 = EasyMock.createMock(Handler.class);
+		Handler handler2 = EasyMock.createMock(Handler.class);
+		game.setClientHandlerPlayer1(handler1);
+		game.setClientHandlerPlayer2(handler2);
+		game.setColorPlayer1(ProtocolMessages.BLACK);
+		game.setColorPlayer2(ProtocolMessages.WHITE);
+		
+		// --> set expectations
+		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
+		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
+																		andReturn("M;1");
+		handler1.giveResultMessage(true, "UBUUUUUUUUUUUUUUUUUUUUUUU");
+		EasyMock.expect(handler2.doTurnMessage("UBUUUUUUUUUUUUUUUUUUUUUUU", "1")).
+																		andReturn("M;10");
+		handler2.giveResultMessage(true, "UBUUUUUUUUWUUUUUUUUUUUUUU");
+		EasyMock.expect(handler1.doTurnMessage("UBUUUUUUUUWUUUUUUUUUUUUUU", "10")).
+																		andReturn("M;5");
+		handler1.giveResultMessage(true, "UBUUUBUUUUWUUUUUUUUUUUUUU");
+		EasyMock.expect(handler2.doTurnMessage("UBUUUBUUUUWUUUUUUUUUUUUUU", "5")).
+																		andReturn("M;12");
+		handler2.giveResultMessage(true, "UBUUUBUUUUWUWUUUUUUUUUUUU");
+		EasyMock.expect(handler1.doTurnMessage("UBUUUBUUUUWUWUUUUUUUUUUUU", "12")).
+																		andReturn("M;7");
+		handler1.giveResultMessage(true, "UBUUUBUBUUWUWUUUUUUUUUUUU");
+		EasyMock.expect(handler2.doTurnMessage("UBUUUBUBUUWUWUUUUUUUUUUUU", "7")).
+																		andReturn("M;16");
+		handler2.giveResultMessage(true, "UBUUUBUBUUWUWUUUWUUUUUUUU");
+		EasyMock.expect(handler1.doTurnMessage("UBUUUBUBUUWUWUUUWUUUUUUUU", "16")).
+																		andReturn("M;11");
+		handler1.giveResultMessage(true, "UBUUUBUBUUWBWUUUWUUUUUUUU");
+		EasyMock.expect(handler2.doTurnMessage("UBUUUBUBUUWBWUUUWUUUUUUUU", "11")).
+																		andReturn("M;6");
+		handler2.giveResultMessage(true, "UBUUUBWBUUWUWUUUWUUUUUUUU"); //B in 11 is removed
+		EasyMock.expect(handler1.doTurnMessage("UBUUUBWBUUWUWUUUWUUUUUUUU", "6")).
+																		andReturn("M;11");
+		handler1.giveResultMessage(false, "Your move was invalid. You lose the game.");
+		handler1.endGameMessage('C', 'W', "0.0", "0.0");
+		handler2.endGameMessage('C', 'W', "0.0", "0.0");
+		
+		EasyMock.replay(handler1, handler2);
+	
+		//act
+		game.runGame();
 		
 		//assert
 		EasyMock.verify(handler1, handler2);
@@ -434,160 +573,6 @@ public class GameTest {
 		expectedNewBoard = "BUUBBUBUBBUBBUUUUBUBUBBUUUBUWWUUUWUU";
 		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
 		assertTrue(newBoard.equals(expectedNewBoard));
-	}
-	
-	/**
-	 * Test whether a repetition of the board (by player2) is caught as invalid.
-	 * 
-	 * Moves are given as lines in two separate files.
-	 * Result message is checked
-	 * 
-	 * @throws FileNotFoundException 
-	 */
-	
-	@Test
-	void repetitionBoardTest() throws FileNotFoundException {
-		Game testGame = new Game(2, "1.0");
-		
-        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
-		BufferedReader inPlayer1 = new BufferedReader(
-				new FileReader("src/tests/resources/repetitionBoardTest_Player1.txt"));
-		StringWriter stringWriter1 = new StringWriter();
-		BufferedWriter outPlayer1 = new BufferedWriter(stringWriter1);
-		
-		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
-		BufferedReader inPlayer2 = new BufferedReader(
-				new FileReader("src/tests/resources/repetitionBoardTest_Player2.txt"));
-		StringWriter stringWriter2 = new StringWriter();
-		BufferedWriter outPlayer2 = new BufferedWriter(stringWriter2);
-		
-		//add players to game
-		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
-		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
-		
-		testGame.startGame();
-		//I have 8 lines of commands (4 for player1, 4 for player2)
-		//first command is used in startGame, so 7 more to go.
-		for (int x = 0; x < 6; x++) {
-			testGame.doTurn();
-		}
-		testGame.doTurn();
-		//The last board seen by player 1 (W in 6 is removed, B in 18 not yet removed)
-		assertThat(stringWriter1.toString(), containsString("R;V;UBUUUBUBUUUBUUUUUUUUUWWUU"));
-		//The last board seen by player 2 (placing a W in 6 is invalid)
-		assertThat(stringWriter2.toString(), containsString("R;I"));
-		
-		//TODO end game (and then I can use playGame instead of doTurgn 13 times)
-
-		OUTCONTENT.reset();
-	}
-	
-	/**
-	 * End game tests.
-	 */
-	
-	/**
-	 * Test whether two passes in a row lead to and end of game.
-	 * And that two passes not in a row do not lead to an end of game.
-	 * 
-	 * @throws FileNotFoundException
-	 */
-	@Test
-	void twoPassesTest() throws FileNotFoundException {
-		Game testGame = new Game(2, "1.0");
-		
-        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
-		BufferedReader inPlayer1 = new BufferedReader(
-				new FileReader("src/tests/resources/twoPassesTest_MovesPlayer1.txt"));
-		StringWriter stringWriter1 = new StringWriter();
-		BufferedWriter outPlayer1 = new BufferedWriter(stringWriter1);
-		
-		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
-		BufferedReader inPlayer2 = new BufferedReader(
-				new FileReader("src/tests/resources/twoPassesTest_MovesPlayer2.txt"));
-		StringWriter stringWriter2 = new StringWriter();
-		BufferedWriter outPlayer2 = new BufferedWriter(stringWriter2);
-		
-		//add players to game
-		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
-		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
-		
-		testGame.startGame(); //first turn player1 (P)
-		assertThat(stringWriter1.toString(), containsString("R;V;UUUUUUUUUUUUUUUUUUUUUUUUU"));
-		
-		testGame.doTurn(); //first turn player2 (6)
-		assertThat(stringWriter2.toString(), containsString("R;V;UUUUUUWUUUUUUUUUUUUUUUUUU"));
-		
-		testGame.doTurn(); //second turn player1 (3)
-		assertThat(stringWriter1.toString(), containsString("R;V;UUUBUUWUUUUUUUUUUUUUUUUUU"));
-		
-		testGame.doTurn(); //second turn player2 (P) - second pass, but not consecutive
-		assertThat(stringWriter2.toString(), containsString("R;V;UUUBUUWUUUUUUUUUUUUUUUUUU"));
-		
-		testGame.doTurn(); //third turn player1 (P) - second consecutive pass
-		assertThat(stringWriter1.toString(), containsString("R;V;UUUBUUWUUUUUUUUUUUUUUUUUU"));
-		testGame.endGame();
-		//TODO change once I can calculate score!
-		assertThat(stringWriter1.toString(), containsString("E;F;B;0;0"));
-
-		OUTCONTENT.reset();
-	}
-	
-	@Test
-	void quitOnTurnTest() throws FileNotFoundException {
-		Game testGame = new Game(2, "1.0");
-		
-        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
-		BufferedReader inPlayer1 = new BufferedReader(
-				new FileReader("src/tests/resources/quitOnTurnPlayer2Test_MovesPlayer1.txt"));
-		StringWriter stringWriter1 = new StringWriter();
-		BufferedWriter outPlayer1 = new BufferedWriter(stringWriter1);
-		
-		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
-		BufferedReader inPlayer2 = new BufferedReader(
-				new FileReader("src/tests/resources/quitOnTurnPlayer2Test_MovesPlayer2.txt"));
-		StringWriter stringWriter2 = new StringWriter();
-		BufferedWriter outPlayer2 = new BufferedWriter(stringWriter2);
-		
-		//add players to game
-		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
-		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
-		
-		testGame.startGame(); //first turn player1 (3)
-		assertThat(stringWriter1.toString(), containsString("R;V;UUUBUUUUUUUUUUUUUUUUUUUUU"));
-		
-		testGame.doTurn(); //first turn player2 (Q)
-		assertThat(stringWriter2.toString(), not(containsString("R;V;UUUBUUUUUUUUUUUUUUUUUUUUU")));
-		testGame.endGame();
-		assertThat(stringWriter2.toString(), containsString("E;Q;B;0;0")); //black wins
-
-		OUTCONTENT.reset();
-		
-		testGame = new Game(2, "1.0");
-		
-        //Use a file with a command per line to represent the moves of player1 as the bufferedReader
-		inPlayer1 = new BufferedReader(
-				new FileReader("src/tests/resources/quitOnTurnPlayer1Test_MovesPlayer1.txt"));
-		stringWriter1 = new StringWriter();
-		outPlayer1 = new BufferedWriter(stringWriter1);
-		
-		//Use a file with a command per line to represent the moves of player2 as the bufferedReader
-		inPlayer2 = new BufferedReader(
-				new FileReader("src/tests/resources/quitOnTurnPlayer1Test_MovesPlayer2.txt"));
-		stringWriter2 = new StringWriter();
-		outPlayer2 = new BufferedWriter(stringWriter2);
-		
-		//add players to game
-		testGame.addPlayer("Player1", inPlayer1, outPlayer1, "black");
-		testGame.addPlayer("Player2", inPlayer2, outPlayer2, "white");
-		
-		testGame.startGame(); //first turn player1 (3)
-		assertThat(stringWriter1.toString(), not(containsString("R")));
-		
-		testGame.endGame();
-		assertThat(stringWriter2.toString(), containsString("E;Q;W;0;0")); //white wins
-
-		OUTCONTENT.reset();
 	}
 	
 	@AfterAll

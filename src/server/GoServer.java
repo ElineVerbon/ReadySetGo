@@ -130,7 +130,7 @@ public class GoServer implements Runnable {
 	 */
 	public void createSocket(InetAddress addr, int port) throws IOException {
 		tui.showMessage("Attempting to open a socket at " + addr.toString() +
-				"on port " + port + "...");
+				" on port " + port + "...");
 		ssock = new ServerSocket(port, 0, addr);
 		tui.showMessage("Socket opened, waiting for a client.");
 	}

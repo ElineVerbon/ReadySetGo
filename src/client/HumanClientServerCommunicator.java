@@ -173,8 +173,7 @@ public class HumanClientServerCommunicator {
 				clientTUI.showMessage("Only 'black' and 'white' are allowed as answer.");
 			}
 		}
-		clientTUI.showMessage("Name client: " + nameClient + ", wanted color: " + wantedColor);
-		
+
 		//perform the handshake
 		doHandshake(nameClient, wantedColor);
 	}
@@ -197,8 +196,6 @@ public class HumanClientServerCommunicator {
 		String message = ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER + wantedVersion + 
 				ProtocolMessages.DELIMITER + nameClient + ProtocolMessages.DELIMITER + wantedColor;
 		
-		clientTUI.showMessage(message);
-		
 		//send handshake message to the server, read the response.
 		String line = "";
 		try {
@@ -206,6 +203,9 @@ public class HumanClientServerCommunicator {
 			out.newLine();
 			out.flush();
 			line = readLineFromServer();
+			if (line == null) {
+				return;
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw new ServerUnavailableException("Could not read "
@@ -217,8 +217,6 @@ public class HumanClientServerCommunicator {
 		 * PROTOCOL.handshake + PROTOCOL.delimiter + finalVersion (string) 
 		 * optionally these at the end: PROTOCOL.delimiter + message (string)
 		 */ 
-		
-		clientTUI.showMessage(line);
 		
 		//check whether the handshake character came first, if not: throw exception
 		String[] serverResponse = line.split(ProtocolMessages.DELIMITER);
@@ -258,12 +256,12 @@ public class HumanClientServerCommunicator {
 				answer = in.readLine();
 				
 				if (answer == null) {
-					clientTUI.showMessage("Server disconnected. The connection will be closed.");
+					clientTUI.showMessage("\nServer disconnected. The connection will be closed.");
 					closeConnection();
 				}
 				return answer;
 			} catch (IOException e) {
-				clientTUI.showMessage("Server cannot be reached. The connection will be closed.");
+				clientTUI.showMessage("\nServer cannot be reached. The connection will be closed.");
 				closeConnection();
 			}
 		} else {

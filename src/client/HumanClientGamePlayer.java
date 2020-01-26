@@ -84,6 +84,9 @@ public class HumanClientGamePlayer {
 		 */
 		while (!gameEnded) {
 			String message = serverHandler.readLineFromServer();
+			if (message == null) {
+				return;
+			}
 			handleServerMessage(message);
 		}
 	}	

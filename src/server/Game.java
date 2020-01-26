@@ -10,6 +10,7 @@ public class Game {
 	/** Set board dimension (= length of board). */
 	//TODO possibly let user of server set this instead
 	private int boardDimension = 5;
+	private double komi = 0.5;
 	
 	/** Save the game number, might need it later for a leader board. */
 	private int gameNumber;
@@ -39,9 +40,10 @@ public class Game {
 	private String board;
 	private List<String> prevBoards = new ArrayList<String>();
 	
-	/** Set classes to check move results. */
+	/** Make objects of the classes that implement the GO rules. */
 	private MoveValidator moveValidator = new MoveValidator();
-	private MoveResultGenerator moveResult = new MoveResultGenerator();
+	private BoardUpdater moveResult = new BoardUpdater();
+	private ScoreCalculator scoreCalculator = new ScoreCalculator();
 	
 	/** 
 	 * Constructor, creates string representation of the board. 
@@ -327,20 +329,25 @@ public class Game {
 	
 	/**
 	 * End the game. 
-	 * 
-	 * @param reason One of the ProtocolMessages indicating the reason for ending the game
+	 * Calculate the scores of the players and determine the winner. Send an end of game message
+	 * to both clients.
 	 */
 	public void endGame() {
 		
 		char winner = 'x';
-		double scoreBlack = 0;
-		double scoreWhite = 0;
+		
+		scoreCalculator.calculateScores(board, komi);
+		double scoreBlack = scoreCalculator.getScoreBlack();
+		double scoreWhite = scoreCalculator.getScoreWhite();
+		if (scoreBlack > scoreWhite) {
+			winner = ProtocolMessages.BLACK;
+		} else {
+			winner = ProtocolMessages.WHITE;
+		}
 		
 		switch (reasonGameEnd) {
 			//if game ended after a double pass, decide on winner based on the scores
 			case ProtocolMessages.FINISHED:
-				//TODO change to actual winner
-				winner = 'B';
 				String endGameMessage = messageGenerator.endGameMessage(reasonGameEnd, winner, 
 						Double.toString(scoreBlack), Double.toString(scoreWhite));
 				goClientHandlerPlayer1.sendMessageToClient(endGameMessage);

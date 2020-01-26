@@ -26,7 +26,7 @@ import protocol.ProtocolMessages;
  * procedure is repeated from starting from method 1, but this time for the opposite color.
  */
 
-public class MoveResultGenerator {
+public class BoardUpdater {
 	
 	private boolean surrounded;
 	private char opponentsColor = 'x';

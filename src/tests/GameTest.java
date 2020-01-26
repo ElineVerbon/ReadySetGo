@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import protocol.ProtocolMessages;
-import ruleimplementations.MoveResultGenerator;
+import ruleimplementations.BoardUpdater;
 import server.Game;
 import server.Handler;
 
@@ -120,8 +120,8 @@ public class GameTest {
 		handler1.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;null");
 		EasyMock.expect(handler1.getReply()).andReturn("M;-1");
 		handler1.sendMessageToClient("R;I;Your move was invalid. You lose the game.");
-		handler1.sendMessageToClient("E;C;W;0.0;0.0");
-		handler2.sendMessageToClient("E;C;W;0.0;0.0");
+		handler1.sendMessageToClient("E;C;W;-0.5;0.0");
+		handler2.sendMessageToClient("E;C;W;-0.5;0.0");
 		EasyMock.replay(handler1, handler2);
 		
 		//act
@@ -152,8 +152,8 @@ public class GameTest {
 		handler2.sendMessageToClient("T;UUUBUUUUUUUUUUUUUUUUUUUUU;3");
 		EasyMock.expect(handler2.getReply()).andReturn("M;3");
 		handler2.sendMessageToClient("R;I;Your move was invalid. You lose the game.");
-		handler1.sendMessageToClient("E;C;B;0.0;0.0");
-		handler2.sendMessageToClient("E;C;B;0.0;0.0");
+		handler1.sendMessageToClient("E;C;B;24.5;0.0");
+		handler2.sendMessageToClient("E;C;B;24.5;0.0");
 		EasyMock.replay(handler1, handler2);
 		
 		//act
@@ -181,8 +181,8 @@ public class GameTest {
 		handler1.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;null");
 		EasyMock.expect(handler1.getReply()).andReturn("M;g");
 		handler1.sendMessageToClient("R;I;Your move was invalid. You lose the game.");
-		handler1.sendMessageToClient("E;C;W;0.0;0.0");
-		handler2.sendMessageToClient("E;C;W;0.0;0.0");
+		handler1.sendMessageToClient("E;C;W;-0.5;0.0");
+		handler2.sendMessageToClient("E;C;W;-0.5;0.0");
 		EasyMock.replay(handler1, handler2);
 		
 		//act
@@ -215,8 +215,8 @@ public class GameTest {
 		handler2.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;P");
 		EasyMock.expect(handler2.getReply()).andReturn("M;P");
 		handler2.sendMessageToClient("R;V;UUUUUUUUUUUUUUUUUUUUUUUUU");
-		handler1.sendMessageToClient("E;F;B;0.0;0.0");
-		handler2.sendMessageToClient("E;F;B;0.0;0.0");
+		handler1.sendMessageToClient("E;F;W;-0.5;0.0");
+		handler2.sendMessageToClient("E;F;W;-0.5;0.0");
 		EasyMock.replay(handler1, handler2);
 	
 		//act
@@ -293,8 +293,8 @@ public class GameTest {
 		handler1.sendMessageToClient("R;V;UUUUUUUBUUUUUUUUUUUUUUUUU");
 		handler2.sendMessageToClient("T;UUUUUUUBUUUUUUUUUUUUUUUUU;7");
 		EasyMock.expect(handler2.getReply()).andReturn("Q");
-		handler1.sendMessageToClient("E;Q;B;0.0;0.0");
-		handler2.sendMessageToClient("E;Q;B;0.0;0.0");
+		handler1.sendMessageToClient("E;Q;B;24.5;0.0");
+		handler2.sendMessageToClient("E;Q;B;24.5;0.0");
 		EasyMock.replay(handler1, handler2);
 	
 		//act
@@ -316,6 +316,9 @@ public class GameTest {
 	 * After this board, B may place a stone in 11 and then W may place a stone in 6 to 
 	 * capture B. However, B may not subsequently place another stone in 11 to capture W 
 	 * back again (repetition of previous board).
+	 * 
+	 * End result: B has one captured area of size 1 (location 0) + 3 stones - 0.5 komi
+	 * W has one captured area of size 1 (11) + 4 stones
 	 */
 	
 	@Test
@@ -359,8 +362,8 @@ public class GameTest {
 		handler1.sendMessageToClient("T;UBUUUBWBUUWUWUUUWUUUUUUUU;6");
 		EasyMock.expect(handler1.getReply()).andReturn("M;11");
 		handler1.sendMessageToClient("R;I;Your move was invalid. You lose the game.");
-		handler1.sendMessageToClient("E;C;W;0.0;0.0");
-		handler2.sendMessageToClient("E;C;W;0.0;0.0");
+		handler1.sendMessageToClient("E;C;W;3.5;5.0");
+		handler2.sendMessageToClient("E;C;W;3.5;5.0");
 		
 		EasyMock.replay(handler1, handler2);
 	
@@ -382,7 +385,7 @@ public class GameTest {
 	
 	@Test
 	void removeStonesTest() {
-		MoveResultGenerator moveResult = new MoveResultGenerator();
+		BoardUpdater moveResult = new BoardUpdater();
 		String oldBoard;
 		String expectedNewBoard;
 		String newBoard;

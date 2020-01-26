@@ -14,7 +14,7 @@ import protocol.ProtocolMessages;
 
 public class MoveValidator {
 
-	MoveResultGenerator moveResultGenerator = new MoveResultGenerator();
+	BoardUpdater moveResultGenerator = new BoardUpdater();
 	String board;
 	
 	public boolean processMove(String move, int boardDimension, String theBoard, 

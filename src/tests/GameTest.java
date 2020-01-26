@@ -12,30 +12,13 @@ import org.junit.jupiter.api.Test;
 
 import protocol.ProtocolMessages;
 import ruleimplementations.BoardUpdater;
+import ruleimplementations.ScoreCalculator;
 import server.Game;
 import server.Handler;
 
 /**
- * This class will test whether the Game responds correctly to certain responses of players.
- * Each test comes with two files, specifying the moves of player1 and player2, respectively.
- * These are used as inputStreams for the game.
- * 
- * Implemented tests:
- * -startGameTest tests whether G, T and R messages are correctly sent to the players.
- * -removeStonesTest tests whether the board is updated correctly according to removal of stones.
- * -wrongMovesTest tests whether move is outside of board, not an int or the location already taken
- * -repetitionBoardsTest tests whether repetition of boards is found correctly
- * -quitOnTurnTest tests whether the game ends correctly when a user types 'quit' during turn
- * 
- * TODO:
- * -getScoreTest
- * -endGameTests test whether game is ended cleanly and correct winner is found
- * - getting the score
- * - deciding on the winner
- * - ending a game by two passes
- * - ending a game by losing connection
- * - ending a game by invalid move
- * - ending a game by quitting
+ * This class will test whether the Game sends messages correctly and responds correctly 
+ * to the responses of the players.
  * 
  * @author eline.verbon
  *
@@ -53,7 +36,8 @@ public class GameTest {
 	/**
 	 * Test game start: 
 	 * - second player's handler's startGame message is called 
-	 * (first player's handler is called in the addPlayer call of the second)
+	 * (first player's handler is called in the addPlayer call when the second player
+	 * is added to the game)
 	 * - black player gets first turn.
 	 * 
 	 * Test valid first turns (use edge cases 0 and 24). (Cannot test it without 
@@ -132,6 +116,7 @@ public class GameTest {
 	}
 	
 	/** Test occupied-location invalid turn. */
+	
 	@Test
 	void occupiedLocationInvalidTurnTest() {
 		
@@ -164,6 +149,7 @@ public class GameTest {
 	}
 	
 	/** Test non-integer invalid turn. */
+	
 	@Test
 	void nonIntegerInvalidTurnTest() {
 		
@@ -195,6 +181,7 @@ public class GameTest {
 	/**
 	 * Test whether two passes in a row lead to an end of game.
 	 */
+	
 	@Test
 	void twoPassesTest() {
 		
@@ -376,11 +363,6 @@ public class GameTest {
 	
 	/**
 	 * Test whether the correct stones are removed from the board.
-	 * 
-	 * Moves are given as lines in two separate files.
-	 * Last boards are checked
-	 * 
-	 * @throws FileNotFoundException 
 	 */
 	
 	@Test
@@ -577,6 +559,72 @@ public class GameTest {
 		expectedNewBoard = "BUUBBUBUBBUBBUUUUBUBUBBUUUBUWWUUUWUU";
 		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
 		assertTrue(newBoard.equals(expectedNewBoard));
+	}
+	
+	@Test
+	void calculateScoresTest() {
+		ScoreCalculator scoreCalculator = new ScoreCalculator();
+		
+		/** Empty board. */
+		scoreCalculator.calculateScores("UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU", 0.5);
+		assertTrue(scoreCalculator.getScoreBlack() == -0.5);
+		assertTrue(scoreCalculator.getScoreWhite() == 0.0);
+		
+		/** Boards with one stone. */
+		scoreCalculator.calculateScores("WUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU", 0.5);
+		assertTrue(scoreCalculator.getScoreBlack() == -0.5);
+		assertTrue(scoreCalculator.getScoreWhite() == 36.0);
+		
+		scoreCalculator.calculateScores("UUUUUUUUUUUUUUUUUUUUUUBUUUUUUUUUUUUU", 0.5);
+		assertTrue(scoreCalculator.getScoreBlack() == 35.5);
+		assertTrue(scoreCalculator.getScoreWhite() == 0.0);
+		
+		/** Filled board. */
+		scoreCalculator.calculateScores("WWWWWWWWWWWWWWWWWWBBBBBBBBBBBBBBBBBB", 0.5);
+		assertTrue(scoreCalculator.getScoreBlack() == 17.5);
+		assertTrue(scoreCalculator.getScoreWhite() == 18.0);
+		
+		/**
+		 * Area's for both B and W.
+		 * 
+		 * BUUBBU
+		 * BUBBUB
+		 * BUUUUB
+		 * UBUBBU
+		 * UUBUWW
+		 * UUUWUU
+		 */
+		scoreCalculator.calculateScores("BUUBBUBUBBUBBUUUUBUBUBBUUUBUWWUUUWUU", 0.5);
+		assertTrue(scoreCalculator.getScoreBlack() == 22.5);
+		assertTrue(scoreCalculator.getScoreWhite() == 5.0);
+		
+		/**
+		 * Only an surrounded area for B.
+		 * 
+		 * UUUUUU
+		 * BUUUUB
+		 * UBBBBU
+		 * UUUUUU
+		 * UUUUUU
+		 * UUUWWU
+		 */
+		scoreCalculator.calculateScores("UUUUUUBUUUUBUBBBBUUUUUUUUUUUUUUUUWWU", 0.5);
+		assertTrue(scoreCalculator.getScoreBlack() == 15.5);
+		assertTrue(scoreCalculator.getScoreWhite() == 2.0);
+		
+		/**
+		 * No surrounded areas.
+		 * 
+		 * UWUUUU
+		 * BUUUUB
+		 * UBBBBU
+		 * UUUUUU
+		 * UUUUUU
+		 * UUUWWU
+		 */
+		scoreCalculator.calculateScores("UWUUUUBUUUUBUBBBBUUUUUUUUUUUUUUUUWWU", 0.5);
+		assertTrue(scoreCalculator.getScoreBlack() == 5.5);
+		assertTrue(scoreCalculator.getScoreWhite() == 3.0);
 	}
 	
 	@AfterAll

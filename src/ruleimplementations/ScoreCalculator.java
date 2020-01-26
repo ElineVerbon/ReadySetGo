@@ -20,6 +20,7 @@ public class ScoreCalculator {
 	List<Integer> checkedUnoccupiedPlaces = new ArrayList<Integer>();
 	List<Integer> surroundedArea = new ArrayList<Integer>();
 	List<Integer> checkedPlacesInAndAroundSurroundedArea = new ArrayList<Integer>();
+	
 	char areaSurrounder = 'x';
 	boolean surrounded;
 	
@@ -55,6 +56,9 @@ public class ScoreCalculator {
 	 * Determines the empty area surrounded by the player.
 	 */
 	public void calculateEmptyArea() {
+		checkedUnoccupiedPlaces.clear();
+		surroundedArea.clear();
+		checkedPlacesInAndAroundSurroundedArea.clear();
 		
 		//go through all stones from top left to bottom to look for an unoccupied location
 		for (int x = 0; x < boardDimension; x++) {

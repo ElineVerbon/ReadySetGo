@@ -226,7 +226,7 @@ public class GoServer implements Runnable {
 			//if there is a not-yet-started game, check whether the first player is still connected
 			Game lastGame = games.get(games.size() - 1);
 			GoClientHandler player1goClientHandler = (GoClientHandler) 
-															lastGame.getClientHandlerPlayer1();;
+															lastGame.getClientHandlerPlayer1();
 			try {
 				player1goClientHandler.startGameMessageInTwoParts(lastGame.getBoard(), 
 															lastGame.getColorPlayer1());

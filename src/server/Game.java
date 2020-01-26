@@ -2,6 +2,7 @@ package server;
 
 import java.util.*;
 
+import protocol.MessageGenerator;
 import protocol.ProtocolMessages;
 import ruleimplementations.*;
 
@@ -15,14 +16,15 @@ public class Game {
 	private String version;
 	
 	/** Variable to keep track of and connect to the players. */
-	private String namePlayer1 = null; //name of player1
-	private String namePlayer2 = null; //name of player2
+	private String namePlayer1 = null; //name of player1, used by server
+	private String namePlayer2 = null; //name of player2, used by server
 	private char colorPlayer1 = 'x'; //color of player1
 	private char colorPlayer2 = 'x'; //color of player2
 	
 	private Handler goClientHandlerPlayer1;
 	private Handler goClientHandlerPlayer2;
 	private Handler currentPlayersHandler;
+	private MessageGenerator messageGenerator;
 	
 	/** Variable to keep track of game states. */
 	private boolean twoPlayers = false; //two players have been added
@@ -42,11 +44,13 @@ public class Game {
 	private MoveResultGenerator moveResult = new MoveResultGenerator();
 	
 	/** 
-	 * Constructor, sets game number & creates string representation of the board. 
+	 * Constructor, creates string representation of the board. 
 	 */
 	public Game(int number, String chosenVersion) {
 		gameNumber = number;
 		version = chosenVersion;
+		messageGenerator = new MessageGenerator();
+		
 		// Create a string representation of the empty board.
         char[] charArray = new char[boardDimension * boardDimension];
         Arrays.fill(charArray, ProtocolMessages.UNOCCUPIED);
@@ -145,7 +149,8 @@ public class Game {
      */
 	public void startGame() {
 		//Send start message to player 2 
-		goClientHandlerPlayer2.startGameMessage(board, colorPlayer2);
+		String startGameMessage = messageGenerator.startGameMessage(board, colorPlayer2);
+		goClientHandlerPlayer2.sendMessageToClient(startGameMessage);
 		
 		//Send first turn to the player whose stones are black
 		if (colorPlayer1 == ProtocolMessages.BLACK) {
@@ -173,7 +178,10 @@ public class Game {
 		} else {
 			currentPlayersHandler = goClientHandlerPlayer2;
 		}
-		reply = currentPlayersHandler.doTurnMessage(board, opponentsMove);
+		
+		String doTurnMessage = messageGenerator.doTurnMessage(board, opponentsMove);
+		currentPlayersHandler.sendMessageToClient(doTurnMessage);
+		reply = currentPlayersHandler.getReply();
 		
 		// End game if client disconnected. 
 		if (reply == null) {
@@ -186,8 +194,10 @@ public class Game {
 		String[] components = reply.split(ProtocolMessages.DELIMITER);
 		if (components[0].length() != 1) {
 			//TODO not sure what to do after sending an error message. doTurn() again?
-			currentPlayersHandler.errorMessage("Player did not keep to the protoc l: the first "
-						+ "part of its move message ( " + reply + ") was not a single character.");
+			String errorMessage = messageGenerator.errorMessage("Player did not keep to "
+					+ "the protocol: the first part of its move message ( " + reply + ") "
+					+ "was not a single character.", version);
+			currentPlayersHandler.sendMessageToClient(errorMessage);
 			return;
 		}
 		
@@ -204,10 +214,11 @@ public class Game {
 				//TODO what to do if the player did not understand a message? End game?
 			default:
 				//TODO not sure what to do after sending an error message. doTurn() again?
-				currentPlayersHandler.errorMessage("Player did not keep to the protocol: '"
-					+ ProtocolMessages.QUIT + "', '" + ProtocolMessages.ERROR + "' or '" +
-					ProtocolMessages.MOVE + "' expected as first part of the message, but '" +
-					command + "' received.");
+				String errorMessage = messageGenerator.errorMessage("Player did not keep to the "
+					+ "protocol: '" + ProtocolMessages.QUIT + "', '" + ProtocolMessages.ERROR 
+					+ "' or '" + ProtocolMessages.MOVE + "' expected as first part of the message, "
+					+ "but '" +	command + "' received.", version);
+				currentPlayersHandler.sendMessageToClient(errorMessage);
 				return;
 		}
 		
@@ -304,12 +315,13 @@ public class Game {
 		} else {
 			message = "Your move was invalid. You lose the game.";
 		}
+		String resultMessage = messageGenerator.resultMessage(valid, message);
 		
 		// Send the result to the current player.
 		if (firstPlayersTurn) {
-			goClientHandlerPlayer1.giveResultMessage(valid, message);
+			goClientHandlerPlayer1.sendMessageToClient(resultMessage);
 		} else {
-			goClientHandlerPlayer2.giveResultMessage(valid, message);
+			goClientHandlerPlayer2.sendMessageToClient(resultMessage);
 		}
 	}
 	
@@ -329,10 +341,10 @@ public class Game {
 			case ProtocolMessages.FINISHED:
 				//TODO change to actual winner
 				winner = 'B';
-				goClientHandlerPlayer1.endGameMessage(reasonGameEnd, winner, 
+				String endGameMessage = messageGenerator.endGameMessage(reasonGameEnd, winner, 
 						Double.toString(scoreBlack), Double.toString(scoreWhite));
-				goClientHandlerPlayer2.endGameMessage(reasonGameEnd, winner, 
-						Double.toString(scoreBlack), Double.toString(scoreWhite));
+				goClientHandlerPlayer1.sendMessageToClient(endGameMessage);
+				goClientHandlerPlayer2.sendMessageToClient(endGameMessage);
 				break;
 			//if one of the other game end reasons: the not-current player wins
 			case ProtocolMessages.CHEAT:
@@ -342,30 +354,32 @@ public class Game {
 				} else {
 					winner = colorPlayer1;
 				}
-				goClientHandlerPlayer1.endGameMessage(reasonGameEnd, winner, 
+				endGameMessage = messageGenerator.endGameMessage(reasonGameEnd, winner, 
 						Double.toString(scoreBlack), Double.toString(scoreWhite));
-				goClientHandlerPlayer2.endGameMessage(reasonGameEnd, winner, 
-						Double.toString(scoreBlack), Double.toString(scoreWhite));
+				goClientHandlerPlayer1.sendMessageToClient(endGameMessage);
+				goClientHandlerPlayer2.sendMessageToClient(endGameMessage);
 				break;
 			//in case of a disconnect, only the still-connected player gets a message
 			case ProtocolMessages.DISCONNECT:
 				if (firstPlayersTurn) {
 					winner = colorPlayer2;
-					goClientHandlerPlayer2.endGameMessage(reasonGameEnd, winner, 
+					endGameMessage = messageGenerator.endGameMessage(reasonGameEnd, winner, 
 							Double.toString(scoreBlack), Double.toString(scoreWhite));
+					goClientHandlerPlayer2.sendMessageToClient(endGameMessage);
 				} else {
 					winner = colorPlayer1;
-					goClientHandlerPlayer1.endGameMessage(reasonGameEnd, winner, 
+					endGameMessage = messageGenerator.endGameMessage(reasonGameEnd, winner, 
 							Double.toString(scoreBlack), Double.toString(scoreWhite));
+					goClientHandlerPlayer1.sendMessageToClient(endGameMessage);
 				}
 				break;
 			default:
 				//TODO not sure what to do after sending the error messages. Maybe nothing, only
 				//used for debugging?
-				goClientHandlerPlayer1.errorMessage("Sorry, the winner cannot be decided. Known " +
-						"reason game end (" + reasonGameEnd + ") is unknown.");
-				goClientHandlerPlayer2.errorMessage("Sorry, the winner cannot be decided. Known " +
-						"reason game end (" + reasonGameEnd + ") is unknown.");
+				String errorMessage = messageGenerator.errorMessage("Sorry, the winner cannot be "
+					+ "decided. Reason game end (" + reasonGameEnd + ") is unknown.", version);
+				goClientHandlerPlayer1.sendMessageToClient(errorMessage);
+				goClientHandlerPlayer2.sendMessageToClient(errorMessage);
 		}
 	}
 }

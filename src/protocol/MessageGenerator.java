@@ -1,28 +1,76 @@
 package protocol;
 
-import client.HumanClientServerCommunicator;
-
-public class MessageGenerator {
+public class MessageGenerator implements GeneratorInterface {
 	
-	HumanClientServerCommunicator serverHandler;
+	/**
+	 * Message sent by both client and server.
+	 */
 	
-	public MessageGenerator(HumanClientServerCommunicator aServerHandler) {
-		serverHandler = aServerHandler;
-	}
-	
-	public void errorMessage(String message) {
+	public String errorMessage(String message, String version) {
 		String errorMessage = ProtocolMessages.ERROR + ProtocolMessages.DELIMITER + 
-						serverHandler.getVersion() + ProtocolMessages.DELIMITER + message;
-		messageSender(errorMessage);
+						version + ProtocolMessages.DELIMITER + message;
+		return errorMessage;
 	}
 	
-	public void moveMessage(String move) {
+	/**
+	 * Message sent by the client only.
+	 */
+	
+	public String moveMessage(String move) {
 		
 		String moveMessage = ProtocolMessages.MOVE + ProtocolMessages.DELIMITER + move;
-		messageSender(moveMessage);
+		return moveMessage;
 	}
 	
-	public void messageSender(String message) {
-		serverHandler.sendToGame(message);
+	/**
+	 * Messages sent by the server only.
+	 */
+	public String startGameMessage(String board, char color) {
+		String startMessage = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
+				+ board + ProtocolMessages.DELIMITER + color;
+		return startMessage;
+	}
+	
+	public String startGameMessagePart1(String board, char color)  {
+		//Check whether player1 has disconnected by sending the start message in two parts (if
+		//disconnected, the second flush will give an IO exception)
+		String startMessage1part1 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER;
+		return startMessage1part1;
+	}
+	
+	public String startGameMessagePart2(String board, char color)  {
+		//Check whether player1 has disconnected by sending the start message in two parts (if
+		//disconnected, the second flush will give an IO exception)
+		String startMessage1part2 = board + ProtocolMessages.DELIMITER + color;
+		return startMessage1part2;
+	}
+	
+	public String doTurnMessage(String board, String opponentsMove) {
+		String turnMessage = ProtocolMessages.TURN + ProtocolMessages.DELIMITER + board + 
+				ProtocolMessages.DELIMITER + opponentsMove;
+		return turnMessage;
+	}
+	
+	public String resultMessage(boolean valid, String msg) {
+		String resultMessage = "";
+		
+		if (valid) {
+			resultMessage = ProtocolMessages.RESULT + ProtocolMessages.DELIMITER
+					+ ProtocolMessages.VALID + ProtocolMessages.DELIMITER + msg;
+		} else {
+			resultMessage = ProtocolMessages.RESULT + ProtocolMessages.DELIMITER
+					+ ProtocolMessages.INVALID + ProtocolMessages.DELIMITER + msg;
+		}
+		return resultMessage;
+	}
+	
+	public String endGameMessage(char reasonGameEnd, char winner, 
+									String scoreBlack, String scoreWhite) {
+		String endOfGameMessage = ProtocolMessages.END + ProtocolMessages.DELIMITER + reasonGameEnd
+				+ ProtocolMessages.DELIMITER + winner + ProtocolMessages.DELIMITER + 
+				scoreBlack + ProtocolMessages.DELIMITER + 
+				scoreWhite;
+		return endOfGameMessage;
+		
 	}
 }

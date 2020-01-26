@@ -8,6 +8,7 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
+import protocol.MessageGenerator;
 import protocol.ProtocolMessages;
 
 /**
@@ -33,6 +34,8 @@ public class GoClientHandler implements Runnable, Handler {
 	/** Communication version of this client-server combination). */
 	//TODO this is not implemented neatly yet (not set anywhere yet)
 	private String version;
+	
+	private MessageGenerator messageGenerator = new MessageGenerator();
 
 	/**
 	 * Constructs a new GoClientHandler. Opens the In- and OutputStreams.
@@ -64,14 +67,17 @@ public class GoClientHandler implements Runnable, Handler {
 	 */
 	public void run() {
 		String msg;
+		
 		try {
 			msg = in.readLine();
 			if (msg.charAt(0) == ProtocolMessages.HANDSHAKE) {
 				doHandshakeAndAddToGame(msg);
 				
 			} else {
-				errorMessage("The client did not comply with the protocol: a handshake message" +
-							"was expected, but " + msg + " was received.");
+				String errorMessage = messageGenerator.errorMessage("The client did not comply "
+						+ "with the protocol: a handshake message was expected, but " + msg + 
+						" was received.", version);
+				sendMessageToClient(errorMessage);
 			}
 			
 			if (thisClientsGame.hasTwoPlayers()) {
@@ -101,8 +107,10 @@ public class GoClientHandler implements Runnable, Handler {
 		
 		String command = commands[0];
 		if (command.length() != 1) {
-			errorMessage("Client did not keep to the handshake protocol. Excepted 'H' as first "
-					+ "component of the message, received " + command + ".");
+			String errorMessage = messageGenerator.errorMessage("Client did not keep to the "
+					+ "handshake protocol. Excepted 'H' as 1st component of the message, received " 
+					+ command + ".", version);
+			sendMessageToClient(errorMessage);
 		}
 		String requestedVersion = commands[1];
 		clientName = commands[2];
@@ -135,26 +143,7 @@ public class GoClientHandler implements Runnable, Handler {
 			e.printStackTrace();
 		}
 	}
-	
-	/**
-	 * Send error message to the client. 
-	 */
-	
-	public void errorMessage(String message) {
-		String errorMessage = ProtocolMessages.ERROR + ProtocolMessages.DELIMITER + 
-						version + ProtocolMessages.DELIMITER + message;
-		sendMessageToClient(errorMessage);
-	}
-	
-	/**
-	 * Send start game message to the client
-	 */
-	public void startGameMessage(String board, char color) {
-		String startMessage = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
-				+ board + ProtocolMessages.DELIMITER + color;
-		sendMessageToClient(startMessage);
-	}
-	
+
 	/**
 	 * Send start game message to the first connected client when the second player it to be added
 	 * to the same game to check whether the first player did not disconnect.
@@ -184,47 +173,6 @@ public class GoClientHandler implements Runnable, Handler {
 		out.write(startMessage1part2);
 		out.newLine();
 		out.flush();
-	}
-	
-	/**
-	 * Send doTurn message to the client.
-	 */
-	public String doTurnMessage(String board, String opponentsMove) {
-		String turnMessage = ProtocolMessages.TURN + ProtocolMessages.DELIMITER + board + 
-				ProtocolMessages.DELIMITER + opponentsMove;
-		sendMessageToClient(turnMessage);
-		
-		String reply = getReply();
-		return reply;
-	}
-	
-	/**
-	 * Send the result of player's move to the client.
-	 */
-	public void giveResultMessage(boolean valid, String msg) {
-		String resultMessage = "";
-		
-		if (valid) {
-			resultMessage = ProtocolMessages.RESULT + ProtocolMessages.DELIMITER
-					+ ProtocolMessages.VALID + ProtocolMessages.DELIMITER + msg;
-		} else {
-			resultMessage = ProtocolMessages.RESULT + ProtocolMessages.DELIMITER
-					+ ProtocolMessages.INVALID + ProtocolMessages.DELIMITER + msg;
-		}
-		sendMessageToClient(resultMessage);
-	}
-	
-	/**
-	 * Send an endGameMessage to the client.
-	 */
-	public void endGameMessage(char reasonGameEnd, char winner, 
-									String scoreBlack, String scoreWhite) {
-		String endOfGameMessage = ProtocolMessages.END + ProtocolMessages.DELIMITER + reasonGameEnd
-				+ ProtocolMessages.DELIMITER + winner + ProtocolMessages.DELIMITER + 
-				scoreBlack + ProtocolMessages.DELIMITER + 
-				scoreWhite;
-		sendMessageToClient(endOfGameMessage);
-		
 	}
 	
 	/**

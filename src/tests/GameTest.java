@@ -81,14 +81,16 @@ public class GameTest {
 		game2.setColorPlayer2(ProtocolMessages.BLACK);
 		
 		// --> set expectations
-		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
-		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null))
-																			.andReturn("M;0");
-		handler1.giveResultMessage(true, "BUUUUUUUUUUUUUUUUUUUUUUUU");
-		handler4.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'B');
-		EasyMock.expect(handler4.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null))
-																			.andReturn("M;24");
-		handler4.giveResultMessage(true, "UUUUUUUUUUUUUUUUUUUUUUUUB");
+		handler2.sendMessageToClient("G;UUUUUUUUUUUUUUUUUUUUUUUUU;W");
+		handler1.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;null");
+		EasyMock.expect(handler1.getReply()).andReturn("M;0");
+		handler1.sendMessageToClient("R;V;BUUUUUUUUUUUUUUUUUUUUUUUU");
+
+		handler4.sendMessageToClient("G;UUUUUUUUUUUUUUUUUUUUUUUUU;B");
+		handler4.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;null");
+		EasyMock.expect(handler4.getReply()).andReturn("M;0");
+		handler4.sendMessageToClient("R;V;BUUUUUUUUUUUUUUUUUUUUUUUU");
+		
 		EasyMock.replay(handler1, handler2, handler3, handler4);
 		
 		//act
@@ -114,12 +116,12 @@ public class GameTest {
 		game.setColorPlayer2(ProtocolMessages.WHITE);
 		
 		// --> set expectations
-		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
-		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
-																		andReturn("M;-1");
-		handler1.giveResultMessage(false, "Your move was invalid. You lose the game.");
-		handler1.endGameMessage('C', 'W', "0.0", "0.0");
-		handler2.endGameMessage('C', 'W', "0.0", "0.0");
+		handler2.sendMessageToClient("G;UUUUUUUUUUUUUUUUUUUUUUUUU;W");
+		handler1.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;null");
+		EasyMock.expect(handler1.getReply()).andReturn("M;-1");
+		handler1.sendMessageToClient("R;I;Your move was invalid. You lose the game.");
+		handler1.sendMessageToClient("E;C;W;0.0;0.0");
+		handler2.sendMessageToClient("E;C;W;0.0;0.0");
 		EasyMock.replay(handler1, handler2);
 		
 		//act
@@ -143,15 +145,15 @@ public class GameTest {
 		game.setColorPlayer2(ProtocolMessages.WHITE);
 		
 		// --> set expectations
-		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
-		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
-																		andReturn("M;3");
-		handler1.giveResultMessage(true, "UUUBUUUUUUUUUUUUUUUUUUUUU");
-		EasyMock.expect(handler2.doTurnMessage("UUUBUUUUUUUUUUUUUUUUUUUUU", "3")).
-																		andReturn("M;3");
-		handler2.giveResultMessage(false, "Your move was invalid. You lose the game.");
-		handler1.endGameMessage('C', 'B', "0.0", "0.0");
-		handler2.endGameMessage('C', 'B', "0.0", "0.0");
+		handler2.sendMessageToClient("G;UUUUUUUUUUUUUUUUUUUUUUUUU;W");
+		handler1.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;null");
+		EasyMock.expect(handler1.getReply()).andReturn("M;3");
+		handler1.sendMessageToClient("R;V;UUUBUUUUUUUUUUUUUUUUUUUUU");
+		handler2.sendMessageToClient("T;UUUBUUUUUUUUUUUUUUUUUUUUU;3");
+		EasyMock.expect(handler2.getReply()).andReturn("M;3");
+		handler2.sendMessageToClient("R;I;Your move was invalid. You lose the game.");
+		handler1.sendMessageToClient("E;C;B;0.0;0.0");
+		handler2.sendMessageToClient("E;C;B;0.0;0.0");
 		EasyMock.replay(handler1, handler2);
 		
 		//act
@@ -175,12 +177,12 @@ public class GameTest {
 		game.setColorPlayer2(ProtocolMessages.WHITE);
 		
 		// --> set expectations
-		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
-		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
-																		andReturn("M;g");
-		handler1.giveResultMessage(false, "Your move was invalid. You lose the game.");
-		handler1.endGameMessage('C', 'W', "0.0", "0.0");
-		handler2.endGameMessage('C', 'W', "0.0", "0.0");
+		handler2.sendMessageToClient("G;UUUUUUUUUUUUUUUUUUUUUUUUU;W");
+		handler1.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;null");
+		EasyMock.expect(handler1.getReply()).andReturn("M;g");
+		handler1.sendMessageToClient("R;I;Your move was invalid. You lose the game.");
+		handler1.sendMessageToClient("E;C;W;0.0;0.0");
+		handler2.sendMessageToClient("E;C;W;0.0;0.0");
 		EasyMock.replay(handler1, handler2);
 		
 		//act
@@ -206,16 +208,15 @@ public class GameTest {
 		game.setColorPlayer2(ProtocolMessages.WHITE);
 		
 		// --> set expectations
-		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
-		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
-																		andReturn("M;P");
-		handler1.giveResultMessage(true, "UUUUUUUUUUUUUUUUUUUUUUUUU");
-		EasyMock.expect(handler2.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", "P")).
-																		andReturn("M;P");
-		handler2.giveResultMessage(true, "UUUUUUUUUUUUUUUUUUUUUUUUU");	
-		//adjust this to the ko (W will win)
-		handler1.endGameMessage('F', 'B', "0.0", "0.0");
-		handler2.endGameMessage('F', 'B', "0.0", "0.0");
+		handler2.sendMessageToClient("G;UUUUUUUUUUUUUUUUUUUUUUUUU;W");
+		handler1.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;null");
+		EasyMock.expect(handler1.getReply()).andReturn("M;P");
+		handler1.sendMessageToClient("R;V;UUUUUUUUUUUUUUUUUUUUUUUUU");
+		handler2.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;P");
+		EasyMock.expect(handler2.getReply()).andReturn("M;P");
+		handler2.sendMessageToClient("R;V;UUUUUUUUUUUUUUUUUUUUUUUUU");
+		handler1.sendMessageToClient("E;F;B;0.0;0.0");
+		handler2.sendMessageToClient("E;F;B;0.0;0.0");
 		EasyMock.replay(handler1, handler2);
 	
 		//act
@@ -242,21 +243,21 @@ public class GameTest {
 		game.setColorPlayer2(ProtocolMessages.WHITE);
 		
 		// --> set expectations
-		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
-		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
-																		andReturn("M;P");
-		handler1.giveResultMessage(true, "UUUUUUUUUUUUUUUUUUUUUUUUU");
-		EasyMock.expect(handler2.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", "P")).
-																		andReturn("M;3");
-		handler2.giveResultMessage(true, "UUUWUUUUUUUUUUUUUUUUUUUUU");	
-		EasyMock.expect(handler1.doTurnMessage("UUUWUUUUUUUUUUUUUUUUUUUUU", "3")).
-																		andReturn("M;4");
-		handler1.giveResultMessage(true, "UUUWBUUUUUUUUUUUUUUUUUUUU");
-		EasyMock.expect(handler2.doTurnMessage("UUUWBUUUUUUUUUUUUUUUUUUUU", "4")).
-																		andReturn("M;P");
-		handler2.giveResultMessage(true, "UUUWBUUUUUUUUUUUUUUUUUUUU");	
+		handler2.sendMessageToClient("G;UUUUUUUUUUUUUUUUUUUUUUUUU;W");
+		handler1.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;null");
+		EasyMock.expect(handler1.getReply()).andReturn("M;P");
+		handler1.sendMessageToClient("R;V;UUUUUUUUUUUUUUUUUUUUUUUUU");
+		handler2.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;P");
+		EasyMock.expect(handler2.getReply()).andReturn("M;3");
+		handler2.sendMessageToClient("R;V;UUUWUUUUUUUUUUUUUUUUUUUUU");
+		handler1.sendMessageToClient("T;UUUWUUUUUUUUUUUUUUUUUUUUU;3");
+		EasyMock.expect(handler1.getReply()).andReturn("M;4");
+		handler1.sendMessageToClient("R;V;UUUWBUUUUUUUUUUUUUUUUUUUU");
+		handler2.sendMessageToClient("T;UUUWBUUUUUUUUUUUUUUUUUUUU;4");
+		EasyMock.expect(handler2.getReply()).andReturn("M;P");
+		handler2.sendMessageToClient("R;V;UUUWBUUUUUUUUUUUUUUUUUUUU");
 		EasyMock.replay(handler1, handler2);
-	
+		
 		//act
 		game.startGame(); //first doTurn called in this method)
 		game.doTurn();
@@ -286,14 +287,14 @@ public class GameTest {
 		game.setColorPlayer2(ProtocolMessages.WHITE);
 		
 		// --> set expectations
-		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
-		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
-																		andReturn("M;7");
-		handler1.giveResultMessage(true, "UUUUUUUBUUUUUUUUUUUUUUUUU");
-		EasyMock.expect(handler2.doTurnMessage("UUUUUUUBUUUUUUUUUUUUUUUUU", "7")).
-																		andReturn("Q");
-		handler1.endGameMessage('Q', 'B', "0.0", "0.0");
-		handler2.endGameMessage('Q', 'B', "0.0", "0.0");
+		handler2.sendMessageToClient("G;UUUUUUUUUUUUUUUUUUUUUUUUU;W");
+		handler1.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;null");
+		EasyMock.expect(handler1.getReply()).andReturn("M;7");
+		handler1.sendMessageToClient("R;V;UUUUUUUBUUUUUUUUUUUUUUUUU");
+		handler2.sendMessageToClient("T;UUUUUUUBUUUUUUUUUUUUUUUUU;7");
+		EasyMock.expect(handler2.getReply()).andReturn("Q");
+		handler1.sendMessageToClient("E;Q;B;0.0;0.0");
+		handler2.sendMessageToClient("E;Q;B;0.0;0.0");
 		EasyMock.replay(handler1, handler2);
 	
 		//act
@@ -330,36 +331,36 @@ public class GameTest {
 		game.setColorPlayer2(ProtocolMessages.WHITE);
 		
 		// --> set expectations
-		handler2.startGameMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", 'W');
-		EasyMock.expect(handler1.doTurnMessage("UUUUUUUUUUUUUUUUUUUUUUUUU", null)).
-																		andReturn("M;1");
-		handler1.giveResultMessage(true, "UBUUUUUUUUUUUUUUUUUUUUUUU");
-		EasyMock.expect(handler2.doTurnMessage("UBUUUUUUUUUUUUUUUUUUUUUUU", "1")).
-																		andReturn("M;10");
-		handler2.giveResultMessage(true, "UBUUUUUUUUWUUUUUUUUUUUUUU");
-		EasyMock.expect(handler1.doTurnMessage("UBUUUUUUUUWUUUUUUUUUUUUUU", "10")).
-																		andReturn("M;5");
-		handler1.giveResultMessage(true, "UBUUUBUUUUWUUUUUUUUUUUUUU");
-		EasyMock.expect(handler2.doTurnMessage("UBUUUBUUUUWUUUUUUUUUUUUUU", "5")).
-																		andReturn("M;12");
-		handler2.giveResultMessage(true, "UBUUUBUUUUWUWUUUUUUUUUUUU");
-		EasyMock.expect(handler1.doTurnMessage("UBUUUBUUUUWUWUUUUUUUUUUUU", "12")).
-																		andReturn("M;7");
-		handler1.giveResultMessage(true, "UBUUUBUBUUWUWUUUUUUUUUUUU");
-		EasyMock.expect(handler2.doTurnMessage("UBUUUBUBUUWUWUUUUUUUUUUUU", "7")).
-																		andReturn("M;16");
-		handler2.giveResultMessage(true, "UBUUUBUBUUWUWUUUWUUUUUUUU");
-		EasyMock.expect(handler1.doTurnMessage("UBUUUBUBUUWUWUUUWUUUUUUUU", "16")).
-																		andReturn("M;11");
-		handler1.giveResultMessage(true, "UBUUUBUBUUWBWUUUWUUUUUUUU");
-		EasyMock.expect(handler2.doTurnMessage("UBUUUBUBUUWBWUUUWUUUUUUUU", "11")).
-																		andReturn("M;6");
-		handler2.giveResultMessage(true, "UBUUUBWBUUWUWUUUWUUUUUUUU"); //B in 11 is removed
-		EasyMock.expect(handler1.doTurnMessage("UBUUUBWBUUWUWUUUWUUUUUUUU", "6")).
-																		andReturn("M;11");
-		handler1.giveResultMessage(false, "Your move was invalid. You lose the game.");
-		handler1.endGameMessage('C', 'W', "0.0", "0.0");
-		handler2.endGameMessage('C', 'W', "0.0", "0.0");
+		handler2.sendMessageToClient("G;UUUUUUUUUUUUUUUUUUUUUUUUU;W");
+		handler1.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;null");
+		EasyMock.expect(handler1.getReply()).andReturn("M;1");
+		handler1.sendMessageToClient("R;V;UBUUUUUUUUUUUUUUUUUUUUUUU");
+		handler2.sendMessageToClient("T;UBUUUUUUUUUUUUUUUUUUUUUUU;1");
+		EasyMock.expect(handler2.getReply()).andReturn("M;10");
+		handler2.sendMessageToClient("R;V;UBUUUUUUUUWUUUUUUUUUUUUUU");
+		handler1.sendMessageToClient("T;UBUUUUUUUUWUUUUUUUUUUUUUU;10");
+		EasyMock.expect(handler1.getReply()).andReturn("M;5");
+		handler1.sendMessageToClient("R;V;UBUUUBUUUUWUUUUUUUUUUUUUU");
+		handler2.sendMessageToClient("T;UBUUUBUUUUWUUUUUUUUUUUUUU;5");
+		EasyMock.expect(handler2.getReply()).andReturn("M;12");
+		handler2.sendMessageToClient("R;V;UBUUUBUUUUWUWUUUUUUUUUUUU");
+		handler1.sendMessageToClient("T;UBUUUBUUUUWUWUUUUUUUUUUUU;12");
+		EasyMock.expect(handler1.getReply()).andReturn("M;7");
+		handler1.sendMessageToClient("R;V;UBUUUBUBUUWUWUUUUUUUUUUUU");
+		handler2.sendMessageToClient("T;UBUUUBUBUUWUWUUUUUUUUUUUU;7");
+		EasyMock.expect(handler2.getReply()).andReturn("M;16");
+		handler2.sendMessageToClient("R;V;UBUUUBUBUUWUWUUUWUUUUUUUU");
+		handler1.sendMessageToClient("T;UBUUUBUBUUWUWUUUWUUUUUUUU;16");
+		EasyMock.expect(handler1.getReply()).andReturn("M;11");
+		handler1.sendMessageToClient("R;V;UBUUUBUBUUWBWUUUWUUUUUUUU");
+		handler2.sendMessageToClient("T;UBUUUBUBUUWBWUUUWUUUUUUUU;11");
+		EasyMock.expect(handler2.getReply()).andReturn("M;6");
+		handler2.sendMessageToClient("R;V;UBUUUBWBUUWUWUUUWUUUUUUUU");
+		handler1.sendMessageToClient("T;UBUUUBWBUUWUWUUUWUUUUUUUU;6");
+		EasyMock.expect(handler1.getReply()).andReturn("M;11");
+		handler1.sendMessageToClient("R;I;Your move was invalid. You lose the game.");
+		handler1.sendMessageToClient("E;C;W;0.0;0.0");
+		handler2.sendMessageToClient("E;C;W;0.0;0.0");
 		
 		EasyMock.replay(handler1, handler2);
 	

@@ -26,6 +26,7 @@ public class HumanClientGamePlayer {
 	private char color;
 	private int boardDimension;
 	private GoGUIIntegrator gogui;
+	private String version;
 	
 	/** The board and all previous boards, represented as strings. */
 	private String board;
@@ -46,7 +47,7 @@ public class HumanClientGamePlayer {
 	public HumanClientGamePlayer() {
 		clientTUI = new HumanClientTUI();
 		serverHandler = new HumanClientServerCommunicator(clientTUI);
-		messageGenerator = new MessageGenerator(serverHandler);
+		messageGenerator = new MessageGenerator();
 	}
 	
 	/**
@@ -76,6 +77,7 @@ public class HumanClientGamePlayer {
 		
 		/** Create a connection and do handshake. */
 		serverHandler.startServerConnection();
+		version = serverHandler.getVersion();
 		
 		/** 
 		 * Play the game
@@ -95,8 +97,9 @@ public class HumanClientGamePlayer {
 		
 		//First part of a server message should one character
 		if (components[0].length() != 1) {
-			messageGenerator.errorMessage("Protocol error: First component of the message " +
-						"is not a single character.");
+			String errorMessage = messageGenerator.errorMessage("Protocol error: "
+					+ "First component of the message is not a single character.", version);
+			serverHandler.sendToGame(errorMessage);
 		}
 		
 		char command = components[0].charAt(0);
@@ -129,8 +132,9 @@ public class HumanClientGamePlayer {
 				endGame(components);
 				break;
 			default:
-				messageGenerator.errorMessage("Protocol error: First component of the server " + 
-						"message (" + command + ") is not a known command.");
+				String errorMessage = messageGenerator.errorMessage("Protocol error: 1st component "
+					+ "of the server message (" + command + ") is not a known command.", version);
+				serverHandler.sendToGame(errorMessage);
 				break;
 		}
 	}
@@ -158,9 +162,10 @@ public class HumanClientGamePlayer {
 			String locationStatus = Character.toString(board.charAt(intersection));
 			if  (!(locationStatus.equals("W") || locationStatus.equals("B") 
 															|| locationStatus.equals("U"))) {
-				messageGenerator.errorMessage("ProtocolException in start game message: only " +
-						"'B', 'W' and 'U' expected in the string representation of the board, " +
-						"but " + board + " received.");
+				String errorMessage = messageGenerator.errorMessage("ProtocolException in start "
+					+ "game message: only 'B', 'W' and 'U' expected in the string representation "
+					+ "of the board, but " + board + " received.", version);
+				serverHandler.sendToGame(errorMessage);
 			}
 		}
 		
@@ -170,13 +175,17 @@ public class HumanClientGamePlayer {
 		 */
 		String assignedColor = components[2];
 		if (assignedColor.length() != 1) {
-			messageGenerator.errorMessage("ProtocolException in start game message: "
-					+ "'B' or 'W' expected as third command, but " + assignedColor + " received.");
+			String errorMessage = messageGenerator.errorMessage("ProtocolException in start game "
+				+ "message: 'B' or 'W' expected as third command, but " + assignedColor + 
+				" received.", version);
+			serverHandler.sendToGame(errorMessage);
 		}
 		color = assignedColor.charAt(0);
 		if (!(color == 'W' || color == 'B')) {
-			messageGenerator.errorMessage("ProtocolException in start game message: "
-					+ "'B' or 'W' expected as third command, but " + assignedColor + " received.");
+			String errorMessage = messageGenerator.errorMessage("ProtocolException in start game "
+				+ "message: 'B' or 'W' expected as third command, but " + assignedColor 
+				+ " received.", version);
+			serverHandler.sendToGame(errorMessage);
 		}
 		
 		/**
@@ -217,8 +226,10 @@ public class HumanClientGamePlayer {
 		//Get all components of the message
 		//TODO could check whether components are correct (see eg startGame())
 		if (components.length < 3) {
-			messageGenerator.errorMessage("Server response does not comply with the protocol! It " +
-					"did not send the board and the opponent's move as part of the turn message.");
+			String errorMessage = messageGenerator.errorMessage("Server response does not comply "
+				+ "with the protocol! It did not send the board and the opponent's move as part "
+				+ "of the turn message.", version);
+			serverHandler.sendToGame(errorMessage);
 		}
 		board = components[1];
 		String opponentsMove = components[2];
@@ -302,8 +313,10 @@ public class HumanClientGamePlayer {
 		
 		//check whether the other components are included and if so, use them
 		if (components.length < 2) {
-			messageGenerator.errorMessage("Server response does not comply with the protocol " +
-					"in the result message. It did not contain the validness of the move.");
+			String errorMessage = messageGenerator.errorMessage("Server response does not "
+				+ "comply with the protocol in the result message. It did not contain the "
+				+ "validness of the move.", version);
+			serverHandler.sendToGame(errorMessage);
 		}
 		String validity = components[1];
 		//commands[2] can be a board (if valid result), a message or nothing (if invalid result)
@@ -340,9 +353,10 @@ public class HumanClientGamePlayer {
 	public void endGame(String[] components) {
 		
 		if (components.length < 5) {
-			messageGenerator.errorMessage("Server response does not comply with " +
-						"the protocol! It did not contain the necessary five components " +
-						"in the endGame message.");
+			String errorMessage = messageGenerator.errorMessage("Server response does not comply " +
+						"with the protocol! It did not contain the necessary five components " +
+						"in the endGame message.", version);
+			serverHandler.sendToGame(errorMessage);
 		}
 		
 		String reasonEnd = components[1];

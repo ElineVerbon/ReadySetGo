@@ -36,7 +36,6 @@ public class StupidComputerGamePlayer {
 	boolean gameEnded;
 	boolean doublePass;
 	boolean misunderstood;
-	boolean firstGame;
 
 	/**
 	 * Constructs a new GoClient. Initializes the TUI.
@@ -98,8 +97,6 @@ public class StupidComputerGamePlayer {
 			}
 			handleServerMessage(message);
 		}
-		
-		firstGame = false;
 	}	
 	
 	/**

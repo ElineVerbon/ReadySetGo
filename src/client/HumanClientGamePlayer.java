@@ -40,7 +40,6 @@ public class HumanClientGamePlayer {
 	boolean gameEnded;
 	boolean doublePass;
 	boolean misunderstood;
-	boolean firstGame;
 
 	/**
 	 * Constructs a new GoClient. Initializes the TUI.
@@ -101,8 +100,6 @@ public class HumanClientGamePlayer {
 			}
 			handleServerMessage(message);
 		}
-		
-		firstGame = false;
 	}	
 	
 	/**
@@ -206,7 +203,7 @@ public class HumanClientGamePlayer {
 		}
 		
 		/**
-		 * Send start message to client containing the assigned color.
+		 * Show start message to client containing the assigned color.
 		 */
 		String clientsColor = "";
 		if (color == 'W') {

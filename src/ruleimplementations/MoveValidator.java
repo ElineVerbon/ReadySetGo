@@ -14,7 +14,7 @@ import protocol.ProtocolMessages;
 
 public class MoveValidator {
 
-	BoardUpdater moveResultGenerator = new BoardUpdater();
+	BoardUpdater boardUpdater = new BoardUpdater();
 	String board;
 	
 	public boolean processMove(String move, int boardDimension, String theBoard, 
@@ -32,7 +32,7 @@ public class MoveValidator {
 		//update the board
 		int location = Integer.parseInt(move);
 		board = theBoard.substring(0, location) + color + theBoard.substring(location + 1);
-		board = moveResultGenerator.determineNewBoard(board, color);
+		board = boardUpdater.determineNewBoard(board, color);
 		
 		//check validity of the move (= does not result in repetition of the board)
 		validity = checkValidityAfterRemoving(board, prevBoards);

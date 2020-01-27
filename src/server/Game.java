@@ -1,5 +1,6 @@
 package server;
 
+import java.net.SocketTimeoutException;
 import java.util.*;
 
 import protocol.MessageGenerator;
@@ -136,6 +137,7 @@ public class Game {
 		startGame();
 		while (!gameEnded) {
 			doTurn();
+			processReply();
 		}
 		endGame();
 	}
@@ -158,23 +160,18 @@ public class Game {
 		if (colorPlayer1 == ProtocolMessages.BLACK) {
 			firstPlayersTurn = true;
 			doTurn();
+			processReply();
 		} else {
 			firstPlayersTurn = false;
 			doTurn();
+			processReply();
 		}
 	}
 	
 	/**
-	 * Send message to a player to tell him/her that its their turn & receive reply.
-	 * Check whether first component of the reply is one character & is not 'Q' (for quit)
-	 * If this is the case (protocol is kept), send the move (second component) to 
-	 * processMove()
+	 * Send message to a player to tell him/her that its their turn.
 	 */
 	public void doTurn() {
-
-		String reply;
-		String move = "";
-		
 		if (firstPlayersTurn) {
 			currentPlayersHandler = goClientHandlerPlayer1;
 		} else {
@@ -183,7 +180,30 @@ public class Game {
 		
 		String doTurnMessage = messageGenerator.doTurnMessage(board, opponentsMove);
 		currentPlayersHandler.sendMessageToClient(doTurnMessage);
-		reply = currentPlayersHandler.getReply();
+	}
+	
+	/**
+	 * Only process a reply if a player responded within 1 minute (no SocketTimeoutException).
+	 * If so: check whether first component of a player's reply is one character & is not 'Q' 
+	 * (for quit). If this is the case (protocol is kept), send the move (second component) to 
+	 * processMove()
+	 */
+	public void processReply() {
+		String reply = "";
+		String move = "";
+		
+		// End game if player took more than 1 minute to respond.
+		try {
+			reply = currentPlayersHandler.getReply();
+		} catch (SocketTimeoutException e) {
+			boolean validity = false;
+			String resultMessage = messageGenerator.resultMessage(validity, 
+										"You took more than 1 minute to decide on a move.");
+			currentPlayersHandler.sendMessageToClient(resultMessage);
+			gameEnded = true;
+			reasonGameEnd = ProtocolMessages.CHEAT;
+			return;
+		}
 		
 		// End game if client disconnected. 
 		if (reply == null) {
@@ -192,7 +212,7 @@ public class Game {
 			return;
 		}
 		
-		// Check 1st component of the move message received from the player. 
+		// Check 1st component of the move message received from the player is of length 1. 
 		String[] components = reply.split(ProtocolMessages.DELIMITER);
 		if (components[0].length() != 1) {
 			//TODO not sure what to do after sending an error message. doTurn() again?
@@ -203,6 +223,7 @@ public class Game {
 			return;
 		}
 		
+		// Check which kind of message is received (indicated by first component of the message).
 		char command = components[0].charAt(0);
 		switch (command) {
 			case ProtocolMessages.QUIT:
@@ -211,28 +232,31 @@ public class Game {
 				return;
 			case ProtocolMessages.MOVE:
 				move = components[1];
+				processMove(move);
+		
+				if (!gameEnded) {
+					if (firstPlayersTurn) {
+						firstPlayersTurn = false;
+					} else {
+						firstPlayersTurn = true;
+					}
+				}
 				break;
 			case ProtocolMessages.ERROR:
-				//TODO what to do if the player did not understand a message? End game?
+				boolean validity = false;
+				String resultMessage = messageGenerator.resultMessage(validity, 
+											"You did not understand our message, we have to stop.");
+				currentPlayersHandler.sendMessageToClient(resultMessage);
+				gameEnded = true;
+				reasonGameEnd = ProtocolMessages.CHEAT;
+				return;
 			default:
-				//TODO not sure what to do after sending an error message. doTurn() again?
 				String errorMessage = messageGenerator.errorMessage("Player did not keep to the "
 					+ "protocol: '" + ProtocolMessages.QUIT + "', '" + ProtocolMessages.ERROR 
 					+ "' or '" + ProtocolMessages.MOVE + "' expected as first part of the message, "
 					+ "but '" +	command + "' received.", version);
 				currentPlayersHandler.sendMessageToClient(errorMessage);
 				return;
-		}
-		
-		processMove(move);
-		
-		/** Turn is over and processed: set turn to other player if game has not ended. */
-		if (!gameEnded) {
-			if (firstPlayersTurn) {
-				firstPlayersTurn = false;
-			} else {
-				firstPlayersTurn = true;
-			}
 		}
 	}
 	

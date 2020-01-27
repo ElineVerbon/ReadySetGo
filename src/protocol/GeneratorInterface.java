@@ -19,7 +19,7 @@ public interface GeneratorInterface {
 	 */
 	public String startGameMessage(String board, char color);
 	
-	public String startGameMessagePart1(String board, char color);
+	public String startGameMessagePart1();
 	
 	public String startGameMessagePart2(String board, char color);
 	

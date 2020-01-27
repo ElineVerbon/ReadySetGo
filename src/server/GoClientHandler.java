@@ -11,6 +11,8 @@ import java.util.concurrent.TimeUnit;
 import protocol.MessageGenerator;
 import protocol.ProtocolMessages;
 
+import java.net.SocketTimeoutException;
+
 /**
  * The GoClientHandler handles all communication between the server and the client.
  */
@@ -154,8 +156,9 @@ public class GoClientHandler implements Runnable, Handler {
 	public void startGameMessageInTwoParts(String board, char color) throws IOException {
 		//Check whether player1 has disconnected by sending the start message in two parts (if
 		//disconnected, the second flush will give an IO exception)
-		String startMessage1part1 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER;
-		String startMessage1part2 = board + ProtocolMessages.DELIMITER + color;
+		String startMessage1part1 = messageGenerator.startGameMessagePart1();
+		String startMessage1part2 = messageGenerator.startGameMessagePart2(board, color);
+
 		try {
 			out.write(startMessage1part1);
 			out.flush();
@@ -190,12 +193,17 @@ public class GoClientHandler implements Runnable, Handler {
 	}
 	
 	/**
-	 * Get a message from client.
+	 * Get a message from client. Client has 1 minute to reply
 	 */
-	public String getReply() {
+	public String getReply() throws SocketTimeoutException {
 		String reply = "";
 		try {
-			reply = in.readLine();
+			sock.setSoTimeout(6000000); //TODO put back to 60000
+			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
+																	sock.getInputStream()));
+			reply = bufferedReader.readLine();
+		} catch (SocketTimeoutException e) {
+			throw e;
 		} catch (IOException e) {
 			//TODO auto-generated
 			e.printStackTrace();

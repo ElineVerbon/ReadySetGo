@@ -141,27 +141,33 @@ public class BoardUpdater {
 	 * @return
 	 */
 	public void checkAllNeighbors(int numberInStringRepresentation, char currentlyCheckedColor) {
+		boolean neighborOnBoard;
+		
 		//add this stone (= a stone of the currently checked color) to the list of stones of this 
 		//group and the list of stones of this color that were checked this turn (= after last move)
 		surroundedStones.add(numberInStringRepresentation);
 		checkedStonesThisColor.add(numberInStringRepresentation);
 		
 		//Add all surrounding locations that fall within the board to a to-be-checked list.
-		int locationToTheLeft = numberInStringRepresentation - 1;
-		int locationToTheRight = numberInStringRepresentation + 1;
-		int locationAbove = numberInStringRepresentation - boardDimension;
-		int locationBelow = numberInStringRepresentation + boardDimension;
 		List<Integer> locationsToCheck = new ArrayList<Integer>();
-		if (locationToTheLeft >= 0 && locationToTheLeft < boardDimension * boardDimension) {
+		int locationToTheLeft = numberInStringRepresentation - 1;
+		neighborOnBoard = checkNextLocationBoard(locationToTheLeft, numberInStringRepresentation);
+		if (neighborOnBoard) {
 			locationsToCheck.add(locationToTheLeft);
 		}
-		if (locationToTheRight >= 0 && locationToTheRight < boardDimension * boardDimension) {
+		int locationToTheRight = numberInStringRepresentation + 1;
+		neighborOnBoard = checkNextLocationBoard(locationToTheRight, numberInStringRepresentation);
+		if (neighborOnBoard) {
 			locationsToCheck.add(locationToTheRight);
 		}
-		if (locationAbove >= 0 && locationAbove < boardDimension * boardDimension) {
+		int locationAbove = numberInStringRepresentation - boardDimension;
+		neighborOnBoard = checkNextLocationBoard(locationAbove, numberInStringRepresentation);
+		if (neighborOnBoard) {
 			locationsToCheck.add(locationAbove);
 		}
-		if (locationBelow >= 0 && locationBelow < boardDimension * boardDimension) {
+		int locationBelow = numberInStringRepresentation + boardDimension;
+		neighborOnBoard = checkNextLocationBoard(locationBelow, numberInStringRepresentation);
+		if (neighborOnBoard) {
 			locationsToCheck.add(locationBelow);
 		}
 		
@@ -171,6 +177,36 @@ public class BoardUpdater {
 				checkColor(location, currentlyCheckedColor);
 			}
 		}
+	}
+	
+	public boolean checkNextLocationBoard(int nextLocation, int previousLocation) {
+		boolean onBoard = false;
+		
+		// Location is below 0 or above the last intersection
+		if (nextLocation < 0 || nextLocation >= boardDimension * boardDimension) {
+			return onBoard;
+		}
+		
+		int locationNextX = nextLocation % boardDimension;
+		int locationNextY = nextLocation / boardDimension;
+		
+		int locationPreviousX = previousLocation % boardDimension;
+		int locationPreviousY = previousLocation / boardDimension;
+		
+		// x can be 1 off and y the same, or y can be 1 off and x the same for it to be a neighbor
+		if (locationPreviousX == locationNextX) {
+			if (Math.abs(locationPreviousY - locationNextY) == 1) {
+				onBoard = true;
+				return onBoard;
+			}
+		} else if (locationPreviousY == locationNextY) {
+			if (Math.abs(locationPreviousX - locationNextX) == 1) {
+				onBoard = true;
+				return onBoard;
+			}
+		}
+		
+		return onBoard;
 	}
 	
 	/**

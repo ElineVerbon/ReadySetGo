@@ -1,6 +1,7 @@
 package client;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import com.nedap.go.gui.GoGUIIntegrator;
 
@@ -30,7 +31,7 @@ public class HumanClientGamePlayer {
 	
 	/** The board and all previous boards, represented as strings. */
 	private String board;
-	private List<String> prevBoards = new ArrayList<String>();
+	private List<String> prevBoards;
 	
 	/** Set classes to check move results. */
 	private MoveValidator moveValidator = new MoveValidator();
@@ -39,6 +40,7 @@ public class HumanClientGamePlayer {
 	boolean gameEnded;
 	boolean doublePass;
 	boolean misunderstood;
+	boolean firstGame;
 
 	/**
 	 * Constructs a new GoClient. Initializes the TUI.
@@ -78,6 +80,7 @@ public class HumanClientGamePlayer {
 		gameEnded = false;
 		doublePass = false;
 		misunderstood = false;
+		prevBoards = new ArrayList<String>();
 		
 		/** Create a connection and do handshake. */
 		serverHandler.startServerConnection();
@@ -96,6 +99,8 @@ public class HumanClientGamePlayer {
 			}
 			handleServerMessage(message);
 		}
+		
+		firstGame = false;
 	}	
 	
 	/**
@@ -293,7 +298,6 @@ public class HumanClientGamePlayer {
 				return;
 			} else if (move.equals(Character.toString(ProtocolMessages.QUIT))) {
 				serverHandler.sendToGame(Character.toString(ProtocolMessages.QUIT));
-//				gameEnded = true;
 				return;
 			}
 			
@@ -426,6 +430,14 @@ public class HumanClientGamePlayer {
 	public void showCurrentBoardState(String theBoard) {
 		/** Show the current board to the player. */
 		gogui.clearBoard();
+		
+		//Need to wait, otherwise it doesn't always fully clear the board before filling it again
+		try {
+			TimeUnit.SECONDS.sleep(1);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		
 		for (int c = 0; c < boardDimension * boardDimension; c++) {
 			char thisLocation = theBoard.charAt(c);
 			if (thisLocation == ProtocolMessages.WHITE) {

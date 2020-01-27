@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.*;
+import java.net.SocketTimeoutException;
 
 import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterAll;
@@ -42,10 +43,11 @@ public class GameTest {
 	 * 
 	 * Test valid first turns (use edge cases 0 and 24). (Cannot test it without 
 	 * the first turn: then I get an invalid move message that is not expected.)
+	 * @throws SocketTimeoutException 
 	 */
 	
 	@Test
-	void startGameTest() {
+	void startGameTest() throws SocketTimeoutException {
 		
 		//arrange
 		Game game1 = new Game(1, "1.0");
@@ -85,10 +87,11 @@ public class GameTest {
 		EasyMock.verify(handler1, handler2, handler3, handler4);
 	}
 	
-	/** Test outside-of-board invalid first turn. */
+	/** Test outside-of-board invalid first turn. 
+	 * @throws SocketTimeoutException */
 	
 	@Test
-	void outsideOfBoardInvalidTurnTest() {
+	void outsideOfBoardInvalidTurnTest() throws SocketTimeoutException {
 		
 		//arrange
 		Game game = new Game(1, "1.0");
@@ -115,10 +118,11 @@ public class GameTest {
 		EasyMock.verify(handler1, handler2);
 	}
 	
-	/** Test occupied-location invalid turn. */
+	/** Test occupied-location invalid turn. 
+	 * @throws SocketTimeoutException */
 	
 	@Test
-	void occupiedLocationInvalidTurnTest() {
+	void occupiedLocationInvalidTurnTest() throws SocketTimeoutException {
 		
 		//arrange
 		Game game = new Game(1, "1.0");
@@ -148,10 +152,11 @@ public class GameTest {
 		EasyMock.verify(handler1, handler2);
 	}
 	
-	/** Test non-integer invalid turn. */
+	/** Test non-integer invalid turn. 
+	 * @throws SocketTimeoutException */
 	
 	@Test
-	void nonIntegerInvalidTurnTest() {
+	void nonIntegerInvalidTurnTest() throws SocketTimeoutException {
 		
 		//arrange
 		Game game = new Game(1, "1.0");
@@ -180,10 +185,11 @@ public class GameTest {
 	
 	/**
 	 * Test whether two passes in a row lead to an end of game.
+	 * @throws SocketTimeoutException 
 	 */
 	
 	@Test
-	void twoPassesTest() {
+	void twoPassesTest() throws SocketTimeoutException {
 		
 		//arrange
 		Game game = new Game(1, "1.0");
@@ -215,10 +221,11 @@ public class GameTest {
 	
 	/**
 	 * Test whether two passes not in a row do not lead to an end of game.
+	 * @throws SocketTimeoutException 
 	 */
 	
 	@Test
-	void twoNonConsecutivePassesTest() {
+	void twoNonConsecutivePassesTest() throws SocketTimeoutException {
 		
 		//arrange
 		Game game = new Game(1, "1.0");
@@ -259,10 +266,11 @@ public class GameTest {
 
 	/**
 	 * Test whether quitting leads to an end of game.
+	 * @throws SocketTimeoutException 
 	 */
 	
 	@Test
-	void quitOnTurnTest() {
+	void quitOnTurnTest() throws SocketTimeoutException {
 		
 		//arrange
 		Game game = new Game(1, "1.0");
@@ -306,10 +314,11 @@ public class GameTest {
 	 * 
 	 * End result: B has one captured area of size 1 (location 0) + 3 stones - 0.5 komi
 	 * W has one captured area of size 1 (11) + 4 stones
+	 * @throws SocketTimeoutException 
 	 */
 	
 	@Test
-	void koRuleTest() {
+	void koRuleTest() throws SocketTimeoutException {
 		
 		//arrange
 		Game game = new Game(1, "1.0");
@@ -557,6 +566,20 @@ public class GameTest {
 		 */
 		oldBoard = "BWWBBUBWBBWBBWWWWBUBWBBUUUBUWWUUUWBB";
 		expectedNewBoard = "BUUBBUBUBBUBBUUUUBUBUBBUUUBUWWUUUWUU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertTrue(newBoard.equals(expectedNewBoard));
+		
+		/** 
+		 * Remove a strange form + an extra corner of the other color. 
+		 * 
+		 * BUUU
+		 * WBUU
+		 * BUUU
+		 * WUUU		
+		 * 
+		 */
+		oldBoard = "BUUUWBUUBUUUWUUU";
+		expectedNewBoard = "BUUUUBUUBUUUWUUU";
 		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
 		assertTrue(newBoard.equals(expectedNewBoard));
 	}

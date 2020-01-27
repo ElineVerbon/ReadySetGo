@@ -297,7 +297,7 @@ public class GoServer implements Runnable {
 		if (game.getColorPlayer1() == ProtocolMessages.BLACK) {
 			game.setColorPlayer2(ProtocolMessages.WHITE);
 		} else {
-			game.setColorPlayer2(ProtocolMessages.WHITE);
+			game.setColorPlayer2(ProtocolMessages.BLACK);
 		}
 		game.setTwoPlayers(true);
 	}

@@ -31,7 +31,7 @@ public class MessageGenerator implements GeneratorInterface {
 		return startMessage;
 	}
 	
-	public String startGameMessagePart1(String board, char color)  {
+	public String startGameMessagePart1()  {
 		//Check whether player1 has disconnected by sending the start message in two parts (if
 		//disconnected, the second flush will give an IO exception)
 		String startMessage1part1 = ProtocolMessages.GAME + ProtocolMessages.DELIMITER;

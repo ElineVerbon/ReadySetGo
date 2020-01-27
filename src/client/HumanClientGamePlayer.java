@@ -78,6 +78,9 @@ public class HumanClientGamePlayer {
 		/** Create a connection and do handshake. */
 		serverHandler.startServerConnection();
 		version = serverHandler.getVersion();
+		if (version == null) { 
+			return; //server has disconnected
+		} 
 		
 		/** 
 		 * Play the game
@@ -85,7 +88,7 @@ public class HumanClientGamePlayer {
 		while (!gameEnded) {
 			String message = serverHandler.readLineFromServer();
 			if (message == null) {
-				return;
+				return; //server has disconnected
 			}
 			handleServerMessage(message);
 		}

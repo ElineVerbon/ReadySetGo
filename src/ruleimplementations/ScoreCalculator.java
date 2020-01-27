@@ -53,7 +53,7 @@ public class ScoreCalculator {
 	}
 	
 	/**
-	 * Determines the empty area surrounded by the player.
+	 * Looks for empty areas surrounded by one player.
 	 */
 	public void calculateEmptyArea() {
 		checkedUnoccupiedPlaces.clear();
@@ -139,6 +139,12 @@ public class ScoreCalculator {
 		}
 	}
 	
+	/**
+	 * Checks whether a location is located on the board adjacent to the previous location.
+	 * @param nextLocation
+	 * @param previousLocation
+	 * @return onBoard, a boolean that is true when the location is a neighbor on the board
+	 */
 	public boolean checkNextLocationBoard(int nextLocation, int previousLocation) {
 		boolean onBoard = false;
 		

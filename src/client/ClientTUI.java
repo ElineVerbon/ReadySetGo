@@ -13,10 +13,10 @@ import protocol.ProtocolMessages;
  *
  */
 
-public class HumanClientTUI {
+public class ClientTUI {
 	
 	/** Constructor, connected to the client that called the constructor. */
-	public HumanClientTUI() {
+	public ClientTUI() {
 	}
 	
 	/**

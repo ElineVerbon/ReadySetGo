@@ -1,23 +1,19 @@
 package client;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.nedap.go.gui.GoGUIIntegrator;
 
-import protocol.*;
+import protocol.MessageGenerator;
+import protocol.ProtocolMessages;
 import ruleimplementations.MoveValidator;
 
-/**
- * Class that allows someone play GO by using the console to input moves
- * and checking the status of the game on a GUI. 
- *
- * User needs to now the IP address of the server and the port on which the server
- * is listening to start the game.
- */
-
-public class HumanClientGamePlayer {
+public class StupidComputerGamePlayer {
 	
+	private int nextComputerPlayerNumber = 0;
+	private int computerPlayerNumber;
 	//variables used to start a connection with the server
 	private ClientTUI clientTUI;
 	private ServerHandler serverHandler;
@@ -46,10 +42,12 @@ public class HumanClientGamePlayer {
 	 * Constructs a new GoClient. Initializes the TUI.
 	 * Does not initialize the GUI, as board size has to be known.
 	 */
-	public HumanClientGamePlayer() {
+	public StupidComputerGamePlayer() {
 		clientTUI = new ClientTUI();
 		serverHandler = new ServerHandler(clientTUI);
 		messageGenerator = new MessageGenerator();
+		computerPlayerNumber = nextComputerPlayerNumber;
+		nextComputerPlayerNumber++;
 	}
 	
 	/**
@@ -58,7 +56,7 @@ public class HumanClientGamePlayer {
 	 * @param args 
 	 */
 	public static void main(String[] args) {
-		(new HumanClientGamePlayer()).start();
+		(new StupidComputerGamePlayer()).start();
 	}
 	
 	/**
@@ -84,8 +82,7 @@ public class HumanClientGamePlayer {
 		
 		/** Create a connection and do handshake. */
 		serverHandler.createConnectionWithUserInput();
-		serverHandler.doHandshakeWithUserInput();
-		
+		serverHandler.doHandshake("StupidComputer" + computerPlayerNumber, ProtocolMessages.BLACK);
 		version = serverHandler.getVersion();
 		if (version == null) { 
 			return; //server has disconnected
@@ -206,19 +203,6 @@ public class HumanClientGamePlayer {
 		}
 		
 		/**
-		 * Send start message to client containing the assigned color.
-		 */
-		String clientsColor = "";
-		if (color == 'W') {
-			clientsColor = "white";
-		} else {
-			clientsColor = "black";
-		}
-		clientTUI.showMessage("\nThe game has started! "
-				+ "The board is " + boardDimension + " by " + boardDimension + ". "
-				+ "\nYour color is " + clientsColor + ". Good luck!");
-		
-		/**
 		 * Start the GUI.
 		 */
 		if (gogui == null) {
@@ -239,8 +223,6 @@ public class HumanClientGamePlayer {
 	 */
 	public void doMove(String[] components) {
 		
-		//set game state variable for printing correct message after submitting move
-		boolean opponentPassed = false;
 		
 		//Get all components of the message
 		//TODO could check whether components are correct (see eg startGame())
@@ -251,26 +233,6 @@ public class HumanClientGamePlayer {
 			serverHandler.sendToGame(errorMessage);
 		}
 		board = components[1];
-		String opponentsMove = components[2];
-		
-		//TODO add the score here!
-		/** 
-		 * Let the player know its his/her turn and what the opponent did. 
-		 */
-		if (opponentsMove.equals("null")) {
-			clientTUI.showMessage("\nYou get the first move! " + 
-					"Please check the GUI for the board size.");
-		} else {
-			if (opponentsMove.equals(Character.toString(ProtocolMessages.PASS))) {
-				opponentPassed = true;
-				clientTUI.showMessage("\nThe other player passed. " + 
-						"If you pass as well, the game is over.");
-			} else {
-				int location = Integer.parseInt(opponentsMove);
-				clientTUI.showMessage("\nThe other player placed a stone in location " + location +
-					". Please check the GUI for the current board state.");
-			}
-		}
 		
 		/** 
 		 * Show the current board state in the GUI and add board to previous boards. 
@@ -279,37 +241,28 @@ public class HumanClientGamePlayer {
 		prevBoards.add(board);
 		
 		/** 
-		 * Keep asking the client for a move, until a valid move is given. 
+		 * Go through the board representation of the string and find an unoccupied spot.
+		 * If no uno. spots left, pass. 
 		 */
 		String move = "";
 		boolean validInput = false;
 		String moveMessage = "";
+		boolean valid;
 		
 		while (!validInput) {
-			boolean valid;
-			
-			move = clientTUI.getMove();
-			
-			//If the move is a pass or quit, send appropriate message and break out of loop.
-			if (move.equals(Character.toString(ProtocolMessages.PASS))) {
-				if (opponentPassed == true) {
-					doublePass = true;
+			for (char c = 0; c < board.length(); c++) {
+				if (board.charAt(c) == ProtocolMessages.UNOCCUPIED) {
+					move = Character.toString(c);
 				}
-				moveMessage = messageGenerator.moveMessage(move);
-				serverHandler.sendToGame(moveMessage);
-				return;
-			} else if (move.equals(Character.toString(ProtocolMessages.QUIT))) {
-				serverHandler.sendToGame(Character.toString(ProtocolMessages.QUIT));
-				return;
+				
+				valid = moveValidator.processMove(move, boardDimension, board, color, prevBoards);
+				if  (valid) {
+					validInput = true;
+					break;
+				} 
 			}
-			
-			valid = moveValidator.processMove(move, boardDimension, board, color, prevBoards);
-			if  (!valid) {
-				clientTUI.showMessage("Your move was invalid. "
-							+ "Please try again.");
-				continue; //continue from start of while loop (ask for new input)
-			} 
-			validInput = true;
+			//if you get here, not valid moves found
+			move = Character.toString(ProtocolMessages.PASS);
 		}
 		/** Send move to the game. */
 		moveMessage = messageGenerator.moveMessage(move);
@@ -344,20 +297,13 @@ public class HumanClientGamePlayer {
 		String boardOrMessage = (components.length > 1) ? components[2] : null;
 		
 		/**
-		 * Communicate the result to the client
+		 * Show the result on the GUI
 		 */
 		if (Character.toString(ProtocolMessages.VALID).equals(validity)) {
-			prevBoards.add(boardOrMessage);
-			clientTUI.showMessage("Your move was valid. Check GUI for what the board looks like.");
 			showCurrentBoardState(boardOrMessage);
-			if (!doublePass) {
-				clientTUI.showMessage("It's now the other player's turn. Please wait.");
-			}
 		} else {
+			//should nver get here
 			clientTUI.showMessage("Your move was invalid. You lose the game.");
-			if (boardOrMessage != null) {
-				clientTUI.showMessage("Message from the server: " + boardOrMessage);
-			}
 		}
 	}
 	
@@ -451,4 +397,3 @@ public class HumanClientGamePlayer {
 		}
 	}
 }
-

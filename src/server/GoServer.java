@@ -191,7 +191,6 @@ public class GoServer implements Runnable {
 				break;
 			}
 		}
-		
 		String message = "Welcome " + nameClient + " to the GO server! " +
 				"Communication will proceed via version " + usedVersion + ".";
 		

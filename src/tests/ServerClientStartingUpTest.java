@@ -33,12 +33,12 @@ public class ServerClientStartingUpTest {
 	void testServer() 
 			throws ExitProgram, ServerUnavailableException, ProtocolException, IOException {
 		
-		HumanClientTUI humanClientTUI1 = new HumanClientTUI();
-		HumanClientServerCommunicator humanClientServerCommunicator1 = 
-				 					new HumanClientServerCommunicator(humanClientTUI1);
-		HumanClientTUI humanClientTUI2 = new HumanClientTUI();
-		HumanClientServerCommunicator humanClientServerCommunicator2 = 
-				 					new HumanClientServerCommunicator(humanClientTUI2);
+		ClientTUI humanClientTUI1 = new ClientTUI();
+		ServerHandler humanClientServerCommunicator1 = 
+				 					new ServerHandler(humanClientTUI1);
+		ClientTUI humanClientTUI2 = new ClientTUI();
+		ServerHandler humanClientServerCommunicator2 = 
+				 					new ServerHandler(humanClientTUI2);
 		
 		/** Preparation: start server with local host and port 8888 and let it listen for clients.*/
 		GoServer testServer = new GoServer();
@@ -95,15 +95,15 @@ public class ServerClientStartingUpTest {
 	@Test
 	void testDisconnectBeforeStartGame() 
 			throws ExitProgram, ServerUnavailableException, ProtocolException, IOException {
-		HumanClientTUI humanClientTUI3 = new HumanClientTUI();
-		HumanClientServerCommunicator humanClientServerCommunicator3 = 
-				 					new HumanClientServerCommunicator(humanClientTUI3);
-		HumanClientTUI humanClientTUI4 = new HumanClientTUI();
-		HumanClientServerCommunicator humanClientServerCommunicator4 = 
-				 					new HumanClientServerCommunicator(humanClientTUI4);
-		HumanClientTUI humanClientTUI5 = new HumanClientTUI();
-		HumanClientServerCommunicator humanClientServerCommunicator5 = 
-				 					new HumanClientServerCommunicator(humanClientTUI5);
+		ClientTUI humanClientTUI3 = new ClientTUI();
+		ServerHandler humanClientServerCommunicator3 = 
+				 					new ServerHandler(humanClientTUI3);
+		ClientTUI humanClientTUI4 = new ClientTUI();
+		ServerHandler humanClientServerCommunicator4 = 
+				 					new ServerHandler(humanClientTUI4);
+		ClientTUI humanClientTUI5 = new ClientTUI();
+		ServerHandler humanClientServerCommunicator5 = 
+				 					new ServerHandler(humanClientTUI5);
 		
 		/** Preparation: start server with local host and port 8888 and let it listen for clients.*/
 		GoServer testServer = new GoServer();

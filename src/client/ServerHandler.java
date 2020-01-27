@@ -13,7 +13,7 @@ import exceptions.ProtocolException;
 import exceptions.ServerUnavailableException;
 import protocol.ProtocolMessages;
 
-public class HumanClientServerCommunicator {
+public class ServerHandler {
 	/** The socket and In- and OutputStreams. */
 	private BufferedReader in;
 	private BufferedWriter out;
@@ -23,52 +23,15 @@ public class HumanClientServerCommunicator {
 	private String usedVersion; //given back by server upon handshake
 	
 	/** The connected human client. */
-	HumanClientTUI clientTUI;
+	ClientTUI clientTUI;
 	
-	public HumanClientServerCommunicator(HumanClientTUI givenClientTUI) {
+	public ServerHandler(ClientTUI givenClientTUI) {
 		clientTUI = givenClientTUI;
 		wantedVersion = "1.0";
 	}
 	
 	public String getVersion() {
 		return usedVersion;
-	}
-	
-	public void startServerConnection() {
-		
-		/** 
-		 * Try to create a connection to a server. 
-		 */
-		boolean successfulConnection;
-		
-		successfulConnection = createConnectionWithUserInput();
-		if (!successfulConnection) {
-			clientTUI.showMessage("Sorry, no connection could be established. " +
-					"Hope to see you again in the future!");
-			return;
-		}
-		
-		/** 
-		 * Send HELLO handshake. 
-		 */
-		boolean handshake = false;
-		
-		try {
-			doHandshakeWithUserInput();
-			handshake = true;
-		} catch (ProtocolException e) {
-			clientTUI.showMessage("The server did not keep to the protocol during the handshake.");
-			//TODO what to do when the protocol is not kept? Quit? (='return;')
-		} catch (ServerUnavailableException e) {
-			clientTUI.showMessage("The server cannot be reached anymore for the handshake.");
-			//TODO what to do when the server cannot be reached anymore? Try again? 
-			//Close connection? Check other SUE in other places, handle same way)
-		}
-		
-		if (!handshake) {
-			//TODO what to do (see questions above)
-			return;
-		}
 	}
 	
 	/**
@@ -84,7 +47,7 @@ public class HumanClientServerCommunicator {
 	 * @ensures serverSock contains a valid socket connection to a server
 	 */
 	
-	public boolean createConnectionWithUserInput() {
+	public void createConnectionWithUserInput() {
 		//variable to allow to try to connect a second time if not successful
 		boolean reconnect = true;
 		boolean successfulConnection = false;
@@ -102,7 +65,7 @@ public class HumanClientServerCommunicator {
 					createConnection(addr, port);
 					//successful connection, return
 					successfulConnection = true;
-					return successfulConnection;
+					return;
 				} catch (IOException e) {
 					clientTUI.showMessage("ERROR: could not create a socket on " 
 						+ addr + " and port " + port + ".");
@@ -116,8 +79,10 @@ public class HumanClientServerCommunicator {
 				}
 			}
 		}
-		//If there is a successful connection, you won't get here, return false
-		return false;
+		if (!successfulConnection) {
+			clientTUI.showMessage("Sorry, no connection could be established. " +
+					"Hope to see you again in the future!");
+		}
 	}
 	
 	/**
@@ -139,13 +104,14 @@ public class HumanClientServerCommunicator {
 				sock.getOutputStream())); 
 		clientTUI.showMessage("You made a succesful connection!");
 	}
+	
 	/**
 	 * Get all the necessary components of the handshake message via the console.
 	 * Then paste them together according to the protocol. Send the message to the
 	 * server and wait for a response.
 	 */
 	
-	public void doHandshakeWithUserInput() throws ServerUnavailableException, ProtocolException {
+	public void doHandshakeWithUserInput() {
 		
 		//get name of client
 		boolean correctName = false;
@@ -191,8 +157,7 @@ public class HumanClientServerCommunicator {
 	 * @throws ProtocolException 
 	 */
 	
-	public void doHandshake(String nameClient, char wantedColor) 
-			throws ServerUnavailableException, ProtocolException {
+	public void doHandshake(String nameClient, char wantedColor) {
 		
 		//assemble the handshake message that will be sent to the server.
 		String message = ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER + wantedVersion + 
@@ -209,9 +174,9 @@ public class HumanClientServerCommunicator {
 				return;
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
-			throw new ServerUnavailableException("Could not read "
-					+ "from server.");
+			clientTUI.showMessage("The server cannot be reached anymore for the handshake.");
+			//TODO what to do when the server cannot be reached anymore? Try again? 
+			//Close connection? Check other SUE in other places, handle same way)
 		}
 		
 		/** 
@@ -223,7 +188,7 @@ public class HumanClientServerCommunicator {
 		//check whether the handshake character came first, if not: throw exception
 		String[] serverResponse = line.split(ProtocolMessages.DELIMITER);
 		if (line.charAt(0) != ProtocolMessages.HANDSHAKE) {
-			throw new ProtocolException("Server response does not comply with the protocol!");
+			clientTUI.showMessage("The server did not keep to the protocol during the handshake.");
 		}
 		
 		//get version of the communication protocol and print message(s)

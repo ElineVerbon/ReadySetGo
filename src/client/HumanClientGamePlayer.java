@@ -36,9 +36,9 @@ public class HumanClientGamePlayer {
 	private MoveValidator moveValidator = new MoveValidator();
 	
 	/** Variables to keep track of game states. */
-	boolean gameEnded = false;
-	boolean doublePass = false;
-	boolean misunderstood = false;
+	boolean gameEnded;
+	boolean doublePass;
+	boolean misunderstood;
 
 	/**
 	 * Constructs a new GoClient. Initializes the TUI.
@@ -74,6 +74,10 @@ public class HumanClientGamePlayer {
 	 * user is asked whether a new connection should be made.
 	 */
 	public void start() {
+		
+		gameEnded = false;
+		doublePass = false;
+		misunderstood = false;
 		
 		/** Create a connection and do handshake. */
 		serverHandler.startServerConnection();
@@ -203,14 +207,16 @@ public class HumanClientGamePlayer {
 		} else {
 			clientsColor = "black";
 		}
-		clientTUI.showMessage("The game has started! "
+		clientTUI.showMessage("\nThe game has started! "
 				+ "The board is " + boardDimension + " by " + boardDimension + ". "
 				+ "\nYour color is " + clientsColor + ". Good luck!");
 		
 		/**
 		 * Start the GUI.
 		 */
-		gogui = new GoGUIIntegrator(true, true, boardDimension);
+		if (gogui == null) {
+			gogui = new GoGUIIntegrator(true, true, boardDimension);
+		}
 		gogui.startGUI();
 		gogui.setBoardSize(boardDimension);
 	}
@@ -270,6 +276,7 @@ public class HumanClientGamePlayer {
 		 */
 		String move = "";
 		boolean validInput = false;
+		String moveMessage = "";
 		
 		while (!validInput) {
 			boolean valid;
@@ -281,11 +288,12 @@ public class HumanClientGamePlayer {
 				if (opponentPassed == true) {
 					doublePass = true;
 				}
-				messageGenerator.moveMessage(move);
+				moveMessage = messageGenerator.moveMessage(move);
+				serverHandler.sendToGame(moveMessage);
 				return;
 			} else if (move.equals(Character.toString(ProtocolMessages.QUIT))) {
 				serverHandler.sendToGame(Character.toString(ProtocolMessages.QUIT));
-				gameEnded = true;
+//				gameEnded = true;
 				return;
 			}
 			
@@ -298,7 +306,8 @@ public class HumanClientGamePlayer {
 			validInput = true;
 		}
 		/** Send move to the game. */
-		messageGenerator.moveMessage(move);
+		moveMessage = messageGenerator.moveMessage(move);
+		serverHandler.sendToGame(moveMessage);
 	}
 	
 	/**
@@ -358,6 +367,8 @@ public class HumanClientGamePlayer {
 	 */
 	public void endGame(String[] components) {
 		
+		gameEnded = true;
+		
 		if (components.length < 5) {
 			String errorMessage = messageGenerator.errorMessage("Server response does not comply " +
 						"with the protocol! It did not contain the necessary five components " +
@@ -403,6 +414,12 @@ public class HumanClientGamePlayer {
 							+ "Score black: " + scoreBlack + ", score white: " + scoreWhite + ".");
 				}
 				break;
+		}
+		boolean reply = clientTUI.getBoolean("Do you want to play another game?");
+		if (reply) {
+			start();
+		} else {
+			serverHandler.closeConnection();
 		}
 	}
 	

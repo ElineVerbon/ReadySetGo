@@ -89,6 +89,8 @@ public class HumanClientServerCommunicator {
 		boolean reconnect = true;
 		boolean successfulConnection = false;
 		
+		sock = null; //to enable restarts
+		
 		while (reconnect) {
 			while (sock == null) {
 				//Get user input about where to connect & try connecting.

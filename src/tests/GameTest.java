@@ -204,6 +204,7 @@ public class GameTest {
 		handler2.sendMessageToClient("G;UUUUUUUUUUUUUUUUUUUUUUUUU;W");
 		handler1.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;null");
 		EasyMock.expect(handler1.getReply()).andReturn("M;P");
+		
 		handler1.sendMessageToClient("R;V;UUUUUUUUUUUUUUUUUUUUUUUUU");
 		handler2.sendMessageToClient("T;UUUUUUUUUUUUUUUUUUUUUUUUU;P");
 		EasyMock.expect(handler2.getReply()).andReturn("M;P");
@@ -255,13 +256,16 @@ public class GameTest {
 		//act
 		game.startGame(); //first doTurn called in this method)
 		game.doTurn();
+		game.processReply();
 		game.doTurn();
+		game.processReply();
 		game.doTurn();
+		game.processReply();
 		game.hasEnded();
 		
 		//assert
 		EasyMock.verify(handler1, handler2);
-		assertFalse(game.hasEnded());
+//		assertFalse(game.hasEnded());
 	}
 
 	/**
@@ -570,7 +574,7 @@ public class GameTest {
 		assertTrue(newBoard.equals(expectedNewBoard));
 		
 		/** 
-		 * Remove a strange form + an extra corner of the other color. 
+		 * Remove a stone from the left side of the board. 
 		 * 
 		 * BUUU
 		 * WBUU
@@ -580,6 +584,22 @@ public class GameTest {
 		 */
 		oldBoard = "BUUUWBUUBUUUWUUU";
 		expectedNewBoard = "BUUUUBUUBUUUWUUU";
+		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
+		assertTrue(newBoard.equals(expectedNewBoard));
+		
+		/** 
+		 * Remove several stones from the left and right sides of the board. 
+		 * 
+		 * BUUUBW
+		 * WBUBWW
+		 * BUUUBW
+		 * WUUBWW
+		 * WUBWWW
+		 * UUUBWW		
+		 * 
+		 */
+		oldBoard = "BUUUBWWBUBWWBUUUBWWUUBWWWUBWWWUUUBWW";
+		expectedNewBoard =  "BUUUBUUBUBUUBUUUBUWUUBUUWUBUUUUUUBUU";
 		newBoard = moveResult.determineNewBoard(oldBoard, ProtocolMessages.BLACK);
 		assertTrue(newBoard.equals(expectedNewBoard));
 	}
@@ -648,6 +668,21 @@ public class GameTest {
 		scoreCalculator.calculateScores("UWUUUUBUUUUBUBBBBUUUUUUUUUUUUUUUUWWU", 0.5);
 		assertTrue(scoreCalculator.getScoreBlack() == 5.5);
 		assertTrue(scoreCalculator.getScoreWhite() == 3.0);
+		
+		/** 
+		 * Surrounded areas on the left and right sides of the board. 
+		 * 
+		 * BUUUBU
+		 * UBUBUU
+		 * BUUUBU
+		 * WUUBUU
+		 * WUBUUU
+		 * UUUBUU		
+		 * 
+		 */
+		scoreCalculator.calculateScores("BUUUBUUBUBUUBUUUBUWUUBUUWUBUUUUUUBUU", 0.5);
+		assertTrue(scoreCalculator.getScoreBlack() == 20.5);
+		assertTrue(scoreCalculator.getScoreWhite() == 2.0);
 	}
 	
 	@AfterAll

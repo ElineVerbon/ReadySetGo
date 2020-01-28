@@ -55,7 +55,7 @@ public class ScoreCalculator {
 	/**
 	 * Looks for empty areas surrounded by one player.
 	 */
-	public void calculateEmptyArea() {
+	private void calculateEmptyArea() {
 		checkedUnoccupiedPlaces.clear();
 		surroundedArea.clear();
 		checkedPlacesInAndAroundSurroundedArea.clear();
@@ -105,7 +105,7 @@ public class ScoreCalculator {
 	 * 
 	 * @param numberInStringRepresentation
 	 */
-	public void checkAllNeighbors(int numberInStringRepresentation) {
+	private void checkAllNeighbors(int numberInStringRepresentation) {
 		boolean neighborOnBoard;
 		
 		//Add all surrounding locations that fall within the board to a to-be-checked list.
@@ -145,7 +145,7 @@ public class ScoreCalculator {
 	 * @param previousLocation
 	 * @return onBoard, a boolean that is true when the location is a neighbor on the board
 	 */
-	public boolean checkNextLocationBoard(int nextLocation, int previousLocation) {
+	private boolean checkNextLocationBoard(int nextLocation, int previousLocation) {
 		boolean onBoard = false;
 		
 		// Location is below 0 or above the last intersection
@@ -185,7 +185,7 @@ public class ScoreCalculator {
 	 * 
 	 * @param toBeCheckedLocation, the location whose occupation status is checked
 	 */
-	public void checkColor(int toBeCheckedLocation) {
+	private void checkColor(int toBeCheckedLocation) {
 		checkedPlacesInAndAroundSurroundedArea.add(toBeCheckedLocation);
 		
 		if (board.charAt(toBeCheckedLocation) == ProtocolMessages.UNOCCUPIED) {
@@ -216,7 +216,7 @@ public class ScoreCalculator {
 	 * @return
 	 */
 	
-	public void countStones() {
+	private void countStones() {
 		int numberStonesBlack = 0;
 		int numberStonesWhite = 0;
 		

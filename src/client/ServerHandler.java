@@ -25,6 +25,9 @@ public class ServerHandler {
 	/** The connected human client. */
 	ClientTUI clientTUI;
 	
+	boolean successfulConnection;
+	boolean successfulHandshake;
+	
 	public ServerHandler(ClientTUI givenClientTUI) {
 		clientTUI = givenClientTUI;
 		wantedVersion = "1.0";
@@ -32,6 +35,14 @@ public class ServerHandler {
 	
 	public String getVersion() {
 		return usedVersion;
+	}
+	
+	public boolean getSuccessfulConnection() {
+		return successfulConnection;
+	}
+	
+	public boolean getSuccessfulHandshake() {
+		return successfulHandshake;
 	}
 	
 	/**
@@ -50,31 +61,24 @@ public class ServerHandler {
 	public void createConnectionWithUserInput() {
 		//variable to allow to try to connect a second time if not successful
 		boolean reconnect = true;
-		boolean successfulConnection = false;
 		
 		sock = null; //to enable restarts
 		
 		while (reconnect) {
 			while (sock == null) {
-				//Get user input about where to connect & try connecting.
 				InetAddress addr = clientTUI.getIp("To which IP address do you want to connect?");
 				int port = clientTUI.getInt("On which port do you want to listen?");
 				
-				// try to open a Socket to the server
 				try {
 					createConnection(addr, port);
-					//successful connection, return
-					successfulConnection = true;
 					return;
 				} catch (IOException e) {
 					clientTUI.showMessage("ERROR: could not create a socket on " 
 						+ addr + " and port " + port + ".");
 
 					boolean userInput = clientTUI.getBoolean("Do you want to try again?");
-					//If user doesn't want to try again, shut down, otherwise, loop will start again
 					if (!userInput) {
 						clientTUI.showMessage("Okay, we will shut down!");
-						closeConnection();
 					}
 				}
 			}
@@ -93,6 +97,8 @@ public class ServerHandler {
 	 * @ensures serverSock contains a valid socket connection to a server
 	 */
 	public void createConnection(InetAddress addr, int port) throws IOException {
+		successfulConnection = false;
+		
 		clearConnection();
 			
 		clientTUI.showMessage("Attempting to connect to " + addr + ":" 
@@ -103,6 +109,7 @@ public class ServerHandler {
 		out = new BufferedWriter(new OutputStreamWriter(
 				sock.getOutputStream())); 
 		clientTUI.showMessage("You made a succesful connection!");
+		successfulConnection = true;
 	}
 	
 	/**
@@ -175,15 +182,7 @@ public class ServerHandler {
 			}
 		} catch (IOException e) {
 			clientTUI.showMessage("The server cannot be reached anymore for the handshake.");
-			//TODO what to do when the server cannot be reached anymore? Try again? 
-			//Close connection? Check other SUE in other places, handle same way)
 		}
-		
-		/** 
-		 * Check whether server response complies with the protocol: 
-		 * PROTOCOL.handshake + PROTOCOL.delimiter + finalVersion (string) 
-		 * optionally these at the end: PROTOCOL.delimiter + message (string)
-		 */ 
 		
 		//check whether the handshake character came first, if not: throw exception
 		String[] serverResponse = line.split(ProtocolMessages.DELIMITER);
@@ -206,6 +205,7 @@ public class ServerHandler {
 			clientTUI.showMessage("You connected to a server. Communication will proceed " +
 					"according to version " + usedVersion + ".\n");
 		}
+		successfulHandshake = true;
 	}
 	
 	/**

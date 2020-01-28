@@ -186,6 +186,9 @@ public abstract class AbstractClient implements Client {
 	
 	public void startGame(String board, String assignedColor) {
 		
+		//add board, else 2nd player doesn't save the empty board. 1st player will save it twice
+		prevBoards.add(board);
+		
 		/** 
 		 * Verify that the board contains only U, B and W. 
 		 */

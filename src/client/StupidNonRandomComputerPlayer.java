@@ -12,7 +12,7 @@ import ruleimplementations.MoveValidator;
  *
  */
 
-public class StupidComputerPlayer extends AbstractClient {
+public class StupidNonRandomComputerPlayer extends AbstractClient {
 	
 	private int nextComputerPlayerNumber = 0;
 	private int computerPlayerNumber;
@@ -23,7 +23,7 @@ public class StupidComputerPlayer extends AbstractClient {
 	 * Constructs a new GoClient. Initializes the TUI.
 	 * Does not initialize the GUI, as board size has to be known.
 	 */
-	public StupidComputerPlayer() {
+	public StupidNonRandomComputerPlayer() {
 		super();
 		computerPlayerNumber = nextComputerPlayerNumber;
 		nextComputerPlayerNumber++;
@@ -35,19 +35,21 @@ public class StupidComputerPlayer extends AbstractClient {
 	 * @param args 
 	 */
 	public static void main(String[] args) {
-		(new StupidComputerPlayer()).start();
+		(new StupidNonRandomComputerPlayer()).start();
 	}
 	
 	/**
 	 * Do the handshake.
 	 */
 	public void doHandshake() {
-		serverHandler.doHandshake("StupidComputer" + computerPlayerNumber, ProtocolMessages.BLACK);
+		serverHandler.doHandshake("StupidNonRandomComputer" + computerPlayerNumber, 
+																ProtocolMessages.BLACK);
 	}
 	
 
 	/**
-	 * Get a valid move from the player via the console.
+	 * Go from top left to bottom right of the board, looking for an unoccupied spot 
+	 * that is a valid move.
 	 * 
 	 * @param opponentsMove
 	 * @param boardDimension
@@ -63,6 +65,7 @@ public class StupidComputerPlayer extends AbstractClient {
 		
 		for (int c = 0; c < board.length(); c++) {
 			if (board.charAt(c) == ProtocolMessages.UNOCCUPIED) {
+
 				move = Integer.toString(c);
 			}
 			

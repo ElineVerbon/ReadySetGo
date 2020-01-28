@@ -22,6 +22,7 @@ public class Game {
 	private String namePlayer2 = null; //name of player2, used by server
 	private char colorPlayer1 = 'x'; //color of player1
 	private char colorPlayer2 = 'x'; //color of player2
+	private char currentPlayersColor = 'x';
 	
 	private Handler goClientHandlerPlayer1;
 	private Handler goClientHandlerPlayer2;
@@ -174,8 +175,10 @@ public class Game {
 	public void doTurn() {
 		if (firstPlayersTurn) {
 			currentPlayersHandler = goClientHandlerPlayer1;
+			currentPlayersColor = colorPlayer1;
 		} else {
 			currentPlayersHandler = goClientHandlerPlayer2;
+			currentPlayersColor = colorPlayer2;
 		}
 		
 		String doTurnMessage = messageGenerator.doTurnMessage(board, opponentsMove);
@@ -189,37 +192,22 @@ public class Game {
 	 * processMove()
 	 */
 	public void processReply() {
-		String reply = "";
 		String move = "";
 		
-		// End game if player took more than 1 minute to respond.
-		try {
-			reply = currentPlayersHandler.getReply();
-		} catch (SocketTimeoutException e) {
-			boolean validity = false;
-			String resultMessage = messageGenerator.resultMessage(validity, 
-										"You took more than 1 minute to decide on a move.");
-			currentPlayersHandler.sendMessageToClient(resultMessage);
-			gameEnded = true;
-			reasonGameEnd = ProtocolMessages.CHEAT;
-			return;
-		}
+		String reply = getReply();
 		
-		// End game if client disconnected. 
 		if (reply == null) {
-			reasonGameEnd = ProtocolMessages.DISCONNECT;
-			gameEnded = true;
 			return;
 		}
 		
 		// Check 1st component of the move message received from the player is of length 1. 
 		String[] components = reply.split(ProtocolMessages.DELIMITER);
 		if (components[0].length() != 1) {
-			//TODO not sure what to do after sending an error message. doTurn() again?
 			String errorMessage = messageGenerator.errorMessage("Player did not keep to "
 					+ "the protocol: the first part of its move message ( " + reply + ") "
 					+ "was not a single character.", version);
 			currentPlayersHandler.sendMessageToClient(errorMessage);
+			//TODO what to do next? Cannot really do anything with the current protocol... End game?
 			return;
 		}
 		
@@ -230,6 +218,7 @@ public class Game {
 				reasonGameEnd = ProtocolMessages.QUIT;
 				gameEnded = true;
 				return;
+				
 			case ProtocolMessages.MOVE:
 				move = components[1];
 				processMove(move);
@@ -242,6 +231,7 @@ public class Game {
 					}
 				}
 				break;
+				
 			case ProtocolMessages.ERROR:
 				boolean validity = false;
 				String resultMessage = messageGenerator.resultMessage(validity, 
@@ -250,14 +240,51 @@ public class Game {
 				gameEnded = true;
 				reasonGameEnd = ProtocolMessages.CHEAT;
 				return;
+				
 			default:
 				String errorMessage = messageGenerator.errorMessage("Player did not keep to the "
 					+ "protocol: '" + ProtocolMessages.QUIT + "', '" + ProtocolMessages.ERROR 
 					+ "' or '" + ProtocolMessages.MOVE + "' expected as first part of the message, "
 					+ "but '" +	command + "' received.", version);
 				currentPlayersHandler.sendMessageToClient(errorMessage);
+				//TODO what to do next? end game?
 				return;
 		}
+	}
+	
+	/**
+	 * Get a reply from the client.
+	 * 
+	 * If the reply does not come within a minute, or the reply is null, set gameEnded to true and 
+	 * return null
+	 * 
+	 * @return reply, the reply of the client or null if no reply
+	 */
+	public String getReply() {
+		String reply;
+		
+		// End game if player took more than 1 minute to respond.
+		try {
+			reply = currentPlayersHandler.getReply();
+		} catch (SocketTimeoutException e) {
+			boolean validity = false;
+			String resultMessage = messageGenerator.resultMessage(validity, 
+										"You took more than 1 minute to decide on a move.");
+			currentPlayersHandler.sendMessageToClient(resultMessage);
+			gameEnded = true;
+			reasonGameEnd = ProtocolMessages.CHEAT;
+			return null;
+		}
+		
+		// End game if client disconnected. 
+		if (reply == null) {
+			reasonGameEnd = ProtocolMessages.DISCONNECT;
+			gameEnded = true;
+			return reply;
+		}
+		
+		// Return the reply
+		return reply;
 	}
 	
 	/**
@@ -269,16 +296,13 @@ public class Game {
 	 * 
 	 * If player did not pass:
 	 * - check validity of move (if not valid, return move is invalid message and end game)
-	 * - determine the new board
-	 * - check whether board has not been seen before (if it has: return move is invalid 
-	 *   message and end game)
+	 * - if valid: determine the new board
 	 */
 	
 	public void processMove(String move) {
 		
 		boolean valid = true;
 		
-		// Check whether the player passed. 
 		if (move.equals(Character.toString(ProtocolMessages.PASS))) {
 			if (passed) {
 				gameEnded = true;
@@ -287,44 +311,24 @@ public class Game {
 				passed = true;
 			}
 		} else {
-			// If player did not pass, do validity checks and update board.
 			passed = false;
 			
 			prevBoards.add(board);
-			
-			// Check validity of the move
-			if (firstPlayersTurn) {
-				valid = moveValidator.processMove(move, boardDimension, board, 
-															colorPlayer1, prevBoards);
-			} else {
-				valid = moveValidator.processMove(move, boardDimension, board, 
-															colorPlayer2, prevBoards);
-			}
-			
-			// If the move was valid, update the current board.
+			valid = moveValidator.processMove(move, boardDimension, board, currentPlayersColor, 
+																					prevBoards);
 			if (valid) {
-				int location;
-				location = Integer.parseInt(move);
-				if (firstPlayersTurn) {
-					board = board.substring(0, location) + colorPlayer1 + 
-													board.substring(location + 1);
-					board = moveResult.determineNewBoard(board, colorPlayer1);
-				} else {
-					board = board.substring(0, location) + colorPlayer2 + 
-													board.substring(location + 1);
-					board = moveResult.determineNewBoard(board, colorPlayer2);
-				}
+				int location = Integer.parseInt(move);
+				board = board.substring(0, location) + currentPlayersColor + 
+																board.substring(location + 1);
+				board = moveResult.determineNewBoard(board, currentPlayersColor);
+			} else {
+				gameEnded = true;
+				reasonGameEnd = ProtocolMessages.CHEAT;
 			}
 		}
 		
-		if (!valid) {
-			gameEnded = true;
-			reasonGameEnd = ProtocolMessages.CHEAT;
-		}
-		//give the result to the player
-		opponentsMove = move;
 		giveResult(valid);
-
+		opponentsMove = move;
 	}
 	
 	/**
@@ -336,6 +340,7 @@ public class Game {
 	public void giveResult(boolean valid) {
 		String message = "";
 		
+		//TODO make dependent on board size
 		try {
 			Thread.sleep(250);
 		} catch (InterruptedException e) {

@@ -197,17 +197,17 @@ public class GoClientHandler implements Runnable, Handler {
 	 */
 	public String getReply() throws SocketTimeoutException {
 		String reply = "";
+		
 		try {
-			sock.setSoTimeout(6000000); //TODO put back to 60000
+			sock.setSoTimeout(60000);
 			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
 																	sock.getInputStream()));
 			reply = bufferedReader.readLine();
 		} catch (SocketTimeoutException e) {
 			throw e;
 		} catch (IOException e) {
-			//TODO auto-generated
-			e.printStackTrace();
 		}
+		
 		return reply;
 	}
 	

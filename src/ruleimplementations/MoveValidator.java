@@ -19,6 +19,11 @@ public class MoveValidator {
 	
 	public boolean processMove(String move, int boardDimension, String theBoard, 
 			char color, List<String> prevBoards) {
+
+		if (move.equals("24")) {
+			board = theBoard;
+			
+		}
 		
 		board = theBoard;
 		

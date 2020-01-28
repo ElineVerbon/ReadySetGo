@@ -52,24 +52,22 @@ public class StupidComputerPlayer extends AbstractClient {
 			String board, char color, List<String> prevBoards) {
 		
 		String move = "";
-		boolean validInput = false;
-		boolean valid;
+		boolean valid = false;
 		
-		while (!validInput) {
-			for (char c = 0; c < board.length(); c++) {
-				if (board.charAt(c) == ProtocolMessages.UNOCCUPIED) {
-					move = Character.toString(c);
-				}
-				
-				valid = moveValidator.processMove(move, boardDimension, board, color, prevBoards);
-				if  (valid) {
-					validInput = true;
-					break;
-				} 
+		for (int c = 0; c < board.length(); c++) {
+			if (board.charAt(c) == ProtocolMessages.UNOCCUPIED) {
+				move = Integer.toString(c);
 			}
-			//if you get here, no valid moves found
+			
+			valid = moveValidator.processMove(move, boardDimension, board, color, prevBoards);
+			if (valid) {
+				break;
+			} 
+		}
+		if (!valid) {
 			move = Character.toString(ProtocolMessages.PASS);
 		}
+		
 		return move;
 	}
 }

@@ -286,6 +286,7 @@ public abstract class AbstractClient implements Client {
 		
 		if (Character.toString(ProtocolMessages.VALID).equals(validity)) {
 			showCurrentBoardState(boardOrMessage);
+			prevBoards.add(boardOrMessage);
 		} else {
 			clientTUI.showMessage("Your move was invalid. You lose the game.");
 			if (boardOrMessage != null) {
@@ -310,8 +311,8 @@ public abstract class AbstractClient implements Client {
 					clientTUI.showMessage("\nCongratulations, you won the game! Score black: " + 
 							scoreBlack + ", score white: " + scoreWhite + ".");
 				} else {
-					clientTUI.showMessage("\nToo bad, you lost the game! Score black: " + 
-							scoreBlack + ", score white: " + scoreWhite + ".");
+					clientTUI.showMessage("\nToo bad, you lost the game after two consecutive pas" +
+						"ses! Score black: " + scoreBlack + ", score white: " + scoreWhite + ".");
 				}
 				break;
 			case ProtocolMessages.DISCONNECT:
@@ -349,12 +350,13 @@ public abstract class AbstractClient implements Client {
 		/** Show the current board to the player. */
 		gogui.clearBoard();
 		
-		//Need to wait, otherwise it doesn't always fully clear the board before filling it again
-		try {
-			TimeUnit.SECONDS.sleep(1);
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
-		}
+		//A wait step here prevents not fully clearing the board before filling it again
+		//However, it also results in not being able to follow the computer player games
+//		try {
+//			TimeUnit.SECONDS.sleep(1);
+//		} catch (InterruptedException e1) {
+//			e1.printStackTrace();
+//		}
 		
 		for (int c = 0; c < boardDimension * boardDimension; c++) {
 			char thisLocation = theBoard.charAt(c);

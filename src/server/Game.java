@@ -324,6 +324,7 @@ public class Game {
 		//give the result to the player
 		opponentsMove = move;
 		giveResult(valid);
+
 	}
 	
 	/**
@@ -334,6 +335,11 @@ public class Game {
 	
 	public void giveResult(boolean valid) {
 		String message = "";
+		
+		try {
+			Thread.sleep(250);
+		} catch (InterruptedException e) {
+		}
 		
 		// Set result message.
 		if (valid) {

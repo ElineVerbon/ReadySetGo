@@ -5,6 +5,13 @@ import java.util.List;
 import protocol.ProtocolMessages;
 import ruleimplementations.MoveValidator;
 
+/**
+ * A computer player that can play Go. It will look through the board and choose the first
+ * available unoccupied spot for its move if not invalid. If not valid moves, pass.
+ * @author eline.verbon
+ *
+ */
+
 public class StupidComputerPlayer extends AbstractClient {
 	
 	private int nextComputerPlayerNumber = 0;

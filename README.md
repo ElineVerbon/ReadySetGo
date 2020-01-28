@@ -1,4 +1,4 @@
-# FinalAssignment1
+# ReadySetGo
 Program to play Go against computer players, or to watch Go being played by two computer players.
 
 To get the program up and running, open a command line terminal.

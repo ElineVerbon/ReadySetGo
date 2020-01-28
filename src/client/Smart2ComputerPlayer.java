@@ -8,7 +8,7 @@ import ruleimplementations.ScoreCalculator;
 import ruleimplementations.BoardUpdater;
 
 /**
- * A computer player that can play Go. 
+ * A computer player that can play Go 
  * 
  * It will first check whether the other player has to pass with the current board state. 
  * If so, it will check whether it is currently winning. If so, it will pass.

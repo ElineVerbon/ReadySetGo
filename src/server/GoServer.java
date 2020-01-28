@@ -17,12 +17,6 @@ import protocol.ProtocolMessages;
  * server starts a clientHandler to handle interaction with the client.
  * It will then add the client to a game instance. Once two clients are in a game,
  * the game is started and control is given to the game instance.
- * 
- * What happens when the game is over? 
- * 
- * Not yet supported:
- * ClientHandler can ask the client whether they want to do another game against the same player
- * Clients should be removed from the list once a game is over?
  */
 
 public class GoServer implements Runnable {

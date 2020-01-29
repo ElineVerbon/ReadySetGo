@@ -70,6 +70,8 @@ public class HumanPlayer extends AbstractClient {
 			if (move.equals(Character.toString(ProtocolMessages.PASS)) || 
 								move.equals(Character.toString(ProtocolMessages.QUIT))) {
 				validInput = true;
+			} else if (move.equalsIgnoreCase("hint")) {
+				showHint(board, boardDimension, color, prevBoards);
 			} else {
 				valid = moveValidator.processMove(move, boardDimension, board, color, prevBoards);
 				if  (!valid) {
@@ -82,7 +84,37 @@ public class HumanPlayer extends AbstractClient {
 		}
 		return move;
 	}
-	
+		
+	/**
+	 * Shows an option for a valid move.
+	 */
+	public void showHint(String board, int boardDimension, char color, List<String> prevBoards) {
+			
+		String move = "";
+		int location = 0;
+		boolean valid = false;
+		
+		for (int c = 0; c < board.length(); c++) {
+			if (board.charAt(c) == ProtocolMessages.UNOCCUPIED) {
+				location = c;
+				move = Integer.toString(c);
+			}
+			
+			valid = moveValidator.processMove(move, boardDimension, board, color, prevBoards);
+			if (valid) {
+				break;
+			} 
+		}
+		if (!valid) {
+			clientTUI.showMessage("No valid moves are left, you can only pass.");
+		} else {
+			clientTUI.showMessage("Check the board for a possible valid move!");
+			int hintX = location % boardDimension;
+			int hintY = location / boardDimension;
+			gogui.addHintIndicator(hintX, hintY);
+		}
+	}
+		
 	/**
 	 * Communicate the result to the client and update the GUI.
 	 * 

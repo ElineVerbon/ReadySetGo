@@ -16,7 +16,7 @@ import ruleimplementations.ScoreCalculator;
  */
 
 public class Smart1ComputerPlayer extends AbstractClient {
-	private int nextComputerPlayerNumber = 0;
+	private int nextComputerPlayerNumber = 1;
 	private int computerPlayerNumber;
 
 	private MoveValidator moveValidator = new MoveValidator();

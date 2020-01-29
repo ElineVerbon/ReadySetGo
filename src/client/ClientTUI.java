@@ -40,7 +40,6 @@ public class ClientTUI {
 		InetAddress inetAddress = null;
 		
 		while (!validIP) {
-			System.out.println("Please enter a valid IP, numbers divided by points.");
 			String userInput = "";
 			
 			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
@@ -55,7 +54,8 @@ public class ClientTUI {
 				inetAddress = InetAddress.getByName(userInput);
 				validIP = true;
 			} catch (UnknownHostException e) {
-				System.out.println("Sorry, this is not a valid IP. ");
+				showMessage("Sorry, this is not a valid IP. Please enter a valid IP, "
+						+ "numbers divided by points (or 'localhost').");
 			}
 		}
 		return inetAddress;
@@ -162,7 +162,8 @@ public class ClientTUI {
 		while (!validInput) {
 			//get userInput about move
 			String userInput = getString("Where do you want to place "
-					+ "your next marker? (Type 'pass' to pass or 'quit' to quit.)");
+					+ "your next marker? (Type 'pass' to pass, 'quit' to quit "
+					+ "or 'hint' to get a hint.)");
 			if  (userInput.equalsIgnoreCase("pass")) {
 				if (getBoolean("Are you sure you want to pass? (yes/no)")) {
 					move = Character.toString(ProtocolMessages.PASS);
@@ -179,8 +180,8 @@ public class ClientTUI {
 					move = Integer.toString(userInt);
 					validInput = true;
 				} catch (NumberFormatException e) {
-					showMessage("Only an integer, 'pass' or 'quit' are accepted. You entered: " + 
-								userInput + ". Please try again.");
+					showMessage("Only an integer, 'pass', 'quit' and 'hint' are accepted. "
+							+ "You entered: " + userInput + ". Please try again.");
 				}
 			}
 		}

@@ -41,7 +41,7 @@ public class ServerClientStartingUpTest {
 				 					new ServerHandler(humanClientTUI2);
 		
 		/** Preparation: start server with local host and port 8888 and let it listen for clients.*/
-		GoServer testServer = new GoServer();
+		Server testServer = new Server();
 		InetAddress addr = InetAddress.getLocalHost();
 		int port = 8888;
 		testServer.createSocket(addr, port);
@@ -106,7 +106,7 @@ public class ServerClientStartingUpTest {
 				 					new ServerHandler(humanClientTUI5);
 		
 		/** Preparation: start server with local host and port 8888 and let it listen for clients.*/
-		GoServer testServer = new GoServer();
+		Server testServer = new Server();
 		InetAddress addr = InetAddress.getLocalHost();
 		int port = 8889;
 		testServer.createSocket(addr, port);

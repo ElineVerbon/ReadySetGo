@@ -4,11 +4,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 
-public class GoServerTUI {
+public class ServerTUI {
 	
 	/** The PrintWriter to write messages to. */
 	private PrintWriter console;
@@ -16,7 +14,7 @@ public class GoServerTUI {
 	/**
 	 * Constructs a new HotelServerTUI. Initializes the console.
 	 */
-	public GoServerTUI() {
+	public ServerTUI() {
 		console = new PrintWriter(System.out, true);
 	}
 
@@ -59,7 +57,7 @@ public class GoServerTUI {
 			
 			if (userInt < minNumber) {
 				System.out.println("The number should be at least " + minNumber +
-						"Please try again.");
+						". Please try again.");
 			} else {
 				validInt = true;
 			}
@@ -69,36 +67,32 @@ public class GoServerTUI {
 	}
 	
 	/**
-	 * Ask the user to input a valid IP. If it is not valid, show a message and ask
-	 * again.
+	 * Prints the question and returns the input parsed to an integer.
+	 * If input cannot be parsed to a double, an error message is shown and user can try again.
 	 * 
-	 * @return a valid IP
+	 * @param question The question to show to the user
+	 * @return The written Integer.
 	 */
-	public InetAddress getIp(String message) {
-		showMessage(message);
-		boolean validIP = false;
-		InetAddress inetAddress = null;
+	public double getDouble(String question) {
+		showMessage(question);
 		
-		while (!validIP) {
-			System.out.println("Please enter a valid IP, numbers divided by points.");
-			String userInput = "";
-			
-			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-			
-			try {
-				userInput = in.readLine();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		boolean validDouble = false;
+		double userDouble = 0;
+		
+		while (!validDouble) {
+			String userInput = readUserInput();
 			
 			try {
-				inetAddress = InetAddress.getByName(userInput);
-				validIP = true;
-			} catch (UnknownHostException e) {
-				System.out.println("Sorry, this is not a valid IP. ");
-			}
+				userDouble = Double.parseDouble(userInput);
+	        } catch (NumberFormatException e) {
+	            System.out.println(userInput
+	            		           + " is not an double. Please try again.");
+	        }
+
+			validDouble = true;
 		}
-		return inetAddress;
+		
+		return userDouble;
 	}
 
 	/**
@@ -150,6 +144,5 @@ public class GoServerTUI {
 		}
 		return userInput;
 	}
-
 }
 

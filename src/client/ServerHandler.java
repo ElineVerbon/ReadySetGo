@@ -191,7 +191,7 @@ public class ServerHandler {
 		}
 		
 		//get version of the communication protocol and print message(s)
-		usedVersion = serverResponse[1]; //TODO check whether the version is valid?
+		usedVersion = serverResponse[1]; 
 		//get message if available
 		if (serverResponse.length > 2) {
 			//correct response was received. Print own message

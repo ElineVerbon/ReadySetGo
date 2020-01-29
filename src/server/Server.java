@@ -1,7 +1,6 @@
 package server;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -20,13 +19,13 @@ import protocol.ProtocolMessages;
  */
 
 
-public class GoServer implements Runnable {
+public class Server implements Runnable {
 	
 	/** The Socket of this GoServer (is a serverSocket!). */
 	private ServerSocket ssock;
 
 	/** List of GoClientHandlers, one for each connected client. */
-	private List<GoClientHandler> clients;
+	private List<ClientHandler> clients;
 	
 	/** Next client number, increasing for every new connection. */
 	private int nextClientNo;
@@ -37,15 +36,19 @@ public class GoServer implements Runnable {
 	/** Next game number, increasing for every new connection. */
 	private int nextGameNo;
 	
+	/** User-defined variables for the board size and komi of the games hosted by this server. */
+	int boardDimension;
+	double komi;
+	
 	/** Available versions of this server. */
 	private List<String> availableVersions = new ArrayList<String>();
 	private String usedVersion;
 
 	/**  
 	 * The TUI of this GoServer.
-	 * Required to ask for IP address and port number
+	 * Required to ask for port number and board size.
 	 */
-	private GoServerTUI tui;
+	private ServerTUI tui;
 	
 	// ------------------ Main --------------------------
 
@@ -55,8 +58,8 @@ public class GoServer implements Runnable {
 	 * method is called in a new thread to continuously listen for new clients. 
 	 */
 	public static void main(String[] args) {
-		GoServer server = new GoServer();
-		System.out.println("Welcome to the GoServer! Starting...");
+		Server server = new Server();
+		System.out.println("Welcome to the Server hosting Go! Starting...");
 		
 		try {
 			server.setup();
@@ -71,23 +74,20 @@ public class GoServer implements Runnable {
 	 * Constructor of a GoServer.
 	 */
 	
-	public GoServer() {
+	public Server() {
 		clients = new ArrayList<>();
 		nextClientNo = 1;
 		games = new ArrayList<Game>();
 		nextGameNo = 1;
-		tui = new GoServerTUI();
+		tui = new ServerTUI();
 		
 		availableVersions.add("0.01");
 	}
 	
 	/**
-	 * Sets up a ServerSocket on a user-defined IP address and port.
-	 * 
-	 * The user of the server is asked to input a port and an IP address, 
-	 * after which a socket is attempted to be opened. If the attempt succeeds, 
-	 * the method ends. If the attempt fails, the user can decide whether to try again, 
-	 * after which an ExitProgram exception is thrown or a new port is entered.
+	 * Sets up a ServerSocket on a user-defined port.
+	 * If the socket cannot be created, the user can decide whether to try again, 
+	 * after which a new port is entered, or to stop, resulting in an ExitProgram exception.
 	 * 
 	 * @throws ExitProgram if a connection can not be created on the given 
 	 *                     port and the user decides to exit the program.
@@ -96,16 +96,21 @@ public class GoServer implements Runnable {
 	public void setup() throws ExitProgram {
 		ssock = null;
 		while (ssock == null) {
-			InetAddress addr = tui.getIp("Please enter your IP address.");
+			tui.showMessage("To start, please answer some questions to initialize the server.\n");
+			boardDimension = tui.getInt("Please enter a positive integer to set the board"
+					+ "size of the games that you will host. (Minimum is 3.)", 3);
+			
+			komi = tui.getDouble("Please enter a double (eg 0.5) to set the komi (= penalty"
+					+ " for black) for the games that you will host.");
+			
 			int port = tui.getInt("Please enter the number of the server port " +
 					"that you want to listen on.", 1281);
 			
 			// try to open a new ServerSocket
 			try {
-				createSocket(addr, port);
+				createSocket(port);
 			} catch (IOException e) {
-				tui.showMessage("ERROR: could not create a socket on "
-						+ addr.toString() + " and port " + port + ".");
+				tui.showMessage("ERROR: could not create a socket on port " + port + ".");
 
 				if (!tui.getBoolean("Do you want to try again? (yes/no)")) {
 					throw new ExitProgram("User indicated to exit the "
@@ -123,10 +128,9 @@ public class GoServer implements Runnable {
 	 * @param port
 	 * @throws IOException
 	 */
-	public void createSocket(InetAddress addr, int port) throws IOException {
-		tui.showMessage("Attempting to open a socket at " + addr.toString() +
-				" on port " + port + "...");
-		ssock = new ServerSocket(port, 0, addr);
+	public void createSocket(int port) throws IOException {
+		tui.showMessage("Attempting to open a socket on port " + port + "...");
+		ssock = new ServerSocket(port, 0);
 		tui.showMessage("Socket opened, waiting for a client.");
 	}
 	
@@ -145,7 +149,7 @@ public class GoServer implements Runnable {
 				Socket sock = ssock.accept();
 				tui.showMessage("Client number " + nextClientNo + " just connected!");
 				
-				GoClientHandler handler = new GoClientHandler(sock, this);
+				ClientHandler handler = new ClientHandler(sock, this);
 				new Thread(handler).start();
 				
 				clients.add(handler);
@@ -205,7 +209,7 @@ public class GoServer implements Runnable {
 	 */
 	
 	public synchronized Game addClientToGame(
-				String nameClient, String wantedColor, GoClientHandler thisClientsHandler) {
+				String nameClient, String wantedColor, ClientHandler thisClientsHandler) {
 		
 		//if no games yet or the last game has already started, make a new game, add the client
 		if (games.isEmpty() || games.get(games.size() - 1).getStarted()) {
@@ -219,7 +223,7 @@ public class GoServer implements Runnable {
 			
 			//if there is a not-yet-started game, check whether the first player is still connected
 			Game lastGame = games.get(games.size() - 1);
-			GoClientHandler player1goClientHandler = (GoClientHandler) 
+			ClientHandler player1goClientHandler = (ClientHandler) 
 															lastGame.getClientHandlerPlayer1();
 			try {
 				player1goClientHandler.startGameMessageInTwoParts(lastGame.getBoard(), 
@@ -245,7 +249,7 @@ public class GoServer implements Runnable {
 	 * Removes a clientHandler from the client list.
 	 * @requires client != null
 	 */
-	public void removeClient(GoClientHandler client) {
+	public void removeClient(ClientHandler client) {
 		this.clients.remove(client);
 	}
 	
@@ -259,7 +263,7 @@ public class GoServer implements Runnable {
 	 */
 	
 	public void addClientAsPlayer1(String nameClient, String wantedColor, Game game, 
-														GoClientHandler thisClientsHandler) {
+														ClientHandler thisClientsHandler) {
 		game.setNamePlayer1(nameClient);
 		game.setClientHandlerPlayer1(thisClientsHandler);
 		
@@ -277,13 +281,13 @@ public class GoServer implements Runnable {
 	
 	/** 
 	 * Adds a second player to a game. 
-	 * He/she will get the other color than player 1.
+	 * He/she will get the other color from player 1.
 	 * 
 	 * @param nameClient, the name of the player
 	 * @param game, the game that the client is added to
 	 */
 	public void addClientAsPlayer2(String nameClient, Game game, 
-														GoClientHandler thisClientsHandler) {
+														ClientHandler thisClientsHandler) {
 		game.setNamePlayer2(nameClient);
 		game.setClientHandlerPlayer2(thisClientsHandler);
 		
@@ -301,9 +305,9 @@ public class GoServer implements Runnable {
 	 * 
 	 * @return the newly created game.
 	 */
-	//TODO need to add the version as a variable
 	public Game setupGoGame() {
-		Game aGame = new Game(nextGameNo, usedVersion);
+		
+		Game aGame = new Game(nextGameNo, usedVersion, boardDimension, komi);
 		
 		//increase next game number by one
 		nextGameNo++;

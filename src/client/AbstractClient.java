@@ -17,7 +17,7 @@ public abstract class AbstractClient implements Client {
 	//variables to play a game
 	private char color;
 	private int boardDimension;
-	private GoGUIIntegrator gogui;
+	protected GoGUIIntegrator gogui;
 	private String version;
 	
 	/** The board and all previous boards, represented as strings. */
@@ -66,9 +66,11 @@ public abstract class AbstractClient implements Client {
 			return; //server has disconnected
 		} 
 		
+		
 		/** Play the game. */
 		while (!gameEnded) {
 			String message = serverHandler.readLineFromServer();
+			clientTUI.showMessage(message);//TODO remove this
 			if (message == null) {
 				return; //server has disconnected
 			}
@@ -231,9 +233,9 @@ public abstract class AbstractClient implements Client {
 		} else {
 			clientsColor = "black";
 		}
-		clientTUI.showMessage("\nThe game has started! "
+		clientTUI.showMessage("The game has started! "
 				+ "The board is " + boardDimension + " by " + boardDimension + ". "
-				+ "\nYour color is " + clientsColor + ". Good luck!");
+				+ "Your color is " + clientsColor + ". Good luck!");
 		
 		/**
 		 * Start the GUI.

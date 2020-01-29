@@ -10,8 +10,8 @@ import ruleimplementations.*;
 public class Game {
 	/** Set board dimension (= length of board). */
 	//TODO possibly let user of server set this instead
-	private int boardDimension = 5;
-	private double komi = 0.5;
+	private int boardDimension;
+	private double komi;
 	
 	/** Save the game number, might need it later for a leader board. */
 	private int gameNumber;
@@ -50,9 +50,11 @@ public class Game {
 	/** 
 	 * Constructor, creates string representation of the board. 
 	 */
-	public Game(int number, String chosenVersion) {
+	public Game(int number, String chosenVersion, int boardSize, double komi) {
 		gameNumber = number;
 		version = chosenVersion;
+		boardDimension = boardSize;
+		this.komi = komi;
 		messageGenerator = new MessageGenerator();
 		
 		// Create a string representation of the empty board.

@@ -17,7 +17,7 @@ import java.net.SocketTimeoutException;
  * The GoClientHandler handles all communication between the server and the client.
  */
 
-public class GoClientHandler implements Runnable, Handler {
+public class ClientHandler implements Runnable, Handler {
 	
 	/** The In- and OutputStreams to communicate with the client. */
 	private BufferedReader in;
@@ -25,7 +25,7 @@ public class GoClientHandler implements Runnable, Handler {
 	private Socket sock;
 	
 	/** The connected Server. */
-	private GoServer srv;
+	private Server srv;
 
 	/** Name of the connected client. */
 	private String clientName;
@@ -47,7 +47,7 @@ public class GoClientHandler implements Runnable, Handler {
 	 * @param name The name of this ClientHandler
 	 */
 	
-	public GoClientHandler(Socket sock, GoServer srv) {
+	public ClientHandler(Socket sock, Server srv) {
 		try {
 			in = new BufferedReader(
 					new InputStreamReader(sock.getInputStream()));
@@ -112,6 +112,12 @@ public class GoClientHandler implements Runnable, Handler {
 			String errorMessage = messageGenerator.errorMessage("Client did not keep to the "
 					+ "handshake protocol. Excepted 'H' as 1st component of the message, received " 
 					+ command + ".", version);
+			sendMessageToClient(errorMessage);
+		}
+		if (commands.length < 3) {
+			String errorMessage = messageGenerator.errorMessage("Client did not keep to the "
+					+ "handshake protocol. Excepted both version and name as components of the "
+					+ "message, received " + command + ".", version);
 			sendMessageToClient(errorMessage);
 		}
 		String requestedVersion = commands[1];

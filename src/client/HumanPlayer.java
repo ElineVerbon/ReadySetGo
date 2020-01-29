@@ -70,7 +70,7 @@ public class HumanPlayer extends AbstractClient {
 			if (move.equals(Character.toString(ProtocolMessages.PASS)) || 
 								move.equals(Character.toString(ProtocolMessages.QUIT))) {
 				validInput = true;
-			} else if (move.equalsIgnoreCase("hint")) {
+			} else if (move.equals("N")) {
 				showHint(board, boardDimension, color, prevBoards);
 			} else {
 				valid = moveValidator.processMove(move, boardDimension, board, color, prevBoards);

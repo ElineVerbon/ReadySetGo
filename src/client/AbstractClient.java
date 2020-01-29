@@ -66,13 +66,9 @@ public abstract class AbstractClient implements Client {
 			return; //server has disconnected
 		} 
 		
-		clientTUI.showMessage("Almost starting to wait");
-		
 		/** Play the game. */
 		while (!gameEnded) {
-			clientTUI.showMessage("Waiting");
 			String message = serverHandler.readLineFromServer();
-			clientTUI.showMessage("Message from server: " + message);
 			if (message == null) {
 				return; //server has disconnected
 			}

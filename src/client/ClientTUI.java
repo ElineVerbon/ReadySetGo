@@ -174,6 +174,9 @@ public class ClientTUI {
 					move = Character.toString(ProtocolMessages.QUIT);
 					validInput = true;
 				}
+			} else if (userInput.equalsIgnoreCase("hint")) {
+				move = Character.toString('N');
+				validInput = true;
 			} else {
 				try  {
 					userInt = Integer.parseInt(userInput);

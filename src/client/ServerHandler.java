@@ -216,13 +216,11 @@ public class ServerHandler {
 	 */
 	public String readLineFromServer() {
 		String answer = null;
-		clientTUI.showMessage("starting to read");
 		
 		if (in != null) {
 			try {
 				// Read and return answer from Server
 				answer = in.readLine();
-				clientTUI.showMessage("answer: " + answer);
 				
 				if (answer == null) {
 					clientTUI.showMessage("\nServer disconnected. The connection will be closed.");
@@ -282,5 +280,7 @@ public class ServerHandler {
 			e.printStackTrace();
 		}
 		clientTUI.showMessage("Connection has been closed, hope to see you again someday!");
+		
+		return;
 	}
 }

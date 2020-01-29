@@ -84,8 +84,6 @@ public class ServerClientStartingUpTest {
 		assertThat(OUTCONTENT.toString(), containsString(" was added to game "));
 		assertThat(OUTCONTENT.toString(), containsString("The game can start!"));
 		OUTCONTENT.reset();
-		
-		//TODO close connections?
 	}
 	
 	/**

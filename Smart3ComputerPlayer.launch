@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-        <listEntry value="/ReadySetGo/src/client/HumanPlayer.java"/>
+        <listEntry value="/ReadySetGo/src/client/Smart3ComputerPlayer.java"/>
     </listAttribute>
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
         <listEntry value="1"/>
@@ -10,6 +10,6 @@
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_EXCLUDE_TEST_CODE" value="true"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_CLASSPATH_ONLY_JAR" value="false"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="false"/>
-    <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="client.HumanPlayer"/>
+    <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="client.Smart3ComputerPlayer"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="ReadySetGo"/>
 </launchConfiguration>

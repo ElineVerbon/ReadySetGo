@@ -38,7 +38,6 @@ public class Server implements Runnable {
 	
 	/** User-defined variables for the board size and komi of the games hosted by this server. */
 	int boardDimension;
-	double komi;
 	
 	/** Available versions of this server. */
 	private List<String> availableVersions = new ArrayList<String>();
@@ -100,8 +99,10 @@ public class Server implements Runnable {
 			boardDimension = tui.getInt("Please enter a positive integer to set the board"
 					+ "size of the games that you will host. (Minimum is 3.)", 3);
 			
-			komi = tui.getDouble("Please enter a double (eg 0.5) to set the komi (= penalty"
-					+ " for black) for the games that you will host.");
+			// Cannot set the komi here, as I cannot let the client know (and thus they cannot calculate scores)
+			// because we did not include this in the protocol.
+//			komi = tui.getDouble("Please enter a double (eg 0.5) to set the komi (= penalty"
+//					+ " for black) for the games that you will host.");
 			
 			int port = tui.getInt("Please enter the number of the server port " +
 					"that you want to listen on.", 1281);
@@ -307,7 +308,7 @@ public class Server implements Runnable {
 	 */
 	public Game setupGoGame() {
 		
-		Game aGame = new Game(nextGameNo, usedVersion, boardDimension, komi);
+		Game aGame = new Game(nextGameNo, usedVersion, boardDimension);
 		
 		//increase next game number by one
 		nextGameNo++;

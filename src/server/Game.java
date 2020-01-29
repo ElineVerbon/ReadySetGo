@@ -11,7 +11,7 @@ public class Game {
 	/** Set board dimension (= length of board). */
 	//TODO possibly let user of server set this instead
 	private int boardDimension;
-	private double komi;
+	public static final double KOMI = 0.5;
 	
 	/** Save the game number, might need it later for a leader board. */
 	private int gameNumber;
@@ -50,11 +50,10 @@ public class Game {
 	/** 
 	 * Constructor, creates string representation of the board. 
 	 */
-	public Game(int number, String chosenVersion, int boardSize, double komi) {
+	public Game(int number, String chosenVersion, int boardSize) {
 		gameNumber = number;
 		version = chosenVersion;
 		boardDimension = boardSize;
-		this.komi = komi;
 		messageGenerator = new MessageGenerator();
 		
 		// Create a string representation of the empty board.
@@ -342,9 +341,8 @@ public class Game {
 	public void giveResult(boolean valid) {
 		String message = "";
 		
-		//TODO make dependent on board size
 		try {
-			Thread.sleep(250);
+			Thread.sleep(100);
 		} catch (InterruptedException e) {
 		}
 		
@@ -373,7 +371,7 @@ public class Game {
 		
 		char winner = 'x';
 		
-		scoreCalculator.calculateScores(board, komi);
+		scoreCalculator.calculateScores(board, KOMI);
 		double scoreBlack = scoreCalculator.getScoreBlack();
 		double scoreWhite = scoreCalculator.getScoreWhite();
 		if (scoreBlack > scoreWhite) {

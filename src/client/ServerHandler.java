@@ -280,7 +280,5 @@ public class ServerHandler {
 			e.printStackTrace();
 		}
 		clientTUI.showMessage("Connection has been closed, hope to see you again someday!");
-		
-		return;
 	}
 }

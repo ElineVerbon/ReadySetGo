@@ -145,7 +145,7 @@ public class ScoreCalculator {
 	 * @param previousLocation
 	 * @return onBoard, a boolean that is true when the location is a neighbor on the board
 	 */
-	private boolean checkNextLocationBoard(int nextLocation, int previousLocation) {
+	public boolean checkNextLocationBoard(int nextLocation, int previousLocation) {
 		boolean onBoard = false;
 		
 		// Location is below 0 or above the last intersection

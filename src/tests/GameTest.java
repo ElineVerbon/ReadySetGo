@@ -50,7 +50,7 @@ public class GameTest {
 	void startGameTest() throws SocketTimeoutException {
 		
 		//arrange
-		Game game1 = new Game(1, "1.0", 5, 0.5);
+		Game game1 = new Game(1, "1.0", 5);
 		Handler handler1 = EasyMock.createMock(Handler.class);
 		Handler handler2 = EasyMock.createMock(Handler.class);
 		game1.setClientHandlerPlayer1(handler1);
@@ -58,7 +58,7 @@ public class GameTest {
 		game1.setColorPlayer1(ProtocolMessages.BLACK);
 		game1.setColorPlayer2(ProtocolMessages.WHITE);
 		
-		Game game2 = new Game(2, "1.0", 5, 0.5);
+		Game game2 = new Game(2, "1.0", 5);
 		Handler handler3 = EasyMock.createMock(Handler.class);
 		Handler handler4 = EasyMock.createMock(Handler.class);
 		game2.setClientHandlerPlayer1(handler3);
@@ -94,7 +94,7 @@ public class GameTest {
 	void outsideOfBoardInvalidTurnTest() throws SocketTimeoutException {
 		
 		//arrange
-		Game game = new Game(1, "1.0", 5, 0.5);
+		Game game = new Game(1, "1.0", 5);
 		Handler handler1 = EasyMock.createMock(Handler.class);
 		Handler handler2 = EasyMock.createMock(Handler.class);
 		game.setClientHandlerPlayer1(handler1);
@@ -125,7 +125,7 @@ public class GameTest {
 	void occupiedLocationInvalidTurnTest() throws SocketTimeoutException {
 		
 		//arrange
-		Game game = new Game(1, "1.0", 5, 0.5);
+		Game game = new Game(1, "1.0", 5);
 		Handler handler1 = EasyMock.createMock(Handler.class);
 		Handler handler2 = EasyMock.createMock(Handler.class);
 		game.setClientHandlerPlayer1(handler1);
@@ -159,7 +159,7 @@ public class GameTest {
 	void nonIntegerInvalidTurnTest() throws SocketTimeoutException {
 		
 		//arrange
-		Game game = new Game(1, "1.0", 5, 0.5);
+		Game game = new Game(1, "1.0", 5);
 		Handler handler1 = EasyMock.createMock(Handler.class);
 		Handler handler2 = EasyMock.createMock(Handler.class);
 		game.setClientHandlerPlayer1(handler1);
@@ -192,7 +192,7 @@ public class GameTest {
 	void twoPassesTest() throws SocketTimeoutException {
 		
 		//arrange
-		Game game = new Game(1, "1.0", 5, 0.5);
+		Game game = new Game(1, "1.0", 5);
 		Handler handler1 = EasyMock.createMock(Handler.class);
 		Handler handler2 = EasyMock.createMock(Handler.class);
 		game.setClientHandlerPlayer1(handler1);
@@ -229,7 +229,7 @@ public class GameTest {
 	void twoNonConsecutivePassesTest() throws SocketTimeoutException {
 		
 		//arrange
-		Game game = new Game(1, "1.0", 5, 0.5);
+		Game game = new Game(1, "1.0", 5);
 		Handler handler1 = EasyMock.createMock(Handler.class);
 		Handler handler2 = EasyMock.createMock(Handler.class);
 		game.setClientHandlerPlayer1(handler1);
@@ -277,7 +277,7 @@ public class GameTest {
 	void quitOnTurnTest() throws SocketTimeoutException {
 		
 		//arrange
-		Game game = new Game(1, "1.0", 5, 0.5);
+		Game game = new Game(1, "1.0", 5);
 		Handler handler1 = EasyMock.createMock(Handler.class);
 		Handler handler2 = EasyMock.createMock(Handler.class);
 		game.setClientHandlerPlayer1(handler1);
@@ -325,7 +325,7 @@ public class GameTest {
 	void koRuleTest() throws SocketTimeoutException {
 		
 		//arrange
-		Game game = new Game(1, "1.0", 5, 0.5);
+		Game game = new Game(1, "1.0", 5);
 		Handler handler1 = EasyMock.createMock(Handler.class);
 		Handler handler2 = EasyMock.createMock(Handler.class);
 		game.setClientHandlerPlayer1(handler1);

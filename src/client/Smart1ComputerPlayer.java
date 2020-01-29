@@ -44,6 +44,8 @@ public class Smart1ComputerPlayer extends AbstractClient {
 	/**
 	 * Do the handshake.
 	 */
+	
+	@Override
 	public void doHandshake() {
 		serverHandler.doHandshake("Smart1Computer" + computerPlayerNumber, ProtocolMessages.BLACK);
 	}
@@ -62,6 +64,8 @@ public class Smart1ComputerPlayer extends AbstractClient {
 	 * @param color, the color of the player
 	 * @param prevBoards, a list of all already seen previous board states
 	 */
+	
+	@Override
 	public String getMove(String opponentsMove, int boardDimension, 
 			String board, char color, List<String> prevBoards) {
 		

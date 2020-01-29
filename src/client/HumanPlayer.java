@@ -31,6 +31,8 @@ public class HumanPlayer extends AbstractClient {
 	/**
 	 * Do the handshake.
 	 */
+	
+	@Override
 	public void doHandshake() {
 		serverHandler.doHandshakeWithUserInput();
 	}
@@ -41,6 +43,8 @@ public class HumanPlayer extends AbstractClient {
 	 * First show a message indicating it's the player's turn and what the other player did.
 	 * Then, ask for input for a move until a valid move is chosen.
 	 */
+	
+	@Override
 	public String getMove(String opponentsMove, int boardDimension, 
 						String board, char color, List<String> prevBoards) {
 		

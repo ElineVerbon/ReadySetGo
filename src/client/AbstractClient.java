@@ -19,6 +19,7 @@ public abstract class AbstractClient implements Client {
 	private int boardDimension;
 	protected GoGUIIntegrator gogui;
 	private String version;
+	public static final double KOMI = 0.5;
 	
 	/** The board and all previous boards, represented as strings. */
 	private List<String> prevBoards;
@@ -30,7 +31,7 @@ public abstract class AbstractClient implements Client {
 	private boolean misunderstood;
 	
 	private String prevServerMessage;
-	
+
 	public AbstractClient() {
 		clientTUI = new ClientTUI();
 		serverHandler = new ServerHandler(clientTUI);

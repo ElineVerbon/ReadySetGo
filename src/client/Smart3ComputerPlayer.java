@@ -9,17 +9,16 @@ import ruleimplementations.MoveValidator;
 import ruleimplementations.ScoreCalculator;
 
 /**
- * A computer player that can play Go on a 19 by 19 board only! 
+ * A computer player that can play Go, optimized for a 19 by 19 board.
  * 
  * If the board is 19 by 19, the first stone will be placed at a 4-4 point.
- * The second at a 4-4 point adjacent to it. Then stay in that part of the board
+ * The second at a 4-4 point adjacent to it. 
  * 
- * It will first check whether the other player has to pass with the current board state. 
+ * It will first check whether the other player has to pass with the current board state or has just passed. 
  * If so, it will check whether it is currently winning. If so, it will pass.
  * 
- * Otherwise, it will look through the board look from top left to bottom right for all
- * unoccupied locations that are valid moves. It will choose the move that leads to the greatest
- * enhancement in score.
+ * Otherwise, it will look in the area where it put its first two moves for all
+ * unoccupied locations that are valid moves. It will randomly choose one of those moves.
  * 
  * If there are no valid moves, it will pass.
  */
@@ -66,11 +65,7 @@ public class Smart3ComputerPlayer extends AbstractClient {
 	
 
 	/**
-	 * Go from top left to bottom right of the board, looking for an unoccupied spot 
-	 * that is a valid move.
-	 * 
-	 * Check whether the opponent can still do a move. If not, calculate score. If highest score:
-	 * pass.
+	 * Decide on a move
 	 * 
 	 * @param opponentsMove
 	 * @param boardDimension
@@ -82,7 +77,7 @@ public class Smart3ComputerPlayer extends AbstractClient {
 	public String getMove(String opponentsMove, int boardDimension, 
 			String board, char color, List<String> prevBoards) {
 		
-		/** Set good openings locations. */
+		/** Set good opening locations. */
 		int first4_4 = 3 + 3 * boardDimension; 
 											//intersection 3,3 (counting from 0)
 		int second4_4 = boardDimension - 1 - 3 + 3 * boardDimension; 
@@ -91,12 +86,10 @@ public class Smart3ComputerPlayer extends AbstractClient {
 											//intersection four from right, 3
 		int fourth4_4 = boardDimension - 1 - 3 + 3 * (boardDimension - 1 - 3) * boardDimension; 
 											//intersection four from right, 3
-
 		
 		String move = "";
 		
 		if (boardDimension == 19) {
-			//set the first stone at 4,4 from a corner
 			if (currentMove == 0) {
 				int location = getOpeningsMove(board, first4_4, second4_4);
 				openingsMove = location;
@@ -105,8 +98,6 @@ public class Smart3ComputerPlayer extends AbstractClient {
 				return move;
 			}
 			
-			//set the second stone in a neighboring 4,4 OR close to this one
-			//set the side where we play
 			if (currentMove == 1) {
 				int location = getSecondMove(board, boardDimension, first4_4, second4_4, third4_4, fourth4_4);
 				currentMove++;
@@ -115,15 +106,14 @@ public class Smart3ComputerPlayer extends AbstractClient {
 			}
 		}
 		
-		//if opponent has to pass & player is current winner: pass
 		boolean opponentCanDoAMove = canOpponentDoAMove(move, boardDimension, 
 																		board, color, prevBoards);
+		boolean opponentPassed = opponentsMove.equals(Character.toString(ProtocolMessages.PASS));
 		char winner = currentWinner(board, KOMI);
-		if (!opponentCanDoAMove && winner == color) {
+		if ((!opponentCanDoAMove || opponentPassed) && winner == color) {
 			return Character.toString(ProtocolMessages.PASS);
 		}
 		
-		//otherwise, first look for a position in the wanted side 1 - 4 intersections from the side
 		if (side.equals("left")) {
 			move = findSpotLeftSide(board, boardDimension, color, prevBoards);
 		} else if (side.equals("right")) {
@@ -131,8 +121,6 @@ public class Smart3ComputerPlayer extends AbstractClient {
 		} else if (side.equals("top")) {
 			move = findSpotTopSide(board, boardDimension, color, prevBoards);
 		}
-		
-		//if no move found in wanted area, search entire board
 		if (move == null) {
 			move = findSpotOnBoard(board, boardDimension, color, prevBoards);
 		}

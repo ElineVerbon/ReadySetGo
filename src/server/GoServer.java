@@ -11,13 +11,14 @@ import exceptions.ExitProgram;
 import protocol.ProtocolMessages;
 
 /**
- * Server for playing GO.
+ * Server for playing GO
  * 
  * The server listens for clients continuously. When a client connects, the 
  * server starts a clientHandler to handle interaction with the client.
  * It will then add the client to a game instance. Once two clients are in a game,
  * the game is started and control is given to the game instance.
  */
+
 
 public class GoServer implements Runnable {
 	

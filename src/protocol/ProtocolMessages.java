@@ -2,10 +2,15 @@ package protocol;
 
 /**
  * Protocol for NU5 GO game (final assignment 1).
- * This is version: ‘0.1’
+ * This is version: ‘1.0’
  */
 public class ProtocolMessages {
 
+	/**
+	 * Version of this protocol.
+	 */
+	public static final String VERSION = "1.0";
+	
 	/**
 	 * Delimiter used to separate arguments sent over the network.
 	 */

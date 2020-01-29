@@ -44,7 +44,7 @@ public class ServerClientStartingUpTest {
 		Server testServer = new Server();
 		InetAddress addr = InetAddress.getLocalHost();
 		int port = 8888;
-		testServer.createSocket(addr, port);
+		testServer.createSocket(port);
 		new Thread(testServer).start();
 		
 		/**
@@ -109,7 +109,7 @@ public class ServerClientStartingUpTest {
 		Server testServer = new Server();
 		InetAddress addr = InetAddress.getLocalHost();
 		int port = 8889;
-		testServer.createSocket(addr, port);
+		testServer.createSocket(port);
 		new Thread(testServer).start();
 		
 		//Connect and disconnect first client

@@ -1,5 +1,5 @@
 java -classpath \
-FinalAssignment1.jar\
+ReadySetGo.jar\
 :./lib/javafx-sdk-11.0.2/lib/javafx.fxml.jar\
 :./lib/javafx-sdk-11.0.2/lib/javafx-swt.jar\
 :./lib/javafx-sdk-11.0.2/lib/javafx.media.jar\
@@ -9,4 +9,4 @@ FinalAssignment1.jar\
 :./lib/javafx-sdk-11.0.2/lib/javafx.controls.jar\
 :./lib/javafx-sdk-11.0.2/lib/javafx.base.jar\
 :./lib/goGui/gui-1.1.jar\
- server.GoServer
+ server.Server

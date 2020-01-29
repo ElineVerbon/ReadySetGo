@@ -1,5 +1,5 @@
 java -classpath \
-FinalAssignment1.jar\
+ReadySetGo.jar\
 :./lib/javafx-sdk-11.0.2/lib/javafx.fxml.jar\
 :./lib/javafx-sdk-11.0.2/lib/javafx-swt.jar\
 :./lib/javafx-sdk-11.0.2/lib/javafx.media.jar\

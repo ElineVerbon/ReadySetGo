@@ -20,6 +20,7 @@ __Mac users:__
 
 `./server`
 
+
 __Windows users:__
 
 `server.bat`
@@ -35,6 +36,7 @@ __Mac users:__
 `./smartComputerPlayer`	_This will start an automized player that uses a smart(er) strategy._
 
 `./stupidComputerPlayer` 	_This will start an automized player that uses a less smart stategy._
+
 
 __Windows users:__
 

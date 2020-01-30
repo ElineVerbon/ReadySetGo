@@ -99,8 +99,8 @@ public class Server implements Runnable {
 			boardDimension = tui.getInt("Please enter a positive integer to set the board"
 					+ "size of the games that you will host. (Minimum is 3.)", 3);
 			
-			// Cannot set the komi here, as I cannot let the client know (and thus they cannot calculate scores)
-			// because we did not include this in the protocol.
+			// Cannot set the komi here, as I cannot let the client know because we did not include 
+			// this in the protocol.
 //			komi = tui.getDouble("Please enter a double (eg 0.5) to set the komi (= penalty"
 //					+ " for black) for the games that you will host.");
 			

@@ -43,7 +43,7 @@ public class Smart4ComputerPlayer extends AbstractClient {
 	
 
 	/**
-	 * Decide on a move
+	 * Decide on a move.
 	 * 
 	 * @param opponentsMove
 	 * @param boardDimension
@@ -73,12 +73,12 @@ public class Smart4ComputerPlayer extends AbstractClient {
 		//fill up left five columns, then move on
 		int xmin = 0;
 		int xmax = 4;
-		while(!noMovesLeft) {
+		while (!noMovesLeft) {
 			for (int x = xmin; x <= xmax; x++) {
 				for (int y = 0; y <= boardDimension - 1; y++) {
 					int location = x + y * boardDimension;
 					if (isValidMove(board, boardDimension, color, prevBoards, location)) {
-						if(!neighborsAllOwnColor(board, boardDimension, color, location)) {
+						if (!neighborsAllOwnColor(board, boardDimension, color, location)) {
 							possibleLocations.add(Integer.toString(location));
 						}
 					}
@@ -102,36 +102,41 @@ public class Smart4ComputerPlayer extends AbstractClient {
 	
 
 	/**
-	 * Check whether all neighbors of a location are of current player
+	 * Check whether all neighbors of a location are of current player.
 	 * 
 	 * @return boolean, false when not all neighbors are of current color
 	 */
 	
-	public boolean neighborsAllOwnColor(String board, int boardDimension, char color, int location) {
+	public boolean neighborsAllOwnColor(String board, int boardDimension, 
+															char color, int location) {
 		boolean neighborOnBoard;
 		int locationToTheLeft = location - 1;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationToTheLeft, location, boardDimension);
+		neighborOnBoard = boardState.checkNextLocationBoard(locationToTheLeft, location, 
+																			boardDimension);
 		if (neighborOnBoard) {
 			if (board.charAt(locationToTheLeft) != color) {
 				return false;
 			}
 		}
 		int locationToTheRight = location + 1;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationToTheRight, location, boardDimension);
+		neighborOnBoard = boardState.checkNextLocationBoard(locationToTheRight, location, 
+																			boardDimension);
 		if (neighborOnBoard) {
 			if (board.charAt(locationToTheRight) != color) {
 				return false;
 			}
 		}
 		int locationAbove = location - boardDimension;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationAbove, location, boardDimension);
+		neighborOnBoard = boardState.checkNextLocationBoard(locationAbove, location, 
+																			boardDimension);
 		if (neighborOnBoard) {
 			if (board.charAt(locationAbove) != color) {
 				return false;
 			}
 		}
 		int locationBelow = location + boardDimension;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationBelow, location, boardDimension);
+		neighborOnBoard = boardState.checkNextLocationBoard(locationBelow, location, 
+																			boardDimension);
 		if (neighborOnBoard) {
 			if (board.charAt(locationBelow) != color) {
 				return false;
@@ -165,7 +170,7 @@ public class Smart4ComputerPlayer extends AbstractClient {
 	}
 	
 	/**
-	 * Checks whether the opponent can do a move
+	 * Checks whether the opponent can do a move.
 	 * 
 	 * @return true when the opponent can do a move, false when it cannot
 	 */

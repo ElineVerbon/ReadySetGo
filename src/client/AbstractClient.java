@@ -7,6 +7,11 @@ import com.nedap.go.gui.GoGUIIntegrator;
 import protocol.MessageGenerator;
 import protocol.ProtocolMessages;
 
+/**
+ * This class contains all methods that are shared between the different players.
+ * All implemented players extend this class.
+ */
+
 public abstract class AbstractClient implements Client {
 
 	//variables used to start a connection with the server
@@ -23,7 +28,6 @@ public abstract class AbstractClient implements Client {
 	
 	/** The board and all previous boards, represented as strings. */
 	private List<String> prevBoards;
-	
 	
 	/** Variables to keep track of game states. */
 	private boolean gameEnded;
@@ -85,7 +89,8 @@ public abstract class AbstractClient implements Client {
 	/**
 	 * Handles messages received from the server.
 	 * 
-	 * Checks whether all necessary components are there and sends them to the correct method.
+	 * Checks whether all necessary components are there and sends them to the correct player method
+	 * .
 	 * @param message, a String received from the server.
 	 */
 	public void handleServerMessage(String message) {
@@ -109,7 +114,7 @@ public abstract class AbstractClient implements Client {
 					misunderstood = true;
 				}
 				clientTUI.showMessage("Server did not understand the message. Let's try again.");
-				handleServerMessage(prevServerMessage);
+				handleServerMessage(prevServerMessage); //whether this works depends on server
 				break;
 				
 			case ProtocolMessages.GAME:
@@ -189,9 +194,7 @@ public abstract class AbstractClient implements Client {
 		//add board, else 2nd player doesn't save the empty board. 1st player will save it twice
 		prevBoards.add(board);
 		
-		/** 
-		 * Verify that the board contains only U, B and W. 
-		 */
+		// Verify that the board contains only U, B and W. 
 		int numberOfIntersections = board.length();
 		boardDimension = (int) Math.sqrt(numberOfIntersections);
 		for (int intersection = 0; intersection < board.length(); intersection++) {

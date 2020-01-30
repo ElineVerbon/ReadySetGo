@@ -15,7 +15,8 @@ public class BoardState {
 	 * @param previousLocation
 	 * @return onBoard, a boolean that is true when the location is a neighbor on the board
 	 */
-	public boolean checkNextLocationBoard(int nextLocation, int previousLocation, int boardDimension) {
+	public boolean checkNextLocationBoard(int nextLocation, 
+													int previousLocation, int boardDimension) {
 		boolean onBoard = false;
 		
 		// Location is below 0 or above the last intersection

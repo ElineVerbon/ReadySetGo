@@ -1,7 +1,6 @@
 package ruleimplementations;
 
 import java.util.ArrayList;
-import ruleimplementations.BoardState;
 import java.util.List;
 
 import protocol.ProtocolMessages;
@@ -114,22 +113,26 @@ public class ScoreCalculator {
 		//Add all surrounding locations that fall within the board to a to-be-checked list.
 		List<Integer> locationsToCheck = new ArrayList<Integer>();
 		int locationToTheLeft = numberInStringRepresentation - 1;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationToTheLeft, numberInStringRepresentation, boardDimension);
+		neighborOnBoard = boardState.checkNextLocationBoard(locationToTheLeft, 
+													numberInStringRepresentation, boardDimension);
 		if (neighborOnBoard) {
 			locationsToCheck.add(locationToTheLeft);
 		}
 		int locationToTheRight = numberInStringRepresentation + 1;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationToTheRight, numberInStringRepresentation, boardDimension);
+		neighborOnBoard = boardState.checkNextLocationBoard(locationToTheRight, 
+													numberInStringRepresentation, boardDimension);
 		if (neighborOnBoard) {
 			locationsToCheck.add(locationToTheRight);
 		}
 		int locationAbove = numberInStringRepresentation - boardDimension;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationAbove, numberInStringRepresentation, boardDimension);
+		neighborOnBoard = boardState.checkNextLocationBoard(locationAbove, 
+													numberInStringRepresentation, boardDimension);
 		if (neighborOnBoard) {
 			locationsToCheck.add(locationAbove);
 		}
 		int locationBelow = numberInStringRepresentation + boardDimension;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationBelow, numberInStringRepresentation, boardDimension);
+		neighborOnBoard = boardState.checkNextLocationBoard(locationBelow, 
+													numberInStringRepresentation, boardDimension);
 		if (neighborOnBoard) {
 			locationsToCheck.add(locationBelow);
 		}

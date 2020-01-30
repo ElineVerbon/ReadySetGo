@@ -1,12 +1,13 @@
 package ruleimplementations;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import protocol.ProtocolMessages;
 
 /**
- * A class that calculates the score of two player on a given board.
+ * A class that calculates the score of two players on a given board.
  */
 
 public class ScoreCalculator {
@@ -14,19 +15,17 @@ public class ScoreCalculator {
 	private double scoreWhite;
 	private double scoreBlack;
 	
-	public static final double KOMI = 0.5;
-	
+	private double komi;
 	private int boardDimension;
 	private String board;
+	char areaSurrounder = 'x';
+	boolean surrounded;
 	
 	private BoardState boardState = new BoardState();
 	
 	List<Integer> checkedUnoccupiedPlaces = new ArrayList<Integer>();
 	List<Integer> surroundedArea = new ArrayList<Integer>();
 	List<Integer> checkedPlacesInAndAroundSurroundedArea = new ArrayList<Integer>();
-	
-	char areaSurrounder = 'x';
-	boolean surrounded;
 	
 	public synchronized double getScoreWhite() {
 		return scoreWhite;
@@ -36,11 +35,15 @@ public class ScoreCalculator {
 		return scoreBlack;
 	}
 	
+	public void setKomi(double komi) {
+		this.komi = komi;
+	}
+	
 	/**
-	 * Determines the empty area surrounded by the player.
+	 * Calculates the scores of the two players.
+	 * 
 	 * @param board
 	 * @param komi
-	 * @return
 	 */
 	public synchronized void calculateScores(String givenBoard) {
 		scoreWhite = 0.0;
@@ -53,24 +56,21 @@ public class ScoreCalculator {
 		
 		countStones();
 		
-		scoreBlack -= KOMI;
+		scoreBlack -= komi;
 	}
 	
 	/**
-	 * Looks for empty areas surrounded by one player.
+	 * Identify all empty areas surrounded by one of the two player.
 	 */
 	private void calculateEmptyArea() {
 		checkedUnoccupiedPlaces.clear();
 		surroundedArea.clear();
 		checkedPlacesInAndAroundSurroundedArea.clear();
 		
-		//go through all stones from top left to bottom to look for an unoccupied location
 		for (int x = 0; x < boardDimension; x++) {
 			for (int y = 0; y < boardDimension; y++) {
-				//get the location within the string representation. 
 				int numberInStringRepresentation = x  + y * boardDimension;
 				
-				//if this location has been already seen as part of another group: go to next y
 				if (checkedUnoccupiedPlaces.contains(numberInStringRepresentation)) {
 					continue;
 				}
@@ -104,39 +104,28 @@ public class ScoreCalculator {
 	}
 	
 	/**
-	 * Add the stone as the first of a new possibly-surrounded group, check whether the stone's 
-	 * neighbors are part of the same group and whether that group is surrounded.
+	 * Check the neigbors of a given location for being on the board. If so, check 
+	 * their color.
 	 * 
-	 * @param numberInStringRepresentation
+	 * @param numberInStringRepresentation, an int indicating an intersection on the board
 	 */
 	private void checkAllNeighbors(int numberInStringRepresentation) {
-		boolean neighborOnBoard;
 		
-		//Add all surrounding locations that fall within the board to a to-be-checked list.
-		List<Integer> locationsToCheck = new ArrayList<Integer>();
 		int locationToTheLeft = numberInStringRepresentation - 1;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationToTheLeft, 
-													numberInStringRepresentation, boardDimension);
-		if (neighborOnBoard) {
-			locationsToCheck.add(locationToTheLeft);
-		}
 		int locationToTheRight = numberInStringRepresentation + 1;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationToTheRight, 
-													numberInStringRepresentation, boardDimension);
-		if (neighborOnBoard) {
-			locationsToCheck.add(locationToTheRight);
-		}
 		int locationAbove = numberInStringRepresentation - boardDimension;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationAbove, 
-													numberInStringRepresentation, boardDimension);
-		if (neighborOnBoard) {
-			locationsToCheck.add(locationAbove);
-		}
 		int locationBelow = numberInStringRepresentation + boardDimension;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationBelow, 
+		List<Integer> possibleDirectNeighbors = Arrays.asList(locationToTheLeft, locationToTheRight,
+															locationAbove, locationBelow);
+		List<Integer> locationsToCheck = new ArrayList<Integer>();
+		
+		//add all neighbors on the board to the to-be-checked list
+		for (int neighbor : possibleDirectNeighbors) {
+			boolean neighborOnBoard = boardState.checkNextLocationBoard(neighbor, 
 													numberInStringRepresentation, boardDimension);
-		if (neighborOnBoard) {
-			locationsToCheck.add(locationBelow);
+			if (neighborOnBoard) {
+				locationsToCheck.add(neighbor);
+			}
 		}
 		
 		//check the occupation status of all locations in the list that weren't already checked
@@ -178,25 +167,19 @@ public class ScoreCalculator {
 			} else if (areaSurrounder == ProtocolMessages.BLACK) {
 				surrounded = false;
 			}
-		} //otherwise (if no stones on the board), areaSurrounder remains 'x'
+		}
 	}
 	
 	/**
-	 * Determines the number of stones of each player.
-	 * @param board
-	 * @param komi
-	 * @param color
-	 * @return
+	 * Counts the number of stones of each player.
 	 */
 	
 	private void countStones() {
 		int numberStonesBlack = 0;
 		int numberStonesWhite = 0;
 		
-		//go through all stones from top left to bottom to look for an unoccupied location
 		for (int x = 0; x < boardDimension; x++) {
 			for (int y = 0; y < boardDimension; y++) {
-				//get the location within the string representation. 
 				int numberInStringRepresentation = x  + y * boardDimension;
 				
 				if (board.charAt(numberInStringRepresentation) == ProtocolMessages.BLACK) {

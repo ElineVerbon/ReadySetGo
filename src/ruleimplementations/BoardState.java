@@ -4,9 +4,6 @@ import protocol.ProtocolMessages;
 
 /**
  * Class with methods that relate to the current board state.
- * 
- * @author eline.verbon
- *
  */
 
 public class BoardState {
@@ -14,7 +11,7 @@ public class BoardState {
 	private ScoreCalculator scoreCalculator = new ScoreCalculator();
 	
 	/**
-	 * Checks whether a location is located on the board adjacent to the previous location.
+	 * Check whether a location is located on the board, adjacent to the previous location.
 	 * 
 	 * @param nextLocation
 	 * @param previousLocation
@@ -22,11 +19,9 @@ public class BoardState {
 	 */
 	public boolean checkNextLocationBoard(int nextLocation, 
 													int previousLocation, int boardDimension) {
-		boolean onBoard = false;
-		
-		// Location is below 0 or above the last intersection
+
 		if (nextLocation < 0 || nextLocation >= boardDimension * boardDimension) {
-			return onBoard;
+			return false;
 		}
 		
 		int locationNextX = nextLocation % boardDimension;
@@ -38,20 +33,23 @@ public class BoardState {
 		// x can be 1 off and y the same, or y can be 1 off and x the same for it to be a neighbor
 		if (locationPreviousX == locationNextX) {
 			if (Math.abs(locationPreviousY - locationNextY) == 1) {
-				onBoard = true;
-				return onBoard;
+				return true;
 			}
 		} else if (locationPreviousY == locationNextY) {
 			if (Math.abs(locationPreviousX - locationNextX) == 1) {
-				onBoard = true;
-				return onBoard;
+				return true;
 			}
 		}
-		
-		return onBoard;
+		return false;
 	}
 	
-	public char currentWinner(String board) {
+	/**
+	 * Determine which player (W or B) currently has the highest score.
+	 * 
+	 * @param board, a string representation of the board
+	 * @return a char indicating who has the highest score (W or B)
+	 */
+	public char highestScore(String board) {
 		
 		scoreCalculator.calculateScores(board);
 		double scoreBlack = scoreCalculator.getScoreBlack();

@@ -13,7 +13,7 @@ public class MessageGenerator implements GeneratorInterface {
 	}
 	
 	/**
-	 * Message sent by the client only.
+	 * Messages sent by the client only.
 	 */
 	
 	public String clientHandshakeMessage(String wantedVersion, String nameClient, 

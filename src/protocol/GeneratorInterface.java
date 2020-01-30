@@ -9,8 +9,11 @@ public interface GeneratorInterface {
 	public String errorMessage(String message, String version);
 	
 	/**
-	 * Message sent by the client only.
+	 * Messages sent by the client only.
 	 */
+	
+	public String clientHandshakeMessage(String wantedVersion, String nameClient, 
+			char wantedColor);
 	
 	public String moveMessage(String move);
 	

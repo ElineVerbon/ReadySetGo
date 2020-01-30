@@ -1,6 +1,7 @@
 package ruleimplementations;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import protocol.ProtocolMessages;
@@ -18,12 +19,13 @@ import protocol.ProtocolMessages;
  * will call:
  * 4. checkColor. Checks the occupation status of a location to see if it is of the currently being 
  * looked-for color. If so, it is added to the surroundedStones' group and the neighbors of this 
- * location will be checked via a call to 3. If it is unoccupied, the boolean variable 
+ * location will be checked via a call to method number 3. If it is unoccupied, the boolean variable
  * 'surrounded' for this group is set to false. If it is of the opposing color, nothing happens.
  * 
- * Once a recursive call gets back to 2 with 'surrounded = true', all locations in this group are 
- * set to unoccupied and the next location is checked. Once all location are checked in 2, the 
- * procedure is repeated from starting from method 1, but this time for the opposite color.
+ * Once a recursive call gets back to method number 2 with 'surrounded = true', all locations in
+ * this group are set to unoccupied and the next location is checked. Once all locations on the
+ * board are checked in method number 2, the procedure is repeated from starting from method 1, but
+ * this time for the opposite color.
  */
 
 public class BoardUpdater {
@@ -46,7 +48,6 @@ public class BoardUpdater {
 	
 	/**
 	 * Determine which stones are captured and should be removed.
-	 * 
 	 * First check the not-current-player's color for captured stones,
 	 * as capturing of a group goes before suicide.
 	 */
@@ -56,7 +57,6 @@ public class BoardUpdater {
 		
 		boardDimension = (int) Math.sqrt(board.length());
 		
-		//get the not-current-player's color
 		if (currentlyPlayersColor == ProtocolMessages.BLACK) {
 			opponentsColor = ProtocolMessages.WHITE;
 		} else {
@@ -86,22 +86,16 @@ public class BoardUpdater {
 	/**
 	 * Check the stones of one color for captured groups.
 	 * 
-	 * If a stone of that color is found, set surrounded to true and check all the
-	 * neighboring locations (& if it has stones of the same color as neighbor, also the neigboring
-	 * locations of that stone / those stones). If after checking all the neighbors 'surrounded' is 
-	 * still true, change the stones of the found captured group to unoccupied. 
-	 * 
-	 * Once a stone has been checked, it is added to the checkedStones List. Only stones not
-	 * in the list will be checked. 
+	 * If a stone of that color is found, surrounded is set to true and the neighboring locations
+	 * are checked for being surrounded or not. If after checking all the neighbors 'surrounded' is 
+	 * still true, the stones of the found captured group are changed to unoccupied. 
 	 * 
 	 * @param currentlyCheckedColor
 	 */
 	public void checkStonesOfOneColor(char currentlyCheckedColor) {
 		
-		//go through all stones from top left to bottom
 		for (int x = 0; x < boardDimension; x++) {
 			for (int y = 0; y < boardDimension; y++) {
-				//get the location within the string representation. 
 				int numberInStringRepresentation = x  + y * boardDimension;
 				
 				//if this location has been already seen as part of another group: go to next y
@@ -109,12 +103,8 @@ public class BoardUpdater {
 					continue;
 				}
 				
-				/**
-				 * Check whether this location has a stone of the currently being checked color.
-				 * If so, set 'surrounded' to true and check all neighbors to see whether this 
-				 * stone or group of stones has been captured. Once a unoccupied location is 
-				 * found as a neighbor, 'surrounded' is set to false.
-				 */
+				//If there is a stone of the current color in this location, set surrounded to 
+				//true and check all neighbors
 				if (board.charAt(numberInStringRepresentation) == currentlyCheckedColor) {
 					surrounded = true;
 					surroundedStones.clear();
@@ -136,48 +126,31 @@ public class BoardUpdater {
 	}
 	
 	/**
-	 * Check whether a stone's neighbors are also part of the same group 
-	 * and whether that group is surrounded.
+	 * Get a stone's direct neighbors and check the color of all neighbors.
 	 * 
 	 * @param numberInStringRepresentation
-	 * @return
 	 */
 	public void checkAllNeighbors(int numberInStringRepresentation, char currentlyCheckedColor) {
-		boolean neighborOnBoard;
 		
-		//add this stone (= a stone of the currently checked color) to the list of stones of this 
-		//group and the list of stones of this color that were checked this turn (= after last move)
 		surroundedStones.add(numberInStringRepresentation);
 		checkedStonesThisColor.add(numberInStringRepresentation);
 		
-		//Add all surrounding locations that fall within the board to a to-be-checked list.
-		List<Integer> locationsToCheck = new ArrayList<Integer>();
 		int locationToTheLeft = numberInStringRepresentation - 1;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationToTheLeft, 
-													numberInStringRepresentation, boardDimension);
-		if (neighborOnBoard) {
-			locationsToCheck.add(locationToTheLeft);
-		}
 		int locationToTheRight = numberInStringRepresentation + 1;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationToTheRight, 
-													numberInStringRepresentation, boardDimension);
-		if (neighborOnBoard) {
-			locationsToCheck.add(locationToTheRight);
-		}
 		int locationAbove = numberInStringRepresentation - boardDimension;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationAbove, 
-													numberInStringRepresentation, boardDimension);
-		if (neighborOnBoard) {
-			locationsToCheck.add(locationAbove);
-		}
 		int locationBelow = numberInStringRepresentation + boardDimension;
-		neighborOnBoard = boardState.checkNextLocationBoard(locationBelow, 
+		List<Integer> possibleDirectNeighbors = Arrays.asList(locationToTheLeft, locationToTheRight,
+															locationAbove, locationBelow);
+		List<Integer> locationsToCheck = new ArrayList<Integer>();
+		
+		for (int neighbor : possibleDirectNeighbors) {
+			boolean neighborOnBoard = boardState.checkNextLocationBoard(neighbor, 
 													numberInStringRepresentation, boardDimension);
-		if (neighborOnBoard) {
-			locationsToCheck.add(locationBelow);
+			if (neighborOnBoard) {
+				locationsToCheck.add(neighbor);
+			}
 		}
 		
-		//check the occupation status of all locations in the list that weren't already checked
 		for (int location : locationsToCheck) {
 			if (!checkedPlaces.contains(location)) {
 				checkColor(location, currentlyCheckedColor);
@@ -199,14 +172,11 @@ public class BoardUpdater {
 	public void checkColor(int toBeCheckedLocation, char currentlyCheckedColor) {
 		checkedPlaces.add(toBeCheckedLocation);
 		
-		//if the location is occupied by the currently checked color, it is added to the group
 		if (board.charAt(toBeCheckedLocation) == currentlyCheckedColor) {
 			surroundedStones.add(toBeCheckedLocation);
 			checkAllNeighbors(toBeCheckedLocation, currentlyCheckedColor);
-		//if the location is unoccupied, surrounded is set to false
 		} else if (board.charAt(toBeCheckedLocation) == ProtocolMessages.UNOCCUPIED) {
 			surrounded = false;
 		} 
-		//if the location is of the other color, do nothing
 	}
 }

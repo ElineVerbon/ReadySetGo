@@ -77,7 +77,7 @@ public class Smart4ComputerPlayer extends AbstractClient {
 		
 		boolean opponentCanDoAMove = canOpponentDoAMove(boardDimension, board, color, prevBoards);
 		boolean opponentPassed = opponentsMove.equals(Character.toString(ProtocolMessages.PASS));
-		char winner = boardState.currentWinner(board);
+		char winner = boardState.highestScore(board);
 		if ((!opponentCanDoAMove || opponentPassed) && winner == color) {
 			return Character.toString(ProtocolMessages.PASS);
 		}

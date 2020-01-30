@@ -1,33 +1,19 @@
 package protocol;
 
 /**
- * Protocol for NU5 GO game (final assignment 1).
- * This is version: ‘1.0’
+ * Protocol for NU5 GO game, version: ‘1.0’.
  */
 public class ProtocolMessages {
 
-	/**
-	 * Version of this protocol.
-	 */
+	// Version of this protocol.
 	public static final String VERSION = "1.0";
 	
-	/**
-	 * Delimiter used to separate arguments sent over the network.
-	 */
+	// Delimiter used to separate arguments sent over the network.
 	public static final String DELIMITER = ";";
 	
-	/**
-	 * Signal to indicate unknown message.
-	 */
+	// Signal to indicate unknown message.
 	public static final char ERROR = '?'; 
-			//From either side, indicates that message is not known/understood
 
-	/**
-	 * The following chars are both used by the TUI to receive user input
-	 * when playing with a human player, and by the
-	 * server and client to distinguish messages.
-	 */
-	
 	//Commands to indicate game flow (first messages in a protocol message)
 	public static final char HANDSHAKE = 'H'; 
 		//From client and back again from the server to check the protocol

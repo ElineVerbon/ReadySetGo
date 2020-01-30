@@ -174,7 +174,7 @@ public class ClientHandler implements Runnable, Handler {
 		
 		//Need to wait, otherwise it does not go into the exception
 		try {
-			TimeUnit.SECONDS.sleep(1); //TODO try with shorter time step
+			TimeUnit.SECONDS.sleep(1);
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}

@@ -1,6 +1,7 @@
 package ruleimplementations;
 
 import java.util.ArrayList;
+import ruleimplementations.BoardState;
 import java.util.List;
 
 import protocol.ProtocolMessages;
@@ -16,6 +17,8 @@ public class ScoreCalculator {
 	
 	private int boardDimension;
 	private String board;
+	
+	private BoardState boardState = new BoardState();
 	
 	List<Integer> checkedUnoccupiedPlaces = new ArrayList<Integer>();
 	List<Integer> surroundedArea = new ArrayList<Integer>();
@@ -111,22 +114,22 @@ public class ScoreCalculator {
 		//Add all surrounding locations that fall within the board to a to-be-checked list.
 		List<Integer> locationsToCheck = new ArrayList<Integer>();
 		int locationToTheLeft = numberInStringRepresentation - 1;
-		neighborOnBoard = checkNextLocationBoard(locationToTheLeft, numberInStringRepresentation);
+		neighborOnBoard = boardState.checkNextLocationBoard(locationToTheLeft, numberInStringRepresentation, boardDimension);
 		if (neighborOnBoard) {
 			locationsToCheck.add(locationToTheLeft);
 		}
 		int locationToTheRight = numberInStringRepresentation + 1;
-		neighborOnBoard = checkNextLocationBoard(locationToTheRight, numberInStringRepresentation);
+		neighborOnBoard = boardState.checkNextLocationBoard(locationToTheRight, numberInStringRepresentation, boardDimension);
 		if (neighborOnBoard) {
 			locationsToCheck.add(locationToTheRight);
 		}
 		int locationAbove = numberInStringRepresentation - boardDimension;
-		neighborOnBoard = checkNextLocationBoard(locationAbove, numberInStringRepresentation);
+		neighborOnBoard = boardState.checkNextLocationBoard(locationAbove, numberInStringRepresentation, boardDimension);
 		if (neighborOnBoard) {
 			locationsToCheck.add(locationAbove);
 		}
 		int locationBelow = numberInStringRepresentation + boardDimension;
-		neighborOnBoard = checkNextLocationBoard(locationBelow, numberInStringRepresentation);
+		neighborOnBoard = boardState.checkNextLocationBoard(locationBelow, numberInStringRepresentation, boardDimension);
 		if (neighborOnBoard) {
 			locationsToCheck.add(locationBelow);
 		}
@@ -139,41 +142,6 @@ public class ScoreCalculator {
 		}
 	}
 	
-	/**
-	 * Checks whether a location is located on the board adjacent to the previous location.
-	 * @param nextLocation
-	 * @param previousLocation
-	 * @return onBoard, a boolean that is true when the location is a neighbor on the board
-	 */
-	public boolean checkNextLocationBoard(int nextLocation, int previousLocation) {
-		boolean onBoard = false;
-		
-		// Location is below 0 or above the last intersection
-		if (nextLocation < 0 || nextLocation >= boardDimension * boardDimension) {
-			return onBoard;
-		}
-		
-		int locationNextX = nextLocation % boardDimension;
-		int locationNextY = nextLocation / boardDimension;
-		
-		int locationPreviousX = previousLocation % boardDimension;
-		int locationPreviousY = previousLocation / boardDimension;
-		
-		// x can be 1 off and y the same, or y can be 1 off and x the same for it to be a neighbor
-		if (locationPreviousX == locationNextX) {
-			if (Math.abs(locationPreviousY - locationNextY) == 1) {
-				onBoard = true;
-				return onBoard;
-			}
-		} else if (locationPreviousY == locationNextY) {
-			if (Math.abs(locationPreviousX - locationNextX) == 1) {
-				onBoard = true;
-				return onBoard;
-			}
-		}
-		
-		return onBoard;
-	}
 	/**
 	 * Check the occupation status of a location (unoccupied, black or white).
 	 * 

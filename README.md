@@ -1,6 +1,8 @@
 # ReadySetGo
 Program to play Go against computer players, or to watch Go being played by two computer players.
 
+Take care: this program  __only works if you have Java 11 installed__. Please install Java 11 if necessary.
+
 To get the program up and running, open a command line terminal.
 1. First make a clone of this repository by typing in the following lines in the terminal and hitting enter after each line:
  * mkdir goGameDirectory
@@ -12,7 +14,7 @@ To get the program up and running, open a command line terminal.
 
 _Follow the prompts in the terminal, typing in an IP address (or 'localhost') and a port number_
 
-3. Open a new command line window and start a client by typing __one of these lines__ in the command line and hitting enter:
+3. Open a new command line window and start a client by typing  __one of these lines__  in the command line and hitting enter:
  * ./human
  * ./smart1
  * ./smart2
@@ -20,13 +22,11 @@ _Follow the prompts in the terminal, typing in an IP address (or 'localhost') an
 
 _Follow the prompts in the terminal. If you open 'human', you will need to type in your moves. In the case of 'smartX', you only participate at the start of the exchange (entering the IP address and the port number you want to connect with). Afterwards, the computer will take over and play the game to the end._
 
-4. Open another new command line window and start another client by typing __one of these lines__ in the command line and hitting enter:
+4. Open another new command line window and start another client by typing  __one of these lines__  in the command line and hitting enter:
  * ./human
- * ./smart1
- * ./smart2
- * ./smart3
+ * ./computer
 
-_Again, follow the prompts in the terminal. If you open 'human', you will need to type in your moves. In the case of 'smartX', you will indicate the server you want to connect with, but afterwards the computer will take over._
+_Again, follow the prompts in the terminal. If you open 'human', you will play the game and need to type in your moves. In the case of 'computer', you will indicate which server you want to connect with, but afterwards the computer will take over._
 
 5. Once a client indicates that it has closed the connection, you can type 'ctrl c' to stop the execution and to start another client or server, if wanted.
 

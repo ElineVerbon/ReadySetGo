@@ -28,6 +28,7 @@ To get the program up and running, open a command line terminal.
 _Follow the prompts in the terminal, typing in the board size and a port number_
 
 3. Open a new command line window and start a client by typing  __one of these lines__  in the command line and hitting enter:
+
 **Mac users: **
 
 `./humanPlayer`			_This will start a player of which you can decide the moves._
@@ -35,6 +36,7 @@ _Follow the prompts in the terminal, typing in the board size and a port number_
 `./smartComputerPlayer`	_This will start an automized player that uses a smart(er) strategy._
 
 `./stupidComputerPlayer` 	_This will start an automized player that uses a less smart stategy._
+
 
 **Windows users: **
 

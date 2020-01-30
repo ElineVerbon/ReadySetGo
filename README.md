@@ -5,12 +5,18 @@ Take care: this program  __only works if you have Java 11 installed__. Please in
 
 To get the program up and running, open a command line terminal.
 1. First make a clone of this repository by typing in the following lines in the terminal and hitting enter after each line:
- * mkdir goGameDirectory
- * cd goGameDirectory
- * git clone https://github.com/ElineVerbon/ReadySetGo.git
- * cd ReadySetGo
+
+`mkdir goGameDirectory`
+
+`cd goGameDirectory`
+
+`git clone https://github.com/ElineVerbon/ReadySetGo.git`
+
+`cd ReadySetGo`
+
 2. Then, start the server by typing this line in the command line and hitting enter:
- * ./server
+
+`./server`
 
 _Follow the prompts in the terminal, typing in an IP address (or 'localhost') and a port number_
 

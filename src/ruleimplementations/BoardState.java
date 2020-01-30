@@ -10,6 +10,9 @@ public class BoardState {
 	
 	private ScoreCalculator scoreCalculator;
 	
+	/**
+	 * Constructor.
+	 */
 	public BoardState(ScoreCalculator scoreCalculator) {
 		this.scoreCalculator = scoreCalculator;
 	}

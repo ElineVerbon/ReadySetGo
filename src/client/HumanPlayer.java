@@ -74,6 +74,12 @@ public class HumanPlayer extends AbstractClient {
 				validInput = true;
 			} else if (move.equals("N")) {
 				showHint(board, boardDimension, color, prevBoards);
+				//Sleep to allow the GUI time to update the board in between moves.
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+				}
+				gogui.removeHintIdicator();
 			} else {
 				valid = moveValidator.processMove(move, boardDimension, board, color, prevBoards);
 				if  (!valid) {
@@ -110,7 +116,8 @@ public class HumanPlayer extends AbstractClient {
 		if (!valid) {
 			clientTUI.showMessage("No valid moves are left, you can only pass.");
 		} else {
-			clientTUI.showMessage("Check the board for a possible valid move!");
+			clientTUI.showMessage("Check the board for a possible valid move "
+															+ "(it will be shown for 1 sec)!");
 			int hintX = location % boardDimension;
 			int hintY = location / boardDimension;
 			gogui.addHintIndicator(hintX, hintY);

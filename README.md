@@ -14,21 +14,21 @@ To get the program up and running, open a command line terminal.
 
 `cd ReadySetGo`
 
-**For Windows users
-
 2. Then, start the server by typing this line in the command line and hitting enter:
-**Mac users: **
+
+__Mac users:__
 
 `./server`
 
-**Windows users: **
+__Windows users:__
 
 `server.bat`
 
 _Follow the prompts in the terminal, typing in the board size and a port number_
 
 3. Open a new command line window and start a client by typing  __one of these lines__  in the command line and hitting enter:
-**Mac users: **
+
+__Mac users:__
 
 `./humanPlayer`			_This will start a player of which you can decide the moves._
 
@@ -36,7 +36,7 @@ _Follow the prompts in the terminal, typing in the board size and a port number_
 
 `./stupidComputerPlayer` 	_This will start an automized player that uses a less smart stategy._
 
-**Windows users: **
+__Windows users:__
 
 `humanPlayer.bat`			_This will start a player of which you can decide the moves._
 
@@ -46,7 +46,7 @@ _Follow the prompts in the terminal, typing in the board size and a port number_
 
 _Follow the prompts in the terminal. If you open the humanPlayer, you will need to type in your moves. In the case of one of the computer players, you only participate at the start of the exchange (entering the IP address and the port number you want to connect with). Afterwards, the computer will take over and play the game to the end._
 
-4. Open another new command line window and repeat step 3.
+4. Open another new command line window and repeat step 3, choosing the same or a different player according to your wish.
 
 5. Once a client indicates that it has closed the connection, you can type 'ctrl c' to stop the execution and to start another client or server, if wanted.
 

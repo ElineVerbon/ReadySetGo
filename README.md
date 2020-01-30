@@ -15,18 +15,16 @@ To get the program up and running, open a command line terminal.
 _Follow the prompts in the terminal, typing in an IP address (or 'localhost') and a port number_
 
 3. Open a new command line window and start a client by typing  __one of these lines__  in the command line and hitting enter:
- * ./human
- * ./smart1
- * ./smart2
- * ./smart3
 
-_Follow the prompts in the terminal. If you open 'human', you will need to type in your moves. In the case of 'smartX', you only participate at the start of the exchange (entering the IP address and the port number you want to connect with). Afterwards, the computer will take over and play the game to the end._
+`./humanPlayer`			_This will start a player of which you can decide the moves._
 
-4. Open another new command line window and start another client by typing  __one of these lines__  in the command line and hitting enter:
- * ./human
- * ./computer
+`./smartComputerPlayer`	_This will start an automized player that uses a smart(er) strategy._
 
-_Again, follow the prompts in the terminal. If you open 'human', you will play the game and need to type in your moves. In the case of 'computer', you will indicate which server you want to connect with, but afterwards the computer will take over._
+`./stupidComputerPlayer` 	_This will start an automized player that uses a stupid(er) stategy._
+
+_Follow the prompts in the terminal. If you open the humanPlayer, you will need to type in your moves. In the case of one of the computer players, you only participate at the start of the exchange (entering the IP address and the port number you want to connect with). Afterwards, the computer will take over and play the game to the end._
+
+4. Open another new command line window and repeat step 3.
 
 5. Once a client indicates that it has closed the connection, you can type 'ctrl c' to stop the execution and to start another client or server, if wanted.
 

@@ -12,7 +12,6 @@ import exceptions.ExitProgram;
 import exceptions.ProtocolException;
 import exceptions.ServerUnavailableException;
 import protocol.ProtocolMessages;
-import server.Handler;
 
 public class ServerHandler {
 	/** The socket and In- and OutputStreams. */

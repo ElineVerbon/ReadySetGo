@@ -26,7 +26,7 @@ _Follow the prompts in the terminal, typing in the board size and a port number_
 
 `./smartComputerPlayer`	_This will start an automized player that uses a smart(er) strategy._
 
-`./stupidComputerPlayer` 	_This will start an automized player that uses a stupid(er) stategy._
+`./stupidComputerPlayer` 	_This will start an automized player that uses a less smart stategy._
 
 _Follow the prompts in the terminal. If you open the humanPlayer, you will need to type in your moves. In the case of one of the computer players, you only participate at the start of the exchange (entering the IP address and the port number you want to connect with). Afterwards, the computer will take over and play the game to the end._
 

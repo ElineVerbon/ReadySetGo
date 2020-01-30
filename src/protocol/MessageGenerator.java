@@ -16,6 +16,14 @@ public class MessageGenerator implements GeneratorInterface {
 	 * Message sent by the client only.
 	 */
 	
+	public String clientHandshakeMessage(String wantedVersion, String nameClient, 
+																		char wantedColor) {
+		String handshakeToServer = ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER + 
+				wantedVersion + ProtocolMessages.DELIMITER + nameClient + 
+				ProtocolMessages.DELIMITER + wantedColor;
+		return handshakeToServer;
+	}
+	
 	public String moveMessage(String move) {
 		
 		String moveMessage = ProtocolMessages.MOVE + ProtocolMessages.DELIMITER + move;
@@ -25,6 +33,7 @@ public class MessageGenerator implements GeneratorInterface {
 	/**
 	 * Messages sent by the server only.
 	 */
+	
 	public String startGameMessage(String board, char color) {
 		String startMessage = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
 				+ board + ProtocolMessages.DELIMITER + color;

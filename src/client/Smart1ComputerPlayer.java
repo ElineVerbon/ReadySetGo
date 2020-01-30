@@ -3,11 +3,11 @@ package client;
 import java.util.List;
 
 import protocol.ProtocolMessages;
+import ruleimplementations.BoardState;
 import ruleimplementations.MoveValidator;
-import ruleimplementations.ScoreCalculator;
 
 /**
- * A computer player that can play Go. 
+ * A automated computer player that can play Go. 
  * 
  * It will first check whether the other player can do another move. If not, it will 
  * check whether it is currently winning. If so, it will pass.
@@ -20,11 +20,11 @@ public class Smart1ComputerPlayer extends AbstractClient {
 	private int computerPlayerNumber;
 
 	private MoveValidator moveValidator = new MoveValidator();
-	private ScoreCalculator scoreCalculator = new ScoreCalculator();
+	private BoardState boardState = new BoardState();
+	
 	
 	/**
-	 * Constructs a new GoClient. Initializes the TUI.
-	 * Does not initialize the GUI, as board size has to be known.
+	 * Constructor.
 	 */
 	public Smart1ComputerPlayer()  {
 		super();
@@ -33,9 +33,7 @@ public class Smart1ComputerPlayer extends AbstractClient {
 	}
 	
 	/**
-	 * This method starts a new GoClient.
-	 * 
-	 * @param args 
+	 * Start a computer player. 
 	 */
 	public static void main(String[] args) {
 		(new Smart1ComputerPlayer()).start();
@@ -52,17 +50,20 @@ public class Smart1ComputerPlayer extends AbstractClient {
 	
 
 	/**
-	 * Go from top left to bottom right of the board, looking for an unoccupied spot 
-	 * that is a valid move.
+	 * Decide on the next move.  
 	 * 
-	 * Check whether the opponent can still do a move. If not, calculate score. If highest score:
-	 * pass.
+	 * First check whether the opponent can still do a move. If not, calculate score. If highest 
+	 * score: pass. Then go from top left to bottom right of the board, looking for an unoccupied
+	 * spot that is a valid move.
 	 * 
 	 * @param opponentsMove
 	 * @param boardDimension
 	 * @param board, a String representation of the current board state
 	 * @param color, the color of the player
 	 * @param prevBoards, a list of all already seen previous board states
+	 * 
+	 * @return a String representing the move: an integer that represents an intersection on the
+	 * 		board or "P".
 	 */
 	
 	@Override
@@ -74,8 +75,7 @@ public class Smart1ComputerPlayer extends AbstractClient {
 		
 		boolean opponentCanDoAMove = canOpponentDoAMove(move, boardDimension, 
 																		board, color, prevBoards);
-		//TODO get komi from game!
-		char winner = currentWinner(board, 0.5);
+		char winner = boardState.currentWinner(board);
 		
 		if (!opponentCanDoAMove && winner == color) {
 			return Character.toString(ProtocolMessages.PASS);
@@ -124,18 +124,5 @@ public class Smart1ComputerPlayer extends AbstractClient {
 		}
 		
 		return opponentCanDoAMove;
-	}
-	
-	public char currentWinner(String board, double komi) {
-		
-		scoreCalculator.calculateScores(board, komi);
-		double scoreBlack = scoreCalculator.getScoreBlack();
-		double scoreWhite = scoreCalculator.getScoreWhite();
-		
-		if (scoreBlack > scoreWhite) {
-			return ProtocolMessages.BLACK;
-		} else {
-			return ProtocolMessages.WHITE;
-		}
 	}
 }

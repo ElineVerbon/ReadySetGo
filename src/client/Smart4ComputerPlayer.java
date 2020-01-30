@@ -10,13 +10,15 @@ import ruleimplementations.MoveValidator;
 import ruleimplementations.ScoreCalculator;
 
 /**
- * This is an automatized Go player. It will first attempt to fill the left five 
- * rows of the board. Once a location is surrounded by the own color, it is not 
- * filled. Once the first five columns are filled, it will move on to the next five
- * until the board it filled.
+ * A computer player that can play Go. 
  * 
- * @author eline.verbon
- *
+ * It will first check whether the other player has to pass with the current board state 
+ * or it has just passed. If so, the player will check whether it is currently winning. 
+ * If so, it will pass.
+ * 
+ * It will then attempt to fill the left five columns, while leaving little islands (an
+ * empty location fully surrounded by the own color). Once the first five columns are filled, 
+ * it will move on to the next five until the board it filled.
  */
 
 public class Smart4ComputerPlayer extends AbstractClient {
@@ -26,15 +28,23 @@ public class Smart4ComputerPlayer extends AbstractClient {
 	private BoardUpdater boardUpdater = new BoardUpdater();
 	private BoardState boardState = new BoardState();
 	
-	
+	/**
+	 * Constructor.
+	 */
 	public Smart4ComputerPlayer()  {
 		super();
 	}
 	
-	
+	/**
+	 * Starts a computer player. 
+	 */
 	public static void main(String[] args) {
 		(new Smart4ComputerPlayer()).start();
 	}
+	
+	/**
+	 * Do the handshake.
+	 */
 	
 	@Override
 	public void doHandshake() {
@@ -44,6 +54,13 @@ public class Smart4ComputerPlayer extends AbstractClient {
 
 	/**
 	 * Decide on a move.
+	 * 
+	 * First check whether the other player has to pass with the current board state or it has just
+	 * passed. If so, check whether it is currently winning. If so, it will pass.
+	 * 
+	 * Then attempt to fill the left five columns, while leaving little islands (an empty location
+	 * fully surrounded by the own color). Once the first five columns are filled, move on to the
+	 * next five columns until the board it filled.
 	 * 
 	 * @param opponentsMove
 	 * @param boardDimension
@@ -58,12 +75,9 @@ public class Smart4ComputerPlayer extends AbstractClient {
 	public String getMove(String opponentsMove, int boardDimension, 
 			String board, char color, List<String> prevBoards) {
 		
-		String move = null;
-		
-		boolean opponentCanDoAMove = canOpponentDoAMove(move, boardDimension, 
-																		board, color, prevBoards);
+		boolean opponentCanDoAMove = canOpponentDoAMove(boardDimension, board, color, prevBoards);
 		boolean opponentPassed = opponentsMove.equals(Character.toString(ProtocolMessages.PASS));
-		char winner = currentWinner(board, KOMI);
+		char winner = boardState.currentWinner(board);
 		if ((!opponentCanDoAMove || opponentPassed) && winner == color) {
 			return Character.toString(ProtocolMessages.PASS);
 		}
@@ -175,9 +189,8 @@ public class Smart4ComputerPlayer extends AbstractClient {
 	 * @return true when the opponent can do a move, false when it cannot
 	 */
 	
-	public boolean canOpponentDoAMove(String opponentsMove, int boardDimension, 
-			String board, char color, List<String> prevBoards) {
-		
+	public boolean canOpponentDoAMove(int boardDimension, String board, char color, 
+																List<String> prevBoards) {
 		boolean valid = true;
 		boolean opponentCanDoAMove = true;
 		String move = "";
@@ -188,7 +201,7 @@ public class Smart4ComputerPlayer extends AbstractClient {
 			opponentsColor = ProtocolMessages.BLACK;
 		}
 		
-		//go through board from top left to bottom right
+		//go through board from top left to bottom right to find a valid move
 		for (int c = 0; c < board.length(); c++) {
 			if (board.charAt(c) == ProtocolMessages.UNOCCUPIED) {
 				move = Integer.toString(c);
@@ -209,26 +222,6 @@ public class Smart4ComputerPlayer extends AbstractClient {
 	}
 	
 	/**
-	 * Given a board and a komi, returns which color currently has the highest score.
-	 * 
-	 * @param board, s string representation of the current board
-	 * @param komi, a double that represents the points subtracted from black's score
-	 * @return a char, representing the color that currently has the highest score
-	 */
-	public char currentWinner(String board, double komi) {
-		
-		scoreCalculator.calculateScores(board, komi);
-		double scoreBlack = scoreCalculator.getScoreBlack();
-		double scoreWhite = scoreCalculator.getScoreWhite();
-		
-		if (scoreBlack > scoreWhite) {
-			return ProtocolMessages.BLACK;
-		} else {
-			return ProtocolMessages.WHITE;
-		}
-	}
-	
-	/**
 	 * Given a certain board, a move and the current player's color, determines
 	 * whether the move leads to a reduction in the own score.
 	 * 
@@ -239,13 +232,13 @@ public class Smart4ComputerPlayer extends AbstractClient {
 	 */
 	public boolean doesMoveReduceOwnScore(int move, String board, char color, int boardDimension) {
 		
-		scoreCalculator.calculateScores(board, 0.5);
+		scoreCalculator.calculateScores(board);
 		double scoreBlack = scoreCalculator.getScoreBlack();
 		double scoreWhite = scoreCalculator.getScoreWhite();
 		
 		String newBoard = board.substring(0, move) + color + board.substring(move + 1);
 		newBoard = boardUpdater.determineNewBoard(newBoard, color);
-		scoreCalculator.calculateScores(newBoard, KOMI);
+		scoreCalculator.calculateScores(newBoard);
 		double scoreBlackNew = scoreCalculator.getScoreBlack();
 		double scoreWhiteNew = scoreCalculator.getScoreWhite();
 		
@@ -258,9 +251,6 @@ public class Smart4ComputerPlayer extends AbstractClient {
 				return true;
 			}
 		}
-		
 		return false;
 	}
-	
-	
 }

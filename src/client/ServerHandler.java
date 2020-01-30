@@ -11,26 +11,41 @@ import java.net.Socket;
 import exceptions.ExitProgram;
 import exceptions.ProtocolException;
 import exceptions.ServerUnavailableException;
+import protocol.MessageGenerator;
 import protocol.ProtocolMessages;
 
+/**
+ * Handles the communication between a given player and the server it connected to.
+ */
+
 public class ServerHandler {
-	/** The socket and In- and OutputStreams. */
+	
+	// The socket and In- and OutputStreams.
 	private BufferedReader in;
 	private BufferedWriter out;
 	private Socket sock;
 	
-	private String wantedVersion; //set in the constructor
-	private String usedVersion; //given back by server upon handshake
+	// Version information
+	private String wantedVersion;
+	private String usedVersion;
 	
-	/** The connected human client. */
-	ClientTUI clientTUI;
+	// The TUI of the connected client.
+	private ClientTUI clientTUI;
 	
-	boolean successfulConnection;
-	boolean successfulHandshake;
+	//The message generator
+	private MessageGenerator messageGenerator;
 	
+	//Game states
+	private boolean successfulConnection;
+	private boolean successfulHandshake;
+	
+	/**
+	 * Constructor.
+	 */
 	public ServerHandler(ClientTUI givenClientTUI) {
 		clientTUI = givenClientTUI;
 		wantedVersion = "1.0";
+		messageGenerator = new MessageGenerator();
 	}
 	
 	public String getVersion() {
@@ -46,12 +61,10 @@ public class ServerHandler {
 	}
 	
 	/**
-	 * Creates a connection to the server. Requests the IP and port to 
-	 * connect to via the TUI.
+	 * Creates a connection to a server with the user-defined IP and port number. 
 	 * 
-	 * The method continues to ask for an IP and port and attempts to connect 
-	 * until a connection is established or until the user indicates to exit 
-	 * the program.
+	 * The method continues to ask for an IP and port and attempts to connect until either 
+	 * a connection is established or the user indicates he/she doesn't want to try anymore.
 	 * 
 	 * @throws ExitProgram if a connection is not established and the user 
 	 * 				       indicates to want to exit the program.
@@ -59,10 +72,9 @@ public class ServerHandler {
 	 */
 	
 	public void createConnectionWithUserInput() {
-		//variable to allow to try to connect a second time if not successful
 		boolean reconnect = true;
 		
-		sock = null; //to enable restarts
+		sock = null; //to enable a new game to be started after an end game
 		
 		while (reconnect) {
 			while (sock == null) {
@@ -93,7 +105,6 @@ public class ServerHandler {
 	 * Creates a connection to the server with the given IP and port.
 	 * 
 	 * @throws IO Exception if the connection cannot be made 
-	 * 
 	 * @ensures serverSock contains a valid socket connection to a server
 	 */
 	public void createConnection(InetAddress addr, int port) throws IOException {
@@ -113,14 +124,11 @@ public class ServerHandler {
 	}
 	
 	/**
-	 * Get all the necessary components of the handshake message via the console.
-	 * Then paste them together according to the protocol. Send the message to the
-	 * server and wait for a response.
+	 * Send a handshake message, based on user input, to the server and wait for the reply.
 	 */
 	
 	public void doHandshakeWithUserInput() {
 		
-		//get name of client
 		boolean correctName = false;
 		String nameClient = "";
 		while (!correctName) {
@@ -133,7 +141,6 @@ public class ServerHandler {
 			}
 		}
 		
-		//get user color preference from the console
 		boolean correctColor = false;
 		char wantedColor = '!';
 		while (!correctColor) {
@@ -149,59 +156,41 @@ public class ServerHandler {
 			}
 		}
 
-		//perform the handshake
 		doHandshake(nameClient, wantedColor);
 	}
 	
 	/**
-	 * Send a handshake to the server. Follow this protocol:
-	 * PROTOCOL.handshake + PROTOCOL.delimiter + requestedVersion + PROTOCOL.delimiter + naamClient 
-	 * optionally these at the end: + PROTOCOL.delimiter + PROTOCOL.white/black
+	 * Send a handshake to the server containing the client's name and the wanted color.
 	 * 
 	 * After sending, wait for response, which should be formatted as follows:
 	 * PROTOCOL.handshake + PROTOCOL.delimiter + finalVersion (string) 
 	 * optionally these at the end: PROTOCOL.delimiter + message (string)
+	 * 
 	 * @throws ProtocolException 
 	 */
 	
 	public void doHandshake(String nameClient, char wantedColor) {
 		
-		//assemble the handshake message that will be sent to the server.
-		String message = ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER + wantedVersion + 
-				ProtocolMessages.DELIMITER + nameClient + ProtocolMessages.DELIMITER + wantedColor;
+		sendToGame(messageGenerator.clientHandshakeMessage(wantedVersion, nameClient, wantedColor));
 		
-		//send handshake message to the server, read the response.
 		String line = "";
-		try {
-			out.write(message);
-			out.newLine();
-			out.flush();
-			line = readLineFromServer();
-			if (line == null) {
-				return;
-			}
-		} catch (IOException e) {
-			clientTUI.showMessage("The server cannot be reached anymore for the handshake.");
+		line = readLineFromServer();
+		if (line == null) {
+			return;
 		}
 		
-		//check whether the handshake character came first, if not: throw exception
 		String[] serverResponse = line.split(ProtocolMessages.DELIMITER);
 		if (line.charAt(0) != ProtocolMessages.HANDSHAKE) {
 			clientTUI.showMessage("The server did not keep to the protocol during the handshake.");
 		}
 		
-		//get version of the communication protocol and print message(s)
 		usedVersion = serverResponse[1]; 
-		//get message if available
 		if (serverResponse.length > 2) {
-			//correct response was received. Print own message
 			clientTUI.showMessage("You connected to a server. Communication will proceed " +
 					"according to version " + usedVersion + ".\n" +
 					"You received the following message from the server: ");
-			//print server message
 			clientTUI.showMessage(serverResponse[2]);
 		} else {
-			//correct response was received. Print own message (no message received).
 			clientTUI.showMessage("You connected to a server. Communication will proceed " +
 					"according to version " + usedVersion + ".\n");
 		}
@@ -219,14 +208,12 @@ public class ServerHandler {
 		
 		if (in != null) {
 			try {
-				// Read and return answer from Server
 				answer = in.readLine();
 				
 				if (answer == null) {
 					clientTUI.showMessage("\nServer disconnected. The connection will be closed.");
 					closeConnection();
 				}
-				return answer;
 			} catch (IOException e) {
 				clientTUI.showMessage("\nServer cannot be reached. The connection will be closed.");
 				closeConnection();
@@ -234,7 +221,6 @@ public class ServerHandler {
 		} else {
 			clientTUI.showMessage("Could not read from server.");
 		}
-		
 		return answer;
 	}
 	
@@ -252,15 +238,13 @@ public class ServerHandler {
 		} catch (IOException e) {
 			e.printStackTrace();
 			clientTUI.showMessage("Sorry, the server cannot be reached!");
-			//TODO shut down?
+			clientTUI.showMessage("We will close the connection.");
+			closeConnection();
 		}
 	}
 	
 	/**
 	 * Resets the serverSocket and In- and OutputStreams to null.
-	 * 
-	 * Always make sure to close current connections via shutdown() 
-	 * before calling this method!
 	 */
 	public void clearConnection() {
 		sock = null;
@@ -269,8 +253,7 @@ public class ServerHandler {
 	}
 	
 	/**
-	 * Closes the connection by closing the In- and OutputStreams, as 
-	 * well as the serverSocket.
+	 * Closes the socket.
 	 */
 	public void closeConnection() {
 		clientTUI.showMessage("Closing the connection...");

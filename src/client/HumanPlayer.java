@@ -6,17 +6,16 @@ import protocol.*;
 import ruleimplementations.MoveValidator;
 
 /**
- * Class that allows someone play GO by using the console to input moves
- * and checking the status of the game on a GUI. 
- *
- * User needs to now the IP address of the server and the port on which the server
- * is listening to start the game.
+ * A class representing a player that makes moves based on user input.
  */
 
 public class HumanPlayer extends AbstractClient {
 	
 	private MoveValidator moveValidator = new MoveValidator();
 	
+	/**
+	 * Constructor.
+	 */
 	public HumanPlayer() {
 		super();
 	}
@@ -52,7 +51,6 @@ public class HumanPlayer extends AbstractClient {
 		boolean validInput = false;
 		boolean valid;
 		
-		/** Let the player know its his/her turn and what the opponent did. */
 		if (opponentsMove.equals("null")) {
 			clientTUI.showMessage("\nYou get the first move! " + 
 					"Please check the GUI for the board size.");
@@ -90,7 +88,7 @@ public class HumanPlayer extends AbstractClient {
 	}
 		
 	/**
-	 * Shows an option for a valid move.
+	 * Shows an option for a valid move or tells the user it can only pass.
 	 */
 	public void showHint(String board, int boardDimension, char color, List<String> prevBoards) {
 			
@@ -122,9 +120,9 @@ public class HumanPlayer extends AbstractClient {
 	/**
 	 * Communicate the result to the client and update the GUI.
 	 * 
-	 * @param validity, a character indicating validity of the move
-	 * @param boardOrMessage, a String containing the board (if valid move) or (if invalid move)
-	 * 					a message or nothing
+	 * @param validity, a one-character String ("V" or "I") indicating validity of the move
+	 * @param boardOrMessage, a String containing the board (if valid move) or
+	 * 					(in case of an invalid move) either a message or nothing
 	 */
 	public void getResult(String validity, String boardOrMessage, boolean doublePass) {
 		

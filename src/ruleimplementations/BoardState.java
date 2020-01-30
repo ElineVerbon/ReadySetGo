@@ -1,5 +1,7 @@
 package ruleimplementations;
 
+import protocol.ProtocolMessages;
+
 /**
  * Class with methods that relate to the current board state.
  * 
@@ -8,6 +10,9 @@ package ruleimplementations;
  */
 
 public class BoardState {
+	
+	private ScoreCalculator scoreCalculator = new ScoreCalculator();
+	
 	/**
 	 * Checks whether a location is located on the board adjacent to the previous location.
 	 * 
@@ -44,5 +49,18 @@ public class BoardState {
 		}
 		
 		return onBoard;
+	}
+	
+	public char currentWinner(String board) {
+		
+		scoreCalculator.calculateScores(board);
+		double scoreBlack = scoreCalculator.getScoreBlack();
+		double scoreWhite = scoreCalculator.getScoreWhite();
+		
+		if (scoreBlack > scoreWhite) {
+			return ProtocolMessages.BLACK;
+		} else {
+			return ProtocolMessages.WHITE;
+		}
 	}
 }

@@ -6,10 +6,9 @@ import protocol.ProtocolMessages;
 import ruleimplementations.MoveValidator;
 
 /**
- * A computer player that can play Go. It will look through the board and choose the first
- * available unoccupied spot for its move if not invalid. If not valid moves, pass.
- * @author eline.verbon
- *
+ * A computer player that can play Go. 
+ * It will look through the board and choose the first unoccupied spot for its move 
+ * if it is valid. If no valid moves, pass.
  */
 
 public class StupidNonRandomComputerPlayer extends AbstractClient {
@@ -20,8 +19,7 @@ public class StupidNonRandomComputerPlayer extends AbstractClient {
 	private MoveValidator moveValidator = new MoveValidator();
 	
 	/**
-	 * Constructs a new GoClient. Initializes the TUI.
-	 * Does not initialize the GUI, as board size has to be known.
+	 * Constructor.
 	 */
 	public StupidNonRandomComputerPlayer() {
 		super();
@@ -30,9 +28,7 @@ public class StupidNonRandomComputerPlayer extends AbstractClient {
 	}
 	
 	/**
-	 * This method starts a new GoClient.
-	 * 
-	 * @param args 
+	 * Starts a computer player. 
 	 */
 	public static void main(String[] args) {
 		(new StupidNonRandomComputerPlayer()).start();
@@ -48,6 +44,7 @@ public class StupidNonRandomComputerPlayer extends AbstractClient {
 	
 
 	/**
+	 * Decide on a move.
 	 * Go from top left to bottom right of the board, looking for an unoccupied spot 
 	 * that is a valid move.
 	 * 
@@ -77,7 +74,6 @@ public class StupidNonRandomComputerPlayer extends AbstractClient {
 		if (!valid) {
 			move = Character.toString(ProtocolMessages.PASS);
 		}
-		
 		return move;
 	}
 }

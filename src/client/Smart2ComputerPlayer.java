@@ -5,6 +5,7 @@ import java.util.List;
 import protocol.ProtocolMessages;
 import ruleimplementations.MoveValidator;
 import ruleimplementations.ScoreCalculator;
+import ruleimplementations.BoardState;
 import ruleimplementations.BoardUpdater;
 
 /**
@@ -17,10 +18,6 @@ import ruleimplementations.BoardUpdater;
  * unoccupied location that is a valid move. 
  * Once found, it will check whether the move is only suicide (removal of own stones, 
  * no removal of other stones). If it is, it will continue looking for a move. 
- * 
- * NB: but that does not make it much smarter! Because white might then put a stone there
- * and remove it.
- * 
  * If there are no valid moves that are not only suicide, it will pass.
  */
 
@@ -31,10 +28,10 @@ public class Smart2ComputerPlayer extends AbstractClient {
 	private MoveValidator moveValidator = new MoveValidator();
 	private ScoreCalculator scoreCalculator = new ScoreCalculator();
 	private BoardUpdater boardUpdater = new BoardUpdater();
+	private BoardState boardState = new BoardState();
 	
 	/**
-	 * Constructs a new GoClient. Initializes the TUI.
-	 * Does not initialize the GUI, as board size has to be known.
+	 * Constructor.
 	 */
 	public Smart2ComputerPlayer()  {
 		super();
@@ -43,9 +40,7 @@ public class Smart2ComputerPlayer extends AbstractClient {
 	}
 	
 	/**
-	 * This method starts a new GoClient.
-	 * 
-	 * @param args 
+	 * Starts a computer player. 
 	 */
 	public static void main(String[] args) {
 		(new Smart2ComputerPlayer()).start();
@@ -62,11 +57,11 @@ public class Smart2ComputerPlayer extends AbstractClient {
 	
 
 	/**
-	 * Go from top left to bottom right of the board, looking for an unoccupied spot 
-	 * that is a valid move.
+	 * Decide on the next move.
 	 * 
 	 * Check whether the opponent can still do a move. If not, calculate score. If highest score:
-	 * pass.
+	 * pass.Go from top left to bottom right of the board, looking for an unoccupied spot 
+	 * that is a valid move.
 	 * 
 	 * @param opponentsMove
 	 * @param boardDimension
@@ -79,18 +74,14 @@ public class Smart2ComputerPlayer extends AbstractClient {
 	public String getMove(String opponentsMove, int boardDimension, 
 			String board, char color, List<String> prevBoards) {
 		
-		String move = "";
-		boolean valid = false;
-		
-		boolean opponentCanDoAMove = canOpponentDoAMove(move, boardDimension, 
-																		board, color, prevBoards);
-		//TODO get komi from game!
-		char winner = currentWinner(board, 0.5);
-		
+		boolean opponentCanDoAMove = canOpponentDoAMove(boardDimension, board, color, prevBoards);
+		char winner = boardState.currentWinner(board);
 		if (!opponentCanDoAMove && winner == color) {
 			return Character.toString(ProtocolMessages.PASS);
 		}
-				
+		
+		String move = "";
+		boolean valid = false;		
 		for (int c = 0; c < board.length(); c++) {
 			if (board.charAt(c) == ProtocolMessages.UNOCCUPIED) {
 				move = Integer.toString(c);
@@ -106,7 +97,16 @@ public class Smart2ComputerPlayer extends AbstractClient {
 		return Character.toString(ProtocolMessages.PASS);
 	}
 	
-	public boolean canOpponentDoAMove(String opponentsMove, int boardDimension, 
+	/**
+	 * Check whether the opponent can still do a move.
+	 * 
+	 * @param boardDimension
+	 * @param board, a String representation of the current board state
+	 * @param color, the color of the player
+	 * @param prevBoards, a list of all already seen previous board states
+	 * @return true when the opponent can still do a move, false if it cannot
+	 */
+	public boolean canOpponentDoAMove(int boardDimension, 
 			String board, char color, List<String> prevBoards) {
 		
 		boolean valid = true;
@@ -119,7 +119,6 @@ public class Smart2ComputerPlayer extends AbstractClient {
 			opponentsColor = ProtocolMessages.BLACK;
 		}
 		
-		//go through board from top left to bottom right
 		for (int c = 0; c < board.length(); c++) {
 			if (board.charAt(c) == ProtocolMessages.UNOCCUPIED) {
 				move = Integer.toString(c);
@@ -140,28 +139,8 @@ public class Smart2ComputerPlayer extends AbstractClient {
 	}
 	
 	/**
-	 * Given a board and a komi, returns which color currently has the highest score.
-	 * 
-	 * @param board, s string representation of the current board
-	 * @param komi, a double that represents the points subtracted from black's score
-	 * @return a char, representing the color that currently has the highest score
-	 */
-	public char currentWinner(String board, double komi) {
-		
-		scoreCalculator.calculateScores(board, komi);
-		double scoreBlack = scoreCalculator.getScoreBlack();
-		double scoreWhite = scoreCalculator.getScoreWhite();
-		
-		if (scoreBlack > scoreWhite) {
-			return ProtocolMessages.BLACK;
-		} else {
-			return ProtocolMessages.WHITE;
-		}
-	}
-	
-	/**
 	 * Given a certain board, a move and the current player's color, determines
-	 * whether the move leads to a reduction in the own score.
+	 * whether the move leads to a reduction of only the own score.
 	 * 
 	 * @param move, an integer of the location where is stone is to be placed
 	 * @param board, a string representation of the current board
@@ -170,13 +149,13 @@ public class Smart2ComputerPlayer extends AbstractClient {
 	 */
 	public boolean doesMoveReduceOwnScore(int move, String board, char color) {
 		
-		scoreCalculator.calculateScores(board, 0.5);
+		scoreCalculator.calculateScores(board);
 		double scoreBlack = scoreCalculator.getScoreBlack();
 		double scoreWhite = scoreCalculator.getScoreWhite();
 		
 		String newBoard = board.substring(0, move) + color + board.substring(move + 1);
 		newBoard = boardUpdater.determineNewBoard(newBoard, color);
-		scoreCalculator.calculateScores(newBoard, 0.5);
+		scoreCalculator.calculateScores(newBoard);
 		double scoreBlackNew = scoreCalculator.getScoreBlack();
 		double scoreWhiteNew = scoreCalculator.getScoreWhite();
 		

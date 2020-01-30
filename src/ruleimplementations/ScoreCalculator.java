@@ -14,6 +14,8 @@ public class ScoreCalculator {
 	private double scoreWhite;
 	private double scoreBlack;
 	
+	public static final double KOMI = 0.5;
+	
 	private int boardDimension;
 	private String board;
 	
@@ -40,7 +42,7 @@ public class ScoreCalculator {
 	 * @param komi
 	 * @return
 	 */
-	public synchronized void calculateScores(String givenBoard, double komi) {
+	public synchronized void calculateScores(String givenBoard) {
 		scoreWhite = 0.0;
 		scoreBlack = 0.0;
 		
@@ -51,7 +53,7 @@ public class ScoreCalculator {
 		
 		countStones();
 		
-		scoreBlack -= komi;
+		scoreBlack -= KOMI;
 	}
 	
 	/**

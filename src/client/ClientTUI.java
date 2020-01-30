@@ -10,12 +10,13 @@ import protocol.ProtocolMessages;
 
 /** 
  * This class is responsible for getting user input from the console.
- *
  */
 
 public class ClientTUI {
 	
-	/** Constructor, connected to the client that called the constructor. */
+	/** 
+	 * Constructor. 
+	 */
 	public ClientTUI() {
 	}
 	
@@ -29,10 +30,10 @@ public class ClientTUI {
 	}
 
 	/**
-	 * Ask the user to input a valid IP. If it is not valid, show a message and ask
-	 * again.
+	 * Ask the user for a valid IP. If it is invalid, ask again.
 	 * 
-	 * @return a valid IP
+	 * @param question, a String representing the question to show to the user
+	 * @return a user-defined valid IP
 	 */
 	public InetAddress getIp(String message) {
 		showMessage(message);
@@ -64,11 +65,11 @@ public class ClientTUI {
 	/**
 	 * Prints the question and asks the user to input a String.
 	 * 
-	 * @param question The question to show to the user
-	 * @return The user input as a String
+	 * @param question, a String representing the question to show to the user
+	 * @return a user-defined String
 	 */
 	public String getString(String question) {
-		System.out.println(question);
+		showMessage(question);
 		String userInput = "";
 		
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
@@ -85,11 +86,11 @@ public class ClientTUI {
 	/**
 	 * Prints the question and asks the user to input an Integer.
 	 * 
-	 * @param question The question to show to the user
-	 * @return The written Integer.
+	 * @param question, a String representing the question to show to the user
+	 * @return a user-defined integer.
 	 */
 	public int getInt(String question) {
-		System.out.println(question);
+		showMessage(question);
 		boolean validInt = false;
 		String userInput = "";
 		Integer userInt = 0;
@@ -106,9 +107,9 @@ public class ClientTUI {
 				userInt = Integer.parseInt(userInput);
 				validInt = true;
 	        } catch (NumberFormatException e) {
-	            System.out.println("ERROR: " + userInput
+	        	showMessage("ERROR: " + userInput
 	            		           + " is not an integer.");
-	            System.out.println("Please try again.");
+	        	showMessage("Please try again.");
 	        }
 		}
 		
@@ -118,11 +119,11 @@ public class ClientTUI {
 	/**
 	 * Prints the question and asks the user for a yes/no answer.
 	 * 
-	 * @param question The question to show to the user
-	 * @return The user input as boolean.
+	 * @param question, a String representing the question to show to the user
+	 * @return a user-defined boolean.
 	 */
 	public boolean getBoolean(String question) {
-		System.out.println(question);
+		showMessage(question);
 		boolean validInput = false;
 		boolean userBoolean = false;
 		
@@ -140,7 +141,7 @@ public class ClientTUI {
 			} else if (userInput.equalsIgnoreCase("no")) { 
 				userBoolean = false; validInput = true;
 			} else { 
-				System.out.println("Sorry, this is not valid input, please enter yes or no");
+				showMessage("Sorry, this is not valid input, please enter yes or no");
 			}
 		}
 		
@@ -149,10 +150,9 @@ public class ClientTUI {
 	
 	/**
 	 * Prints the question and waits for a move (a String that parses to an int or 'pass').
-	 * Returns the move as a String
 	 * 
 	 * @param question The question to show to the user
-	 * @return The user input as boolean.
+	 * @return a user-defined String representing the move
 	 */
 	public String getMove() {
 		boolean validInput = false;
@@ -160,7 +160,6 @@ public class ClientTUI {
 		String move = "";
 		
 		while (!validInput) {
-			//get userInput about move
 			String userInput = getString("Where do you want to place "
 					+ "your next marker? (Type 'pass' to pass, 'quit' to quit "
 					+ "or 'hint' to get a hint.)");

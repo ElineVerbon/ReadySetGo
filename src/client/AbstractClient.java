@@ -8,34 +8,37 @@ import protocol.MessageGenerator;
 import protocol.ProtocolMessages;
 
 /**
- * This class contains all methods that are shared between the different players.
+ * This class contains all methods that are shared among the different players.
  * All implemented players extend this class.
  */
 
 public abstract class AbstractClient implements Client {
 
-	//variables used to start a connection with the server
+	// Variables used to start a connection with the server
 	protected ClientTUI clientTUI;
 	protected ServerHandler serverHandler;
 	private MessageGenerator messageGenerator;
 	
-	//variables to play a game
+	// Variables to play a game
 	private char color;
 	private int boardDimension;
 	protected GoGUIIntegrator gogui;
 	private String version;
 	public static final double KOMI = 0.5;
 	
-	/** The board and all previous boards, represented as strings. */
+	// The board and all previous boards, represented as strings. 
 	private List<String> prevBoards;
 	
-	/** Variables to keep track of game states. */
+	// Variables to keep track of game states.
 	private boolean gameEnded;
 	private boolean doublePass;
 	private boolean misunderstood;
 	
 	private String prevServerMessage;
 
+	/**
+	 * Constructor.
+	 */
 	public AbstractClient() {
 		clientTUI = new ClientTUI();
 		serverHandler = new ServerHandler(clientTUI);
@@ -45,8 +48,8 @@ public abstract class AbstractClient implements Client {
 	/**
 	 * Start method.
 	 * 
-	 * Creates a connection with a server and sends a handshake. Then waits for server input
-	 * and handles it until the game ends.
+	 * Creates a connection with a server and sends a handshake. Then keeps waiting for 
+	 * and handling server input until the game ends.
 	 */
 	public void start() {
 		
@@ -89,8 +92,9 @@ public abstract class AbstractClient implements Client {
 	/**
 	 * Handles messages received from the server.
 	 * 
-	 * Checks whether all necessary components are there and sends them to the correct player method
-	 * .
+	 * Checks whether all components are there as specified in the communication protocol 
+	 * and sends them to the correct player method.
+	 * 
 	 * @param message, a String received from the server.
 	 */
 	public void handleServerMessage(String message) {
@@ -105,7 +109,6 @@ public abstract class AbstractClient implements Client {
 		char command = components[0].charAt(0);
 		switch (command) {
 			case ProtocolMessages.ERROR:
-				//if an error message is received twice in a row:
 				if (misunderstood) {
 					clientTUI.showMessage("Server did not understand for the second time. We cannot"
 							+ " communicate. We will send 'quit' to end the game. Sorry!");
@@ -115,6 +118,7 @@ public abstract class AbstractClient implements Client {
 				}
 				clientTUI.showMessage("Server did not understand the message. Let's try again.");
 				handleServerMessage(prevServerMessage); //whether this works depends on server
+						//will only appear when a mismatch in communication, only for debugging
 				break;
 				
 			case ProtocolMessages.GAME:
@@ -186,13 +190,10 @@ public abstract class AbstractClient implements Client {
 	}
 	
 	/**
-	 * Check the components start message, let client know the game has started and start the GUI.
+	 * Start the game: let client know the board size and color and start the GUI.
 	 */
 	
 	public void startGame(String board, String assignedColor) {
-		
-		//add board, else 2nd player doesn't save the empty board. 1st player will save it twice
-		prevBoards.add(board);
 		
 		// Verify that the board contains only U, B and W. 
 		int numberOfIntersections = board.length();
@@ -208,10 +209,7 @@ public abstract class AbstractClient implements Client {
 			}
 		}
 		
-		/** 
-		 * Verify that the assigned color is either ProtocolMessages.WHITE or .BLACK.
-		 */
-		
+		// Verify that the assigned color is either ProtocolMessages.WHITE or .BLACK.
 		if (assignedColor.length() != 1) {
 			String errorMessage = messageGenerator.errorMessage("ProtocolException in start game "
 				+ "message: 'B' or 'W' expected as third command, but " + assignedColor + 
@@ -225,10 +223,11 @@ public abstract class AbstractClient implements Client {
 				+ " received.", version);
 			serverHandler.sendToGame(errorMessage);
 		}
+		if (color == ProtocolMessages.WHITE) {
+			prevBoards.add(board); //add board, else 2nd player doesn't save the empty board
+		}
 		
-		/**
-		 * Show start message to client containing the assigned color.
-		 */
+		// Show start message to client containing the assigned color.
 		String clientsColor = "";
 		if (color == 'W') {
 			clientsColor = "white";
@@ -239,9 +238,7 @@ public abstract class AbstractClient implements Client {
 				+ "The board is " + boardDimension + " by " + boardDimension + ". "
 				+ "Your color is " + clientsColor + ". Good luck!");
 		
-		/**
-		 * Start the GUI.
-		 */
+		// Start the GUI.
 		if (gogui == null) {
 			gogui = new GoGUIIntegrator(true, true, boardDimension);
 		}
@@ -249,10 +246,7 @@ public abstract class AbstractClient implements Client {
 		gogui.setBoardSize(boardDimension);
 	}
 	
-	/** 
-	 * Show the current board state in the GUI and ask the client for a move. 
-	 * Send appropriate message with the move to the server.
-	 */
+	// Ask the client for a move and send an appropriate message with the move to the server.
 	public void doMove(String board, String opponentsMove) {
 		showCurrentBoardState(board);
 		prevBoards.add(board);
@@ -269,7 +263,6 @@ public abstract class AbstractClient implements Client {
 			return;
 		}
 		
-		/** Send move to the game. */
 		serverHandler.sendToGame(messageGenerator.moveMessage(move));
 	}
 	
@@ -282,10 +275,11 @@ public abstract class AbstractClient implements Client {
 										String theBoard, char theColor, List<String> thePrevBoards);
 	
 	/**
+	 * Show the result, as received from the server, of the previous own move. 
 	 * 
 	 * @param validity, boolean that is true if the move is valid, otherwise false
-	 * @param boardOrMessage, a String containing the board (if valid move) or 
-	 * 				(if invalid move) null or a message
+	 * @param boardOrMessage, a String containing the board (if valid move), or 
+	 * 				(in case of an invalid move) null or a message
 	 * @param theDoublePass, boolean indicating whether there were were two subsequent passes
 	 */
 	public void getResult(String validity, String boardOrMessage, boolean theDoublePass) {
@@ -302,7 +296,7 @@ public abstract class AbstractClient implements Client {
 	}
 	
 	/**
-	 * Communicate the end game and the result to the player.
+	 * Communicate the end of the game and the result to the player(s).
 	 * 
 	 * @param reasonEnd, a one-character string indicating the reason for the end of game
 	 * @param winner, a one-character string indicating who won the game
@@ -352,17 +346,11 @@ public abstract class AbstractClient implements Client {
 		}
 	}
 	
+	/**
+	 * Shows the current board state in the client's GUI.
+	 */
 	public void showCurrentBoardState(String theBoard) {
-		/** Show the current board to the player. */
 		gogui.clearBoard();
-		
-		//A wait step here prevents not fully clearing the board before filling it again
-		//However, it also results in not being able to follow the computer player games
-//		try {
-//			TimeUnit.SECONDS.sleep(1);
-//		} catch (InterruptedException e1) {
-//			e1.printStackTrace();
-//		}
 		
 		for (int c = 0; c < boardDimension * boardDimension; c++) {
 			char thisLocation = theBoard.charAt(c);

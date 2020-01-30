@@ -18,7 +18,7 @@ To get the program up and running, open a command line terminal.
 
 `./server`
 
-_Follow the prompts in the terminal, typing in an IP address (or 'localhost') and a port number_
+_Follow the prompts in the terminal, typing in the board size and a port number_
 
 3. Open a new command line window and start a client by typing  __one of these lines__  in the command line and hitting enter:
 

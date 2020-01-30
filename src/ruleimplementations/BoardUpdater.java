@@ -35,7 +35,8 @@ public class BoardUpdater {
 	private int boardDimension;
 	private String board;
 	
-	private BoardState boardState = new BoardState();
+	private ScoreCalculator scoreCalculator = new ScoreCalculator();
+	private BoardState boardState = new BoardState(scoreCalculator);
 	
 	//variable to keep track of places checked per group (cleared at end of group)
 	private List<Integer> checkedPlaces;

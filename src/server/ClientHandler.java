@@ -34,7 +34,6 @@ public class ClientHandler implements Runnable, Handler {
 	private Game thisClientsGame;
 	
 	/** Communication version of this client-server combination). */
-	//TODO this is not implemented neatly yet (not set anywhere yet)
 	private String version;
 	
 	private MessageGenerator messageGenerator = new MessageGenerator();
@@ -44,7 +43,6 @@ public class ClientHandler implements Runnable, Handler {
 	 * 
 	 * @param sock The socket of the server that connects to a certain client
 	 * @param srv  The connected server
-	 * @param name The name of this ClientHandler
 	 */
 	
 	public ClientHandler(Socket sock, Server srv) {
@@ -61,11 +59,9 @@ public class ClientHandler implements Runnable, Handler {
 	}
 
 	/**
-	 * This method is called from the server immediately upon construction of the handler. It 
-	 * listens for a handshake message. Once it receives this message, it instructs the server 
-	 * to return the handshake and add the client as a player to a game.
-	 * If it is the second player added to the game, the game will start and be run from the Game
-	 * object. The Game controls the flow of information, which is transmitted via the handler.
+	 * Method that listens for a handshake message from the client. Once it receives this message, 
+	 * it instructs the server to return the handshake and to add the client as a player to a game.
+	 * If it is the second player added to that game, the Game object is told to start the game.
 	 */
 	public void run() {
 		String msg;
@@ -74,12 +70,10 @@ public class ClientHandler implements Runnable, Handler {
 			msg = in.readLine();
 			if (msg.charAt(0) == ProtocolMessages.HANDSHAKE) {
 				doHandshakeAndAddToGame(msg);
-				
 			} else {
-				String errorMessage = messageGenerator.errorMessage("The client did not comply "
+				sendMessageToClient(messageGenerator.errorMessage("The client did not comply "
 						+ "with the protocol: a handshake message was expected, but " + msg + 
-						" was received.", version);
-				sendMessageToClient(errorMessage);
+						" was received.", version));
 			}
 			
 			if (thisClientsGame.hasTwoPlayers()) {
@@ -102,35 +96,28 @@ public class ClientHandler implements Runnable, Handler {
 	
 	private void doHandshakeAndAddToGame(String msg) {
 		
-		/**
-		 * Split the handshake message from client into the components.
-		 */
+		//Check the components of the client's message
 		String[] commands = msg.split(ProtocolMessages.DELIMITER);
 		
 		String command = commands[0];
 		if (command.length() != 1) {
-			String errorMessage = messageGenerator.errorMessage("Client did not keep to the "
+			sendMessageToClient(messageGenerator.errorMessage("Client did not keep to the "
 					+ "handshake protocol. Excepted 'H' as 1st component of the message, received " 
-					+ command + ".", version);
-			sendMessageToClient(errorMessage);
+					+ command + ".", version));
+			return;
 		}
 		if (commands.length < 3) {
-			String errorMessage = messageGenerator.errorMessage("Client did not keep to the "
+			sendMessageToClient(messageGenerator.errorMessage("Client did not keep to the "
 					+ "handshake protocol. Excepted both version and name as components of the "
-					+ "message, received " + command + ".", version);
-			sendMessageToClient(errorMessage);
+					+ "message, received " + command + ".", version));
+			return;
 		}
 		String requestedVersion = commands[1];
 		clientName = commands[2];
 		String wantedColor = (commands.length > 3) ? commands[3] : null; 
 		
-		/**
-		 * Send message to the server and record the returning handshake message.
-		 * In addition, let server add the client to a game
-		 */
-		
+		// Get a handshake message from the server & instruct the server to add client to a game.
 		String handshakeResponse = srv.doHandshake(requestedVersion, clientName);
-		
 		thisClientsGame = srv.addClientToGame(clientName, wantedColor, this);
 		String gameMessage = "";
 		if (thisClientsGame.hasTwoPlayers()) {
@@ -143,25 +130,20 @@ public class ClientHandler implements Runnable, Handler {
 		
 		//Send the server's handshake message + game info to the client.
 		String message = handshakeResponse + gameMessage;
-		try {
-			out.write(message);
-			out.newLine();
-			out.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		
+		sendMessageToClient(message);
+		
 	}
 
 	/**
 	 * Send start game message to the first connected client when the second player it to be added
 	 * to the same game to check whether the first player did not disconnect.
+	 * 
 	 * @param board
 	 * @param color
-	 * @throws IOException, used to check whether client is still connected
+	 * @throws IOException when the client is no longer connected
 	 */
 	public void startGameMessageInTwoParts(String board, char color) throws IOException {
-		//Check whether player1 has disconnected by sending the start message in two parts (if
-		//disconnected, the second flush will give an IO exception)
 		String startMessage1part1 = messageGenerator.startGameMessagePart1();
 		String startMessage1part2 = messageGenerator.startGameMessagePart2(board, color);
 
@@ -193,8 +175,7 @@ public class ClientHandler implements Runnable, Handler {
 			out.newLine();
 			out.flush();
 		} catch (IOException e) {
-			//TODO auto-generated
-			e.printStackTrace();
+			shutdown();
 		}
 	}
 	

@@ -26,7 +26,7 @@ public class Smart4ComputerPlayer extends AbstractClient {
 	private MoveValidator moveValidator = new MoveValidator();
 	private ScoreCalculator scoreCalculator = new ScoreCalculator();
 	private BoardUpdater boardUpdater = new BoardUpdater();
-	private BoardState boardState = new BoardState();
+	private BoardState boardState = new BoardState(scoreCalculator);
 	
 	/**
 	 * Constructor.

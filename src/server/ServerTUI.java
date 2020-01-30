@@ -11,9 +11,7 @@ public class ServerTUI {
 	/** The PrintWriter to write messages to. */
 	private PrintWriter console;
 
-	/**
-	 * Constructs a new HotelServerTUI. Initializes the console.
-	 */
+	// Constructor.
 	public ServerTUI() {
 		console = new PrintWriter(System.out, true);
 	}
@@ -41,6 +39,7 @@ public class ServerTUI {
 	 */
 	public int getPortNumber(String question) {
 		showMessage(question);
+		
 		int minPortNumber = 1281;
 		int maxPortNumber = 65535;
 		
@@ -53,12 +52,11 @@ public class ServerTUI {
 			try {
 				userInt = Integer.parseInt(userInput);
 	        } catch (NumberFormatException e) {
-	            System.out.println(userInput
-	            		           + " is not an integer. Please try again.");
+	            showMessage(userInput + " is not an integer. Please try again.");
 	        }
 			
 			if (userInt < minPortNumber || userInt > maxPortNumber) {
-				System.out.println("The port number should be at least " + minPortNumber +
+				showMessage("The port number should be at least " + minPortNumber +
 						" and at most " + maxPortNumber + ". Please try again.");
 			} else {
 				validInt = true;
@@ -87,13 +85,11 @@ public class ServerTUI {
 			try {
 				userInt = Integer.parseInt(userInput);
 	        } catch (NumberFormatException e) {
-	            System.out.println(userInput
-	            		           + " is not an integer. Please try again.");
+	        	showMessage(userInput + " is not an integer. Please try again.");
 	        }
 			
 			if (userInt < minNumber) {
-				System.out.println("Your answer should be at least " + minNumber +
-						". Please try again.");
+				showMessage("Your answer should be at least " + minNumber + ". Please try again.");
 			} else {
 				validInt = true;
 			}
@@ -103,7 +99,7 @@ public class ServerTUI {
 	}
 	
 	/**
-	 * Prints the question and returns the input parsed to an integer.
+	 * Prints the question and returns the input parsed to an double.
 	 * If input cannot be parsed to a double, an error message is shown and user can try again.
 	 * 
 	 * @param question The question to show to the user
@@ -121,8 +117,7 @@ public class ServerTUI {
 			try {
 				userDouble = Double.parseDouble(userInput);
 	        } catch (NumberFormatException e) {
-	            System.out.println(userInput
-	            		           + " is not an double. Please try again.");
+	        	showMessage(userInput + " is not an double. Please try again.");
 	        }
 
 			validDouble = true;
@@ -151,7 +146,7 @@ public class ServerTUI {
 			} else if (userInput.equalsIgnoreCase("no")) { 
 				userBoolean = false; validInput = true;
 			} else { 
-				System.out.println("sorry, this is not valid input, please enter yes or no");
+				showMessage("sorry, this is not valid input, please enter yes or no");
 			}
 		}
 		

@@ -20,9 +20,6 @@ import server.Handler;
 /**
  * This class will test whether the Game sends messages correctly and responds correctly 
  * to the responses of the players.
- * 
- * @author eline.verbon
- *
  */
 
 public class GameTest {
@@ -609,21 +606,21 @@ public class GameTest {
 		ScoreCalculator scoreCalculator = new ScoreCalculator();
 		
 		/** Empty board. */
-		scoreCalculator.calculateScores("UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU", 0.5);
+		scoreCalculator.calculateScores("UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU");
 		assertTrue(scoreCalculator.getScoreBlack() == -0.5);
 		assertTrue(scoreCalculator.getScoreWhite() == 0.0);
 		
 		/** Boards with one stone. */
-		scoreCalculator.calculateScores("WUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU", 0.5);
+		scoreCalculator.calculateScores("WUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU");
 		assertTrue(scoreCalculator.getScoreBlack() == -0.5);
 		assertTrue(scoreCalculator.getScoreWhite() == 36.0);
 		
-		scoreCalculator.calculateScores("UUUUUUUUUUUUUUUUUUUUUUBUUUUUUUUUUUUU", 0.5);
+		scoreCalculator.calculateScores("UUUUUUUUUUUUUUUUUUUUUUBUUUUUUUUUUUUU");
 		assertTrue(scoreCalculator.getScoreBlack() == 35.5);
 		assertTrue(scoreCalculator.getScoreWhite() == 0.0);
 		
 		/** Filled board. */
-		scoreCalculator.calculateScores("WWWWWWWWWWWWWWWWWWBBBBBBBBBBBBBBBBBB", 0.5);
+		scoreCalculator.calculateScores("WWWWWWWWWWWWWWWWWWBBBBBBBBBBBBBBBBBB");
 		assertTrue(scoreCalculator.getScoreBlack() == 17.5);
 		assertTrue(scoreCalculator.getScoreWhite() == 18.0);
 		
@@ -637,7 +634,7 @@ public class GameTest {
 		 * UUBUWW
 		 * UUUWUU
 		 */
-		scoreCalculator.calculateScores("BUUBBUBUBBUBBUUUUBUBUBBUUUBUWWUUUWUU", 0.5);
+		scoreCalculator.calculateScores("BUUBBUBUBBUBBUUUUBUBUBBUUUBUWWUUUWUU");
 		assertTrue(scoreCalculator.getScoreBlack() == 22.5);
 		assertTrue(scoreCalculator.getScoreWhite() == 5.0);
 		
@@ -651,7 +648,7 @@ public class GameTest {
 		 * UUUUUU
 		 * UUUWWU
 		 */
-		scoreCalculator.calculateScores("UUUUUUBUUUUBUBBBBUUUUUUUUUUUUUUUUWWU", 0.5);
+		scoreCalculator.calculateScores("UUUUUUBUUUUBUBBBBUUUUUUUUUUUUUUUUWWU");
 		assertTrue(scoreCalculator.getScoreBlack() == 15.5);
 		assertTrue(scoreCalculator.getScoreWhite() == 2.0);
 		
@@ -665,7 +662,7 @@ public class GameTest {
 		 * UUUUUU
 		 * UUUWWU
 		 */
-		scoreCalculator.calculateScores("UWUUUUBUUUUBUBBBBUUUUUUUUUUUUUUUUWWU", 0.5);
+		scoreCalculator.calculateScores("UWUUUUBUUUUBUBBBBUUUUUUUUUUUUUUUUWWU");
 		assertTrue(scoreCalculator.getScoreBlack() == 5.5);
 		assertTrue(scoreCalculator.getScoreWhite() == 3.0);
 		
@@ -680,7 +677,7 @@ public class GameTest {
 		 * UUUBUU		
 		 * 
 		 */
-		scoreCalculator.calculateScores("BUUUBUUBUBUUBUUUBUWUUBUUWUBUUUUUUBUU", 0.5);
+		scoreCalculator.calculateScores("BUUUBUUBUBUUBUUUBUWUUBUUWUBUUUUUUBUU");
 		assertTrue(scoreCalculator.getScoreBlack() == 20.5);
 		assertTrue(scoreCalculator.getScoreWhite() == 2.0);
 	}

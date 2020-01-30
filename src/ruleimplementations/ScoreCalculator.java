@@ -15,13 +15,13 @@ public class ScoreCalculator {
 	private double scoreWhite;
 	private double scoreBlack;
 	
-	private double komi;
+	private static final double KOMI = 0.5;
 	private int boardDimension;
 	private String board;
 	char areaSurrounder = 'x';
 	boolean surrounded;
 	
-	private BoardState boardState = new BoardState();
+	private BoardState boardState = new BoardState(this);
 	
 	List<Integer> checkedUnoccupiedPlaces = new ArrayList<Integer>();
 	List<Integer> surroundedArea = new ArrayList<Integer>();
@@ -33,10 +33,6 @@ public class ScoreCalculator {
 
 	public synchronized double getScoreBlack() {
 		return scoreBlack;
-	}
-	
-	public void setKomi(double komi) {
-		this.komi = komi;
 	}
 	
 	/**
@@ -56,7 +52,7 @@ public class ScoreCalculator {
 		
 		countStones();
 		
-		scoreBlack -= komi;
+		scoreBlack -= KOMI;
 	}
 	
 	/**

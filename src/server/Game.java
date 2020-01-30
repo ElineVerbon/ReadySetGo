@@ -46,6 +46,7 @@ public class Game {
 	private MoveValidator moveValidator = new MoveValidator();
 	private BoardUpdater moveResult = new BoardUpdater();
 	private ScoreCalculator scoreCalculator = new ScoreCalculator();
+	private BoardState boardState = new BoardState(scoreCalculator);
 	
 	/** 
 	 * Constructor, creates string representation of an empty board. 
@@ -132,7 +133,7 @@ public class Game {
 	
 	/**
 	 * Runs the game.
-	 * Starts the game (send start messages, send first turn message), 
+	 * Starts the game (send start messages, send first turn message), then
 	 * keeps sending turns to alternating players until game end.
 	 */
 	public void runGame() {
@@ -183,7 +184,7 @@ public class Game {
 	}
 	
 	/**
-	 * Only process replies received within 1 minute (reply == null).
+	 * Only process replies received within 1 minute (reply != null).
 	 * Check whether first component of a player's reply is one character & is not 'Q' 
 	 * (for quit). If this is the case (protocol is kept), send the move (second component) to 
 	 * processMove()
@@ -264,7 +265,7 @@ public class Game {
 	public String getReply() {
 		String reply;
 		
-		// End game if player took more than 1 minute to respond.
+		// Get reply, end game if player took more than 1 minute to respond.
 		try {
 			reply = currentPlayersHandler.getReply();
 		} catch (SocketTimeoutException e) {
@@ -317,6 +318,7 @@ public class Game {
 			prevBoards.add(board);
 			valid = moveValidator.processMove(move, boardDimension, board, currentPlayersColor, 
 																					prevBoards);
+			//if move is valid, update board
 			if (valid) {
 				int location = Integer.parseInt(move);
 				board = board.substring(0, location) + currentPlayersColor + 
@@ -366,16 +368,10 @@ public class Game {
 	 */
 	public void endGame() {
 		
-		char winner = 'x';
-		
-		scoreCalculator.calculateScores(board, KOMI);
+		char winner = boardState.highestScore(board);
 		double scoreBlack = scoreCalculator.getScoreBlack();
 		double scoreWhite = scoreCalculator.getScoreWhite();
-		if (scoreBlack > scoreWhite) {
-			winner = ProtocolMessages.BLACK;
-		} else {
-			winner = ProtocolMessages.WHITE;
-		}
+		
 		
 		switch (reasonGameEnd) {
 			//if game ended after a double pass, decide on winner based on the scores

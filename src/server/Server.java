@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import exceptions.ExitProgram;
+import protocol.MessageGenerator;
 import protocol.ProtocolMessages;
 
 /**
@@ -45,6 +46,8 @@ public class Server implements Runnable {
 	/** Available versions of this server. */
 	private List<String> availableVersions = new ArrayList<String>();
 	private String usedVersion;
+	
+	private MessageGenerator messageGenerator = new MessageGenerator();
 
 	/**  
 	 * The TUI of this GoServer.
@@ -61,7 +64,6 @@ public class Server implements Runnable {
 	 */
 	public static void main(String[] args) {
 		Server server = new Server();
-		System.out.println("Welcome to the Server hosting Go! Starting...");
 		
 		try {
 			server.setup();
@@ -87,7 +89,8 @@ public class Server implements Runnable {
 	}
 	
 	/**
-	 * Sets up a ServerSocket on a user-defined port.
+	 * Sets up the server. Gets some user input for game variables and sets up a ServerSocket
+	 * on a user-defined port.
 	 * If the socket cannot be created, the user can decide whether to try again, 
 	 * after which a new port is entered, or to stop, resulting in an ExitProgram exception.
 	 * 
@@ -96,6 +99,8 @@ public class Server implements Runnable {
 	 * @ensures a serverSocket is opened.
 	 */
 	public void setup() throws ExitProgram {
+		tui.showMessage("Welcome to the Server hosting Go! Starting...");
+		
 		ssock = null;
 		while (ssock == null) {
 			tui.showMessage("To start, please answer some questions to initialize the server.\n");
@@ -108,11 +113,6 @@ public class Server implements Runnable {
 					+ "client. This can allow for following the game play on the GUI in case "
 					+ "of very quick stone placements or small boards, \nbut it can also slow "
 					+ "down the game. (Minimum is 0. 100 is plenty.)", 0);
-			
-			// Cannot set the komi here, as I cannot let the client know because we did not include 
-			// this in the protocol.
-//			komi = tui.getDouble("Please enter a double (eg 0.5) to set the komi (= penalty"
-//					+ " for black) for the games that you will host.");
 			
 			int port = tui.getPortNumber("Please enter the number of the server port " +
 					"that you want to listen on.");
@@ -132,11 +132,9 @@ public class Server implements Runnable {
 	}
 	
 	/**
-	 * Create a socket with given IP and port (also useful for testing purposes).
-	 * Is called in setup()
+	 * Create a socket with given port.
 	 * 
-	 * @param addr
-	 * @param port
+	 * @param port, an integer between 1281 and 65535
 	 * @throws IOException
 	 */
 	public void createSocket(int port) throws IOException {
@@ -146,11 +144,7 @@ public class Server implements Runnable {
 	}
 	
 	/**
-	 * Create connections with clients via the server's ServerSocket.
-	 * 
-	 * The ServerSocket listens for new clients, makes a clientHandler 
-	 * for each connected client and starts the clientHandler in a new 
-	 * thread (so the ServerSocket can continue listening for new clients).
+	 * Continuously creates connections with clients via the server's ServerSocket.
 	 */
 	
 	public void run() {
@@ -174,26 +168,11 @@ public class Server implements Runnable {
 	}
 	
 	/**
-	 * Read handshake from a client. If correct: set usedVersion,
-	 * add client to a game & send a response
-	 * 
-	 * Handshake from the client is correct if it is formatted as follows:
-	 * PROTOCOL.handshake + PROTOCOL.delimiter + requestedVersion + PROTOCOL.delimiter + naamClient 
-	 * optionally these at the end: + PROTOCOL.delimiter + PROTOCOL.white/black
-	 * 
-	 * Response string should be formatted as follows:
-	 * PROTOCOL.handshake + PROTOCOL.delimiter + finalVersion (string) 
-	 * optionally these at the end: PROTOCOL.delimiter + message (string)
+	 * Send a handshake response to the client.
 	 */
 	
 	public String doHandshake(String requestedVersion, String nameClient) {
-		String response;
 		
-		/**
-		 * check if requested version is available, if so:
-		 * it will be used for communication with this client, if not:
-		 * version 1.0 will be used. 
-		 */
 		usedVersion = "1.0";
 		for (String version : availableVersions) {
 			if (version.equals(requestedVersion)) {
@@ -201,13 +180,7 @@ public class Server implements Runnable {
 				break;
 			}
 		}
-		String message = "Welcome " + nameClient + " to the GO server! " +
-				"Communication will proceed via version " + usedVersion + ".";
-		
-		response = ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER 
-				+ usedVersion + ProtocolMessages.DELIMITER + message;
-		
-		return response;
+		return messageGenerator.serverHandshakeMessage(nameClient, usedVersion);
 	}
 	
 	/**
@@ -258,6 +231,7 @@ public class Server implements Runnable {
 	
 	/**
 	 * Removes a clientHandler from the client list.
+	 * 
 	 * @requires client != null
 	 */
 	public void removeClient(ClientHandler client) {
@@ -278,7 +252,6 @@ public class Server implements Runnable {
 		game.setNamePlayer1(nameClient);
 		game.setClientHandlerPlayer1(thisClientsHandler);
 		
-		//if no provided wanted color (or wanted color not of length 1), give black
 		if (wantedColor == null || wantedColor.length() != 1) {
 			game.setColorPlayer1(ProtocolMessages.BLACK);
 		} else {
@@ -302,7 +275,6 @@ public class Server implements Runnable {
 		game.setNamePlayer2(nameClient);
 		game.setClientHandlerPlayer2(thisClientsHandler);
 		
-		//give player 2 the other color than player 1
 		if (game.getColorPlayer1() == ProtocolMessages.BLACK) {
 			game.setColorPlayer2(ProtocolMessages.WHITE);
 		} else {
@@ -320,10 +292,8 @@ public class Server implements Runnable {
 		
 		Game aGame = new Game(nextGameNo, usedVersion, boardDimension, waitTime);
 		
-		//increase next game number by one
 		nextGameNo++;
 		
-		//add game to list of games
 		games.add(aGame);
 		
 		return aGame;

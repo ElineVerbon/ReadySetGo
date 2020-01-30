@@ -5,6 +5,7 @@ import java.util.List;
 import protocol.ProtocolMessages;
 import ruleimplementations.BoardState;
 import ruleimplementations.MoveValidator;
+import ruleimplementations.ScoreCalculator;
 
 /**
  * A automated computer player that can play Go. 
@@ -20,7 +21,8 @@ public class Smart1ComputerPlayer extends AbstractClient {
 	private int computerPlayerNumber;
 
 	private MoveValidator moveValidator = new MoveValidator();
-	private BoardState boardState = new BoardState();
+	private ScoreCalculator scoreCalculator = new ScoreCalculator();
+	private BoardState boardState = new BoardState(scoreCalculator);
 	
 	
 	/**

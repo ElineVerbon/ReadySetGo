@@ -8,7 +8,11 @@ import protocol.ProtocolMessages;
 
 public class BoardState {
 	
-	private ScoreCalculator scoreCalculator = new ScoreCalculator();
+	private ScoreCalculator scoreCalculator;
+	
+	public BoardState(ScoreCalculator scoreCalculator) {
+		this.scoreCalculator = scoreCalculator;
+	}
 	
 	/**
 	 * Check whether a location is located on the board, adjacent to the previous location.

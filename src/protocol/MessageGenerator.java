@@ -34,6 +34,15 @@ public class MessageGenerator implements GeneratorInterface {
 	 * Messages sent by the server only.
 	 */
 	
+	public String serverHandshakeMessage(String nameClient, String usedVersion) {
+		String message = "Welcome " + nameClient + " to the GO server! " +
+				"Communication will proceed via version " + usedVersion + ".";
+		
+		String handshakeToClient = ProtocolMessages.HANDSHAKE + ProtocolMessages.DELIMITER 
+				+ usedVersion + ProtocolMessages.DELIMITER + message;
+		return handshakeToClient;
+	}
+	
 	public String startGameMessage(String board, char color) {
 		String startMessage = ProtocolMessages.GAME + ProtocolMessages.DELIMITER
 				+ board + ProtocolMessages.DELIMITER + color;

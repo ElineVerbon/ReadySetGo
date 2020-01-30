@@ -36,8 +36,11 @@ public class Server implements Runnable {
 	/** Next game number, increasing for every new connection. */
 	private int nextGameNo;
 	
-	/** User-defined variables for the board size and komi of the games hosted by this server. */
+	/** 
+	 * Variables for the board size and waiting time of the games hosted by this server. 
+	 */
 	int boardDimension;
+	int waitTime;
 	
 	/** Available versions of this server. */
 	private List<String> availableVersions = new ArrayList<String>();
@@ -96,16 +99,23 @@ public class Server implements Runnable {
 		ssock = null;
 		while (ssock == null) {
 			tui.showMessage("To start, please answer some questions to initialize the server.\n");
+			
 			boardDimension = tui.getInt("Please enter a positive integer to set the board"
-					+ "size of the games that you will host. (Minimum is 3.)", 3);
+					+ "size of the games that you will host. \n(Minimum is 3.)", 3);
+			
+			waitTime = tui.getInt("Please enter a positive integer to set the wait time in "
+					+ "milliseconds between receiving a reply and sending the result \nto the "
+					+ "client. This can allow for following the game play on the GUI in case "
+					+ "of very quick stone placements or small boards, \nbut it can also slow "
+					+ "down the game. (Minimum is 0.)", 0);
 			
 			// Cannot set the komi here, as I cannot let the client know because we did not include 
 			// this in the protocol.
 //			komi = tui.getDouble("Please enter a double (eg 0.5) to set the komi (= penalty"
 //					+ " for black) for the games that you will host.");
 			
-			int port = tui.getInt("Please enter the number of the server port " +
-					"that you want to listen on.", 1281);
+			int port = tui.getPortNumber("Please enter the number of the server port " +
+					"that you want to listen on.");
 			
 			// try to open a new ServerSocket
 			try {
@@ -308,7 +318,7 @@ public class Server implements Runnable {
 	 */
 	public Game setupGoGame() {
 		
-		Game aGame = new Game(nextGameNo, usedVersion, boardDimension);
+		Game aGame = new Game(nextGameNo, usedVersion, boardDimension, waitTime);
 		
 		//increase next game number by one
 		nextGameNo++;

@@ -21,11 +21,12 @@ __Mac users:__
 `./server`
 
 
+
 __Windows users:__
 
 `server.bat`
 
-_Follow the prompts in the terminal, typing in the board size and a port number_
+_Follow the prompts in the terminal, typing in the board size, the wait time in milliseconds and a port number._
 
 3. Open a new command line window and start a client by typing  __one of these lines__  in the command line and hitting enter:
 
@@ -33,18 +34,19 @@ __Mac users:__
 
 `./humanPlayer`			_This will start a player of which you can decide the moves._
 
-`./smartComputerPlayer`	_This will start an automized player that uses a smart(er) strategy._
+`./smartComputerPlayer`	_This will start an automated player that uses a smart(er) strategy._
 
-`./stupidComputerPlayer` 	_This will start an automized player that uses a less smart stategy._
+`./stupidComputerPlayer` 	_This will start an automated player that uses a less smart strategy._
+
 
 
 __Windows users:__
 
 `humanPlayer.bat`			_This will start a player of which you can decide the moves._
 
-`smartComputerPlayer.bat`	_This will start an automized player that uses a smart(er) strategy._
+`smartComputerPlayer.bat`	_This will start an automated player that uses a smart(er) strategy._
 
-`stupidComputerPlayer.bat` 	_This will start an automized player that uses a less smart stategy._
+`stupidComputerPlayer.bat` 	_This will start an automated player that uses a less smart strategy._
 
 _Follow the prompts in the terminal. If you open the humanPlayer, you will need to type in your moves. In the case of one of the computer players, you only participate at the start of the exchange (entering the IP address and the port number you want to connect with). Afterwards, the computer will take over and play the game to the end._
 

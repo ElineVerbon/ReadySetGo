@@ -39,6 +39,42 @@ public class ServerTUI {
 	 * @param question The question to show to the user
 	 * @return The written Integer.
 	 */
+	public int getPortNumber(String question) {
+		showMessage(question);
+		int minPortNumber = 1281;
+		int maxPortNumber = 65535;
+		
+		boolean validInt = false;
+		Integer userInt = 0;
+		
+		while (!validInt) {
+			String userInput = readUserInput();
+			
+			try {
+				userInt = Integer.parseInt(userInput);
+	        } catch (NumberFormatException e) {
+	            System.out.println(userInput
+	            		           + " is not an integer. Please try again.");
+	        }
+			
+			if (userInt < minPortNumber || userInt > maxPortNumber) {
+				System.out.println("The port number should be at least " + minPortNumber +
+						" and at most " + maxPortNumber + ". Please try again.");
+			} else {
+				validInt = true;
+			}
+		}
+		
+		return userInt;
+	}
+	
+	/**
+	 * Prints the question and returns the input parsed to an integer.
+	 * If input cannot be parsed to an integer, an error message is shown and user can try again.
+	 * 
+	 * @param question The question to show to the user
+	 * @return The written Integer.
+	 */
 	public int getInt(String question, int minNumber) {
 		showMessage(question);
 		
@@ -56,7 +92,7 @@ public class ServerTUI {
 	        }
 			
 			if (userInt < minNumber) {
-				System.out.println("The number should be at least " + minNumber +
+				System.out.println("Your answer should be at least " + minNumber +
 						". Please try again.");
 			} else {
 				validInt = true;

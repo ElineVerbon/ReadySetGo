@@ -15,6 +15,7 @@ public class Game {
 	public static final double KOMI = 0.5;
 	private char reasonGameEnd;
 	private String opponentsMove = null;
+	private int waitTime;
 	
 	/** Variable to keep track of and connect to the players. */
 	@SuppressWarnings("unused")
@@ -49,11 +50,12 @@ public class Game {
 	/** 
 	 * Constructor, creates string representation of an empty board. 
 	 */
-	public Game(int number, String chosenVersion, int boardSize) {
+	public Game(int number, String chosenVersion, int boardSize, int waitTime) {
 		gameNumber = number;
 		version = chosenVersion;
 		boardDimension = boardSize;
 		messageGenerator = new MessageGenerator();
+		this.waitTime = waitTime;
 		
 		// Create a string representation of the empty board.
         char[] charArray = new char[boardDimension * boardDimension];
@@ -340,7 +342,7 @@ public class Game {
 		
 		//Sleep to allow the GUI time to update the board in between moves.
 		try {
-			Thread.sleep(100);
+			Thread.sleep(waitTime);
 		} catch (InterruptedException e) {
 		}
 		

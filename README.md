@@ -28,7 +28,12 @@ __Windows users:__
 
 __Both types of users:__ _Follow the prompts in the terminal, typing in the board size, the wait time in milliseconds and a port number._
 
-3. Open a new command line window and start a client by typing  __one of these lines__  in the command line and hitting enter:
+3. Open a new command line window and navigate to the right directory by typing the following lines in the terminal and hitting enter:
+
+
+`cd ReadySetGo`
+
+Then, start a client by typing  __one of these lines__  in the command line and hitting enter:
 
 __Mac users:__
 
@@ -50,7 +55,7 @@ __Windows users:__
 
 __Both types of users:__ _Follow the prompts in the terminal. If you open the humanPlayer, you will need to type in your moves. In the case of one of the computer players, you only participate at the start of the exchange (entering the IP address and the port number you want to connect with). Afterwards, the computer will take over and play the game to the end._
 
-4. Open another new command line window and repeat step 3, choosing the same or a different player according to your wish.
+4. Repeat step 3, choosing the same or a different player according to your wish.
 
 5. Once a client indicates that it has closed the connection, you can type 'ctrl c' to stop the execution and to start another client or server, if wanted.
 

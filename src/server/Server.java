@@ -101,13 +101,13 @@ public class Server implements Runnable {
 			tui.showMessage("To start, please answer some questions to initialize the server.\n");
 			
 			boardDimension = tui.getInt("Please enter a positive integer to set the board"
-					+ "size of the games that you will host. \n(Minimum is 3.)", 3);
+					+ "size of the games that you will host. \n(Minimum is 5.)", 5);
 			
 			waitTime = tui.getInt("Please enter a positive integer to set the wait time in "
 					+ "milliseconds between receiving a reply and sending the result \nto the "
 					+ "client. This can allow for following the game play on the GUI in case "
 					+ "of very quick stone placements or small boards, \nbut it can also slow "
-					+ "down the game. (Minimum is 0.)", 0);
+					+ "down the game. (Minimum is 0. 100 is plenty.)", 0);
 			
 			// Cannot set the komi here, as I cannot let the client know because we did not include 
 			// this in the protocol.
